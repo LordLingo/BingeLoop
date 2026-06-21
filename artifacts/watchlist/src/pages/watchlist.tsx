@@ -18,26 +18,26 @@ export default function WatchlistPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="bg-primary flex items-center gap-2 px-4 pt-6 pb-2 text-primary-foreground">
+      <div className="flex items-center gap-2 px-4 pt-6 pb-2 text-foreground">
         <Link
           href="/library"
-          className="rounded-full p-1.5 hover:bg-white/10 transition-colors"
+          className="rounded-full p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
           data-testid="link-back-library"
         >
           <ChevronLeft className="w-5 h-5" />
         </Link>
-        <div className="flex items-center gap-2 font-serif font-bold text-xl tracking-tight">
-          <Bookmark className="w-5 h-5 opacity-80" />
-          My Watchlist
+        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-primary">
+          <Bookmark className="w-6 h-6 text-primary shrink-0" />
+          MY WATCHLIST
         </div>
       </div>
 
-      <section className="bg-primary text-primary-foreground pt-4 pb-8 px-6 rounded-b-[2.5rem] shadow-sm mb-6">
+      <section className="cinematic-panel text-foreground pt-4 pb-8 px-6 rounded-b-[2.5rem] border-b border-border/60 mb-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl font-serif font-bold tracking-tight">
+          <h1 className="text-5xl font-serif tracking-wide text-foreground">
             Saved to watch
           </h1>
-          <p className="text-primary-foreground/80 mt-2 text-sm">
+          <p className="text-muted-foreground mt-2 text-sm">
             Shows you've bookmarked, with the group members who've also rated or
             saved them.
           </p>
@@ -70,7 +70,7 @@ export default function WatchlistPage() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col bg-card border border-border rounded-2xl p-5 shadow-sm"
+                className="poster-card flex flex-col bg-card border border-border rounded-2xl p-5"
                 data-testid={`card-watchlist-${item.id}`}
               >
                 <div className="flex justify-between items-start mb-3">
@@ -87,7 +87,7 @@ export default function WatchlistPage() {
                   </span>
                 </div>
 
-                <h3 className="text-xl font-serif font-bold mb-4 line-clamp-2">
+                <h3 className="text-2xl font-serif tracking-wide mb-4 line-clamp-2">
                   {item.title}
                 </h3>
 

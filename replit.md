@@ -43,6 +43,13 @@ A mobile-first web app where users log TV shows and movies, rate them 1–5 star
 
 Users browse their watch library with category/media-type filters and sorting, see summary stats (total logged, average rating, movie/TV split, category breakdown), and add/edit/delete entries — each with a title, movie/TV type, 1–5 star rating, category, and optional comment. Users can also save shows to a personal watchlist and see which other group members have rated or saved the same show.
 
+## Design
+
+- Cinematic "Hollywood" theme: near-black charcoal background with a subtle gold top vignette, warm gold accent (`#E8B500` ≈ `hsl(46 100% 45%)`) used as `--primary`/`--accent`/`--ring` for CTAs, the logo, active states, and the gold star ratings.
+- Fonts (loaded in `index.html` + `index.css`): `Bebas Neue` as the display font (`--font-serif`, used for all headings/logo via the base `h1–h6` rule — set in uppercase with wide tracking for a movie-poster feel); `Oswald` as body (`--font-sans`).
+- Theme is dark-only: `:root` and `.dark` tokens are identical and `<html class="dark">` is set so Clerk's shadcn theme renders dark too. Editing the palette means editing both blocks in `index.css`.
+- Reusable cinematic utilities in `index.css` `@layer components`: `.poster-card` (deep drop shadow + gold hover ring for show cards) and `.cinematic-panel` (dark top-to-background gradient for page hero sections). Page heroes/headers use dark panels with gold accents — avoid large `bg-primary` fills (gold should stay an accent, not a background).
+
 ## User preferences
 
 _Populate as you build — explicit user instructions worth remembering across sessions._

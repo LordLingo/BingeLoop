@@ -59,15 +59,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="bg-primary flex justify-between items-center px-6 pt-6 pb-2 text-primary-foreground">
-        <div className="flex items-center gap-2 font-serif font-bold text-xl tracking-tight">
-          <Film className="w-5 h-5 opacity-80" />
-          Watchlist
+      <div className="flex justify-between items-center px-6 pt-6 pb-2 text-foreground">
+        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-primary">
+          <Film className="w-6 h-6 text-primary shrink-0" />
+          WATCHLIST
         </div>
         <div className="flex items-center gap-1">
           <Link
             href="/watchlist"
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium hover:bg-white/10 transition-colors"
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
             data-testid="link-my-watchlist"
           >
             <Bookmark className="w-4 h-4" />
@@ -77,30 +77,30 @@ export default function Home() {
         </div>
       </div>
       {/* Hero Stats */}
-      <section className="bg-primary text-primary-foreground pt-6 pb-8 px-6 rounded-b-[2.5rem] shadow-sm mb-6">
+      <section className="cinematic-panel text-foreground pt-6 pb-8 px-6 rounded-b-[2.5rem] border-b border-border/60 mb-6">
         <div className="max-w-3xl mx-auto space-y-6">
-          <h1 className="text-4xl font-serif font-bold tracking-tight">Your Library</h1>
+          <h1 className="text-5xl font-serif tracking-wide text-foreground">Your Library</h1>
           
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-black/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-              <div className="text-3xl font-serif font-semibold">{stats?.total || 0}</div>
-              <div className="text-sm text-primary-foreground/80 font-medium">Logged</div>
+            <div className="bg-white/[0.03] rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+              <div className="text-4xl font-serif text-primary">{stats?.total || 0}</div>
+              <div className="text-sm text-muted-foreground font-medium tracking-wide uppercase">Logged</div>
             </div>
-            <div className="bg-black/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-              <div className="text-3xl font-serif font-semibold flex items-center gap-2">
+            <div className="bg-white/[0.03] rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+              <div className="text-4xl font-serif flex items-center gap-2 text-foreground">
                 {stats?.averageRating ? Number(stats.averageRating).toFixed(1) : "-"}
                 <Star className="w-5 h-5 fill-accent text-accent" />
               </div>
-              <div className="text-sm text-primary-foreground/80 font-medium">Avg Rating</div>
+              <div className="text-sm text-muted-foreground font-medium tracking-wide uppercase">Avg Rating</div>
             </div>
-            <div className="bg-black/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+            <div className="bg-white/[0.03] rounded-2xl p-4 backdrop-blur-sm border border-white/10">
               <div className="flex gap-3 h-full items-center">
                 <div className="flex-1 flex flex-col justify-center">
-                  <div className="text-xl font-semibold flex items-center gap-1.5">
-                    <Film className="w-4 h-4 opacity-70" /> {stats?.movieCount || 0}
+                  <div className="text-xl font-semibold flex items-center gap-1.5 text-foreground">
+                    <Film className="w-4 h-4 text-primary/70" /> {stats?.movieCount || 0}
                   </div>
-                  <div className="text-xl font-semibold flex items-center gap-1.5">
-                    <Tv className="w-4 h-4 opacity-70" /> {stats?.tvCount || 0}
+                  <div className="text-xl font-semibold flex items-center gap-1.5 text-foreground">
+                    <Tv className="w-4 h-4 text-primary/70" /> {stats?.tvCount || 0}
                   </div>
                 </div>
               </div>
@@ -195,7 +195,7 @@ export default function Home() {
                 <Link 
                   key={entry.id} 
                   href={`/entry/${entry.id}`}
-                  className="group flex flex-col bg-card hover:bg-muted/30 transition-colors border border-border rounded-2xl p-5 shadow-sm hover:shadow-md"
+                  className="poster-card group flex flex-col bg-card hover:bg-muted/30 transition-all border border-border rounded-2xl p-5"
                   data-testid={`card-entry-${entry.id}`}
                 >
                   <div className="flex justify-between items-start mb-3">
@@ -207,7 +207,7 @@ export default function Home() {
                     </div>
                   </div>
                   
-                  <h3 className="text-xl font-serif font-bold mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+                  <h3 className="text-2xl font-serif tracking-wide mb-3 line-clamp-2 group-hover:text-primary transition-colors">
                     {entry.title}
                   </h3>
                   
