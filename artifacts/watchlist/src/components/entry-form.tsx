@@ -14,7 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "@/components/star-rating";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Film, Tv } from "lucide-react";
+import { useListCategories } from "@workspace/api-client-react";
 import type { Entry, EntryInput } from "@workspace/api-client-react";
 
 const entrySchema = z.object({
@@ -35,6 +43,7 @@ interface EntryFormProps {
 }
 
 export function EntryForm({ initialData, onSubmit, isLoading, submitLabel = "Save" }: EntryFormProps) {
+  const { data: categories } = useListCategories();
   const form = useForm<FormValues>({
     resolver: zodResolver(entrySchema),
     defaultValues: {
@@ -127,9 +136,20 @@ export function EntryForm({ initialData, onSubmit, isLoading, submitLabel = "Sav
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category / Genre</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Sci-Fi, Drama" {...field} data-testid="input-category" className="h-12" />
-              </FormControl>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger className="h-12" data-testid="input-category">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {(categories ?? []).map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

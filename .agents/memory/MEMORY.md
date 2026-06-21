@@ -1,2 +1,3 @@
 - [Clerk appearance vs provider props](clerk-react-gotchas.md) — `localization` is a `<ClerkProvider>` prop, NOT a key inside `appearance`; placing it in appearance fails typecheck.
 - [Drizzle NOT NULL backfill](drizzle-notnull-backfill.md) — adding a NOT NULL column via `drizzle-kit push` to a table with existing rows fails; clear/backfill rows first.
+- [Canonical category contract](canonical-category-contract.md) — server validates `category` against canonical `CATEGORIES`; the UI must constrain it (Select from `/categories`), never free-text, or submits 400.
