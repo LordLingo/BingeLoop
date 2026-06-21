@@ -15,19 +15,81 @@ export interface Error {
 
 export interface Invite {
   token: string;
-  createdByName: string;
+  groupId: number;
+  groupName: string;
   createdAt: string;
 }
 
 export interface InvitePreview {
   token: string;
+  groupName: string;
   inviterName: string;
   valid: boolean;
 }
 
 export interface AcceptInviteResult {
   joined: boolean;
-  inviterName: string;
+  /** @nullable */
+  groupId: number | null;
+  groupName: string;
+}
+
+export interface GroupInput {
+  /**
+     * @minLength 1
+     * @maxLength 60
+     */
+  name: string;
+}
+
+export type GroupRole = typeof GroupRole[keyof typeof GroupRole];
+
+
+export const GroupRole = {
+  owner: 'owner',
+  member: 'member',
+} as const;
+
+export interface Group {
+  id: number;
+  name: string;
+  ownerId: string;
+  role: GroupRole;
+  memberCount: number;
+  createdAt: string;
+}
+
+export type GroupMemberRole = typeof GroupMemberRole[keyof typeof GroupMemberRole];
+
+
+export const GroupMemberRole = {
+  owner: 'owner',
+  member: 'member',
+} as const;
+
+export interface GroupMember {
+  userId: string;
+  displayName: string;
+  role: GroupMemberRole;
+  joinedAt: string;
+}
+
+export type GroupDetailRole = typeof GroupDetailRole[keyof typeof GroupDetailRole];
+
+
+export const GroupDetailRole = {
+  owner: 'owner',
+  member: 'member',
+} as const;
+
+export interface GroupDetail {
+  id: number;
+  name: string;
+  ownerId: string;
+  role: GroupDetailRole;
+  memberCount: number;
+  createdAt: string;
+  members: GroupMember[];
 }
 
 export type MediaType = typeof MediaType[keyof typeof MediaType];
@@ -136,6 +198,8 @@ export interface ApprovalInput {
   title: string;
   mediaType: MediaType;
   approval: Approval;
+  /** Scope the returned tallies to members of this group. Without it, only the caller's own answer is counted. */
+  groupId?: number;
 }
 
 export interface CheckInResult {
@@ -149,6 +213,14 @@ export interface CheckInResult {
 }
 
 export type ListEntriesParams = {
+/**
+ * View this member's entries instead of the group's. Requires a shared group.
+ */
+userId?: string;
+/**
+ * Scope the list to members of this group. You must be a member.
+ */
+groupId?: number;
 category?: string;
 mediaType?: MediaType;
 sort?: ListEntriesSort;
@@ -165,8 +237,48 @@ export const ListEntriesSort = {
   title: 'title',
 } as const;
 
+export type GetStatsParams = {
+/**
+ * View this member's stats instead of the group's. Requires a shared group.
+ */
+userId?: string;
+/**
+ * Aggregate stats across members of this group. You must be a member.
+ */
+groupId?: number;
+};
+
+export type ListWatchlistParams = {
+/**
+ * View this member's saved shows instead of your own. Requires a shared group.
+ */
+userId?: string;
+/**
+ * Scope the "also engaged by" names to members of this group.
+ */
+groupId?: number;
+};
+
+export type ListApprovalsParams = {
+/**
+ * Scope the tallies to members of this group.
+ */
+groupId?: number;
+};
+
 export type ClearApprovalParams = {
 title: string;
 mediaType: MediaType;
+/**
+ * Scope the returned tallies to members of this group.
+ */
+groupId?: number;
+};
+
+export type CheckInParams = {
+/**
+ * Count new entries from other members of this group.
+ */
+groupId?: number;
 };
 

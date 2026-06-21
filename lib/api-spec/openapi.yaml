@@ -17,7 +17,11 @@ tags:
   - name: approvals
     description: Per-member "Wife Approved?" answers per show
   - name: invites
-    description: Shareable invite links to join the group
+    description: Shareable invite links to join a group
+  - name: groups
+    description: User-created named groups
+  - name: activity
+    description: New-activity check-in
 paths:
   /healthz:
     get:
@@ -37,8 +41,20 @@ paths:
       operationId: listEntries
       tags: [entries]
       summary: List watchlist entries
-      description: Returns all watchlist entries, optionally filtered by category or media type and sorted.
+      description: Returns entries from members of the active group by default. Pass groupId to scope to a specific group (you must be a member), or userId to view a single member's entries (only allowed when you share a group). With neither, returns entries from everyone who shares a group with you.
       parameters:
+        - name: userId
+          in: query
+          required: false
+          description: View this member's entries instead of the group's. Requires a shared group.
+          schema:
+            type: string
+        - name: groupId
+          in: query
+          required: false
+          description: Scope the list to members of this group. You must be a member.
+          schema:
+            type: integer
         - name: category
           in: query
           required: false
@@ -158,7 +174,20 @@ paths:
       operationId: getStats
       tags: [entries]
       summary: Watchlist summary stats
-      description: Aggregate counts, average rating, category breakdown, and recent activity for the watchlist.
+      description: Aggregate counts, average rating, and category breakdown. Pass groupId to aggregate across all members of a group (you must be a member), or userId for a single member's stats (only allowed when you share a group). With neither, aggregates across everyone who shares a group with you.
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          description: View this member's stats instead of the group's. Requires a shared group.
+          schema:
+            type: string
+        - name: groupId
+          in: query
+          required: false
+          description: Aggregate stats across members of this group. You must be a member.
+          schema:
+            type: integer
       responses:
         "200":
           description: Stats summary
@@ -187,8 +216,23 @@ paths:
       tags: [watchlist]
       summary: List my saved watchlist items
       description: >-
-        Returns the current user's saved shows, each annotated with the names of
-        other group members who have rated or saved the same show.
+        Returns the caller's saved shows by default, each annotated with the
+        names of other members of the given group who have rated or saved the
+        same show. Pass userId to view another member's saved shows (requires a
+        shared group).
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          description: View this member's saved shows instead of your own. Requires a shared group.
+          schema:
+            type: string
+        - name: groupId
+          in: query
+          required: false
+          description: Scope the "also engaged by" names to members of this group.
+          schema:
+            type: integer
       responses:
         "200":
           description: A list of saved watchlist items
@@ -241,8 +285,17 @@ paths:
       tags: [approvals]
       summary: List "Wife Approved?" summaries
       description: >-
-        Returns, for every show that has at least one answer, the count of each
-        answer across all members plus the current user's own answer.
+        Returns, for every show that has at least one answer within the given
+        group, the count of each answer across that group's members plus the
+        caller's own answer. Without a groupId, only the caller's own answers
+        are counted.
+      parameters:
+        - name: groupId
+          in: query
+          required: false
+          description: Scope the tallies to members of this group.
+          schema:
+            type: integer
       responses:
         "200":
           description: Approval summaries by show
@@ -284,6 +337,12 @@ paths:
           required: true
           schema:
             $ref: "#/components/schemas/MediaType"
+        - name: groupId
+          in: query
+          required: false
+          description: Scope the returned tallies to members of this group.
+          schema:
+            type: integer
       responses:
         "200":
           description: Updated approval summary for the show
@@ -297,9 +356,17 @@ paths:
       tags: [activity]
       summary: Record a visit and get new-activity count
       description: >-
-        Records the current user's visit, returning the number of entries added
-        by other group members since the user's previous visit. Updates the
-        stored last-seen time to now.
+        Records the caller's visit, returning the number of entries added by
+        other members of the given group since the caller's previous visit.
+        Updates the stored last-seen time to now. Without a groupId, newCount is
+        always 0.
+      parameters:
+        - name: groupId
+          in: query
+          required: false
+          description: Count new entries from other members of this group.
+          schema:
+            type: integer
       responses:
         "200":
           description: New-activity summary since the previous visit
@@ -307,29 +374,163 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CheckInResult"
-  /invites:
-    post:
-      operationId: createOrGetInvite
-      tags: [invites]
-      summary: Create or fetch my shareable invite link
-      description: >-
-        Returns the caller's reusable invite. Creates one on first call and
-        returns the existing invite on subsequent calls.
+  /groups:
+    get:
+      operationId: listGroups
+      tags: [groups]
+      summary: List the groups I belong to
       responses:
         "200":
-          description: The caller's invite
+          description: The caller's groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+    post:
+      operationId: createGroup
+      tags: [groups]
+      summary: Create a new group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+  /groups/{id}:
+    get:
+      operationId: getGroup
+      tags: [groups]
+      summary: Get a group's details and members
+      description: Only members of the group may read it.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Group details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupDetail"
+        "403":
+          description: Not a member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      operationId: renameGroup
+      tags: [groups]
+      summary: Rename a group (owner only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "403":
+          description: Not the owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /groups/{id}/leave:
+    post:
+      operationId: leaveGroup
+      tags: [groups]
+      summary: Leave a group
+      description: >-
+        Removes the caller from the group. If the owner leaves, ownership passes
+        to the longest-standing remaining member; if no members remain, the
+        group is deleted.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Left
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /groups/{id}/invite:
+    post:
+      operationId: createOrGetGroupInvite
+      tags: [invites]
+      summary: Create or fetch the group's shareable invite link
+      description: >-
+        Returns the group's reusable invite link, creating one on first call.
+        Only members may generate it.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The group's invite
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Invite"
+        "403":
+          description: Not a member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /invites/{token}:
     get:
       operationId: getInvitePreview
       tags: [invites]
       summary: Look up an invite by token (public)
       description: >-
-        Public endpoint used by the invite landing page to show who invited the
-        visitor before they sign up. Returns valid=false for unknown tokens.
+        Public endpoint used by the invite landing page to show which group the
+        visitor is being invited to before they sign up. Returns valid=false for
+        unknown tokens.
       parameters:
         - name: token
           in: path
@@ -349,8 +550,8 @@ paths:
       tags: [invites]
       summary: Accept an invite after signing in
       description: >-
-        Records that the authenticated caller joined via this invite. Idempotent;
-        accepting the same invite twice is a no-op.
+        Adds the authenticated caller to the invite's group. Idempotent;
+        accepting when already a member is a no-op.
       parameters:
         - name: token
           in: path
@@ -390,12 +591,15 @@ components:
       type: object
       required:
         - token
-        - createdByName
+        - groupId
+        - groupName
         - createdAt
       properties:
         token:
           type: string
-        createdByName:
+        groupId:
+          type: integer
+        groupName:
           type: string
         createdAt:
           type: string
@@ -404,10 +608,13 @@ components:
       type: object
       required:
         - token
+        - groupName
         - inviterName
         - valid
       properties:
         token:
+          type: string
+        groupName:
           type: string
         inviterName:
           type: string
@@ -417,12 +624,95 @@ components:
       type: object
       required:
         - joined
-        - inviterName
+        - groupId
+        - groupName
       properties:
         joined:
           type: boolean
-        inviterName:
+        groupId:
+          type: ["integer", "null"]
+        groupName:
           type: string
+    GroupInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+    Group:
+      type: object
+      required:
+        - id
+        - name
+        - ownerId
+        - role
+        - memberCount
+        - createdAt
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        ownerId:
+          type: string
+        role:
+          type: string
+          enum: [owner, member]
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+    GroupMember:
+      type: object
+      required:
+        - userId
+        - displayName
+        - role
+        - joinedAt
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [owner, member]
+        joinedAt:
+          type: string
+          format: date-time
+    GroupDetail:
+      type: object
+      required:
+        - id
+        - name
+        - ownerId
+        - role
+        - memberCount
+        - createdAt
+        - members
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        ownerId:
+          type: string
+        role:
+          type: string
+          enum: [owner, member]
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupMember"
     MediaType:
       type: string
       enum: [movie, tv]
@@ -603,6 +893,11 @@ components:
           $ref: "#/components/schemas/MediaType"
         approval:
           $ref: "#/components/schemas/Approval"
+        groupId:
+          type: integer
+          description: >-
+            Scope the returned tallies to members of this group. Without it,
+            only the caller's own answer is counted.
     CheckInResult:
       type: object
       required:

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCreateOrGetInvite } from "@workspace/api-client-react";
+import { useCreateOrGetGroupInvite } from "@workspace/api-client-react";
 import {
   Dialog,
   DialogContent,
@@ -12,34 +12,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useActiveGroup } from "@/components/active-group-context";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export function InviteDialog() {
   const { toast } = useToast();
+  const { activeGroup, activeGroupId } = useActiveGroup();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const create = useCreateOrGetInvite();
+  const create = useCreateOrGetGroupInvite();
   const [link, setLink] = useState<string | null>(null);
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
     setCopied(false);
-    if (next && !link) {
-      create.mutate(undefined, {
-        onSuccess: (invite) => {
-          setLink(
-            `${window.location.origin}${basePath}/invite/${invite.token}`,
-          );
+    if (next && !link && activeGroupId != null) {
+      create.mutate(
+        { id: activeGroupId },
+        {
+          onSuccess: (invite) => {
+            setLink(
+              `${window.location.origin}${basePath}/invite/${invite.token}`,
+            );
+          },
+          onError: () => {
+            toast({
+              title: "Couldn't create invite link",
+              description: "Please try again.",
+              variant: "destructive",
+            });
+          },
         },
-        onError: () => {
-          toast({
-            title: "Couldn't create invite link",
-            description: "Please try again.",
-            variant: "destructive",
-          });
-        },
-      });
+      );
     }
   };
 
@@ -76,8 +81,8 @@ export function InviteDialog() {
         <DialogHeader>
           <DialogTitle>Invite a friend</DialogTitle>
           <DialogDescription>
-            Share this link. Anyone who opens it can sign up and instantly join
-            your shared watchlist.
+            Share this link. Anyone who opens it can sign up and join
+            {activeGroup ? ` "${activeGroup.name}"` : " your group"}.
           </DialogDescription>
         </DialogHeader>
         <div className="flex items-center gap-2 pt-2">

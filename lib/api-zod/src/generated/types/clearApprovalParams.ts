@@ -10,4 +10,8 @@ import type { MediaType } from './mediaType';
 export type ClearApprovalParams = {
 title: string;
 mediaType: MediaType;
+/**
+ * Scope the returned tallies to members of this group.
+ */
+groupId?: number;
 };

@@ -13,4 +13,6 @@ export interface ApprovalInput {
   title: string;
   mediaType: MediaType;
   approval: Approval;
+  /** Scope the returned tallies to members of this group. Without it, only the caller's own answer is counted. */
+  groupId?: number;
 }

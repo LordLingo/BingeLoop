@@ -1,8 +1,14 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, asc, and } from "drizzle-orm";
+import { eq, desc, asc, and, inArray } from "drizzle-orm";
 import { clerkClient } from "@clerk/express";
 import { db, entriesTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
+import {
+  usersShareGroup,
+  isMember,
+  getGroupMemberIds,
+  getSharedMemberIds,
+} from "../lib/groups";
 import {
   ListEntriesQueryParams,
   ListEntriesResponse,
@@ -13,6 +19,7 @@ import {
   UpdateEntryBody,
   UpdateEntryResponse,
   DeleteEntryParams,
+  GetStatsQueryParams,
   GetStatsResponse,
   ListCategoriesResponse,
 } from "@workspace/api-zod";
@@ -40,8 +47,42 @@ router.get("/categories", async (_req, res): Promise<void> => {
   res.json(ListCategoriesResponse.parse(CATEGORIES));
 });
 
-router.get("/stats", async (_req, res): Promise<void> => {
-  const rows = await db.select().from(entriesTable);
+router.get("/stats", async (req: AuthedRequest, res): Promise<void> => {
+  const parsed = GetStatsQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const callerId = req.userId!;
+  const { userId: queryUserId, groupId } = parsed.data;
+
+  let memberFilter;
+  if (queryUserId) {
+    if (queryUserId !== callerId) {
+      const allowed = await usersShareGroup(callerId, queryUserId);
+      if (!allowed) {
+        res
+          .status(403)
+          .json({ error: "You don't share a group with this user" });
+        return;
+      }
+    }
+    memberFilter = eq(entriesTable.userId, queryUserId);
+  } else if (groupId != null) {
+    const allowed = await isMember(groupId, callerId);
+    if (!allowed) {
+      res.status(403).json({ error: "You are not a member of this group" });
+      return;
+    }
+    const memberIds = await getGroupMemberIds(groupId);
+    memberFilter = inArray(entriesTable.userId, memberIds);
+  } else {
+    const memberIds = await getSharedMemberIds(callerId);
+    memberFilter = inArray(entriesTable.userId, memberIds);
+  }
+
+  const rows = await db.select().from(entriesTable).where(memberFilter);
 
   const total = rows.length;
   const movieCount = rows.filter((r) => r.mediaType === "movie").length;
@@ -70,15 +111,42 @@ router.get("/stats", async (_req, res): Promise<void> => {
   );
 });
 
-router.get("/entries", async (req, res): Promise<void> => {
+router.get("/entries", async (req: AuthedRequest, res): Promise<void> => {
   const parsed = ListEntriesQueryParams.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { category, mediaType, sort } = parsed.data;
+  const { userId: queryUserId, groupId, category, mediaType, sort } = parsed.data;
 
-  const conditions = [];
+  const callerId = req.userId!;
+
+  let memberFilter;
+  if (queryUserId) {
+    if (queryUserId !== callerId) {
+      const allowed = await usersShareGroup(callerId, queryUserId);
+      if (!allowed) {
+        res
+          .status(403)
+          .json({ error: "You don't share a group with this user" });
+        return;
+      }
+    }
+    memberFilter = eq(entriesTable.userId, queryUserId);
+  } else if (groupId != null) {
+    const allowed = await isMember(groupId, callerId);
+    if (!allowed) {
+      res.status(403).json({ error: "You are not a member of this group" });
+      return;
+    }
+    const memberIds = await getGroupMemberIds(groupId);
+    memberFilter = inArray(entriesTable.userId, memberIds);
+  } else {
+    const memberIds = await getSharedMemberIds(callerId);
+    memberFilter = inArray(entriesTable.userId, memberIds);
+  }
+
+  const conditions = [memberFilter];
   if (category) conditions.push(eq(entriesTable.category, category));
   if (mediaType) conditions.push(eq(entriesTable.mediaType, mediaType));
 
@@ -147,7 +215,7 @@ router.post("/entries", async (req: AuthedRequest, res): Promise<void> => {
   res.status(201).json(GetEntryResponse.parse(entry));
 });
 
-router.get("/entries/:id", async (req, res): Promise<void> => {
+router.get("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
   const params = GetEntryParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -164,10 +232,19 @@ router.get("/entries/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  const callerId = req.userId!;
+  if (entry.userId !== callerId) {
+    const allowed = await usersShareGroup(callerId, entry.userId);
+    if (!allowed) {
+      res.status(404).json({ error: "Entry not found" });
+      return;
+    }
+  }
+
   res.json(GetEntryResponse.parse(entry));
 });
 
-router.patch("/entries/:id", async (req, res): Promise<void> => {
+router.patch("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
   const params = UpdateEntryParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -188,15 +265,20 @@ router.patch("/entries/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  const [existing] = await db
+    .select()
+    .from(entriesTable)
+    .where(eq(entriesTable.id, params.data.id));
+  if (!existing) {
+    res.status(404).json({ error: "Entry not found" });
+    return;
+  }
+  if (existing.userId !== req.userId!) {
+    res.status(403).json({ error: "You can only edit your own entries" });
+    return;
+  }
+
   if (Object.keys(parsed.data).length === 0) {
-    const [existing] = await db
-      .select()
-      .from(entriesTable)
-      .where(eq(entriesTable.id, params.data.id));
-    if (!existing) {
-      res.status(404).json({ error: "Entry not found" });
-      return;
-    }
     res.json(UpdateEntryResponse.parse(existing));
     return;
   }
@@ -207,32 +289,35 @@ router.patch("/entries/:id", async (req, res): Promise<void> => {
     .where(eq(entriesTable.id, params.data.id))
     .returning();
 
-  if (!entry) {
-    res.status(404).json({ error: "Entry not found" });
-    return;
-  }
-
   res.json(UpdateEntryResponse.parse(entry));
 });
 
-router.delete("/entries/:id", async (req, res): Promise<void> => {
-  const params = DeleteEntryParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+router.delete(
+  "/entries/:id",
+  async (req: AuthedRequest, res): Promise<void> => {
+    const params = DeleteEntryParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
 
-  const [entry] = await db
-    .delete(entriesTable)
-    .where(eq(entriesTable.id, params.data.id))
-    .returning();
+    const [deleted] = await db
+      .delete(entriesTable)
+      .where(
+        and(
+          eq(entriesTable.id, params.data.id),
+          eq(entriesTable.userId, req.userId!),
+        ),
+      )
+      .returning();
 
-  if (!entry) {
-    res.status(404).json({ error: "Entry not found" });
-    return;
-  }
+    if (!deleted) {
+      res.status(404).json({ error: "Entry not found" });
+      return;
+    }
 
-  res.sendStatus(204);
-});
+    res.sendStatus(204);
+  },
+);
 
 export default router;

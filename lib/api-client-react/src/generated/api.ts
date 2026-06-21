@@ -22,16 +22,23 @@ import type {
 import type {
   AcceptInviteResult,
   ApprovalInput,
+  CheckInParams,
   CheckInResult,
   ClearApprovalParams,
   Entry,
   EntryInput,
   EntryUpdate,
   Error,
+  GetStatsParams,
+  Group,
+  GroupDetail,
+  GroupInput,
   HealthStatus,
   Invite,
   InvitePreview,
+  ListApprovalsParams,
   ListEntriesParams,
+  ListWatchlistParams,
   ShowApproval,
   Stats,
   WatchlistInput,
@@ -144,7 +151,7 @@ export const getListEntriesUrl = (params?: ListEntriesParams,) => {
 }
 
 /**
- * Returns all watchlist entries, optionally filtered by category or media type and sorted.
+ * Returns entries from members of the active group by default. Pass groupId to scope to a specific group (you must be a member), or userId to view a single member's entries (only allowed when you share a group). With neither, returns entries from everyone who shares a group with you.
  * @summary List watchlist entries
  */
 export const listEntries = async (params?: ListEntriesParams, options?: RequestInit): Promise<Entry[]> => {
@@ -503,21 +510,28 @@ export const useDeleteEntry = <TError = ErrorType<Error>,
       return useMutation(getDeleteEntryMutationOptions(options));
     }
 
-export const getGetStatsUrl = () => {
+export const getGetStatsUrl = (params?: GetStatsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/stats`
+  return stringifiedParams.length > 0 ? `/api/stats?${stringifiedParams}` : `/api/stats`
 }
 
 /**
- * Aggregate counts, average rating, category breakdown, and recent activity for the watchlist.
+ * Aggregate counts, average rating, and category breakdown. Pass groupId to aggregate across all members of a group (you must be a member), or userId for a single member's stats (only allowed when you share a group). With neither, aggregates across everyone who shares a group with you.
  * @summary Watchlist summary stats
  */
-export const getStats = async ( options?: RequestInit): Promise<Stats> => {
+export const getStats = async (params?: GetStatsParams, options?: RequestInit): Promise<Stats> => {
 
-  return customFetch<Stats>(getGetStatsUrl(),
+  return customFetch<Stats>(getGetStatsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -530,23 +544,23 @@ export const getStats = async ( options?: RequestInit): Promise<Stats> => {
 
 
 
-export const getGetStatsQueryKey = () => {
+export const getGetStatsQueryKey = (params?: GetStatsParams,) => {
     return [
-    `/api/stats`
+    `/api/stats`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetStatsQueryOptions = <TData = Awaited<ReturnType<typeof getStats>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetStatsQueryOptions = <TData = Awaited<ReturnType<typeof getStats>>, TError = ErrorType<unknown>>(params?: GetStatsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetStatsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetStatsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStats>>> = ({ signal }) => getStats({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStats>>> = ({ signal }) => getStats(params, { signal, ...requestOptions });
 
 
 
@@ -564,11 +578,11 @@ export type GetStatsQueryError = ErrorType<unknown>
  */
 
 export function useGetStats<TData = Awaited<ReturnType<typeof getStats>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: GetStatsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetStatsQueryOptions(options)
+  const queryOptions = getGetStatsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -659,21 +673,28 @@ export function useListCategories<TData = Awaited<ReturnType<typeof listCategori
 
 
 
-export const getListWatchlistUrl = () => {
+export const getListWatchlistUrl = (params?: ListWatchlistParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/watchlist`
+  return stringifiedParams.length > 0 ? `/api/watchlist?${stringifiedParams}` : `/api/watchlist`
 }
 
 /**
- * Returns the current user's saved shows, each annotated with the names of other group members who have rated or saved the same show.
+ * Returns the caller's saved shows by default, each annotated with the names of other members of the given group who have rated or saved the same show. Pass userId to view another member's saved shows (requires a shared group).
  * @summary List my saved watchlist items
  */
-export const listWatchlist = async ( options?: RequestInit): Promise<WatchlistItem[]> => {
+export const listWatchlist = async (params?: ListWatchlistParams, options?: RequestInit): Promise<WatchlistItem[]> => {
 
-  return customFetch<WatchlistItem[]>(getListWatchlistUrl(),
+  return customFetch<WatchlistItem[]>(getListWatchlistUrl(params),
   {
     ...options,
     method: 'GET'
@@ -686,23 +707,23 @@ export const listWatchlist = async ( options?: RequestInit): Promise<WatchlistIt
 
 
 
-export const getListWatchlistQueryKey = () => {
+export const getListWatchlistQueryKey = (params?: ListWatchlistParams,) => {
     return [
-    `/api/watchlist`
+    `/api/watchlist`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListWatchlistQueryOptions = <TData = Awaited<ReturnType<typeof listWatchlist>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listWatchlist>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListWatchlistQueryOptions = <TData = Awaited<ReturnType<typeof listWatchlist>>, TError = ErrorType<unknown>>(params?: ListWatchlistParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listWatchlist>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListWatchlistQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListWatchlistQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listWatchlist>>> = ({ signal }) => listWatchlist({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listWatchlist>>> = ({ signal }) => listWatchlist(params, { signal, ...requestOptions });
 
 
 
@@ -720,11 +741,11 @@ export type ListWatchlistQueryError = ErrorType<unknown>
  */
 
 export function useListWatchlist<TData = Awaited<ReturnType<typeof listWatchlist>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listWatchlist>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListWatchlistParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listWatchlist>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListWatchlistQueryOptions(options)
+  const queryOptions = getListWatchlistQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -878,21 +899,28 @@ export const useDeleteWatchlistItem = <TError = ErrorType<Error>,
       return useMutation(getDeleteWatchlistItemMutationOptions(options));
     }
 
-export const getListApprovalsUrl = () => {
+export const getListApprovalsUrl = (params?: ListApprovalsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/approvals`
+  return stringifiedParams.length > 0 ? `/api/approvals?${stringifiedParams}` : `/api/approvals`
 }
 
 /**
- * Returns, for every show that has at least one answer, the count of each answer across all members plus the current user's own answer.
+ * Returns, for every show that has at least one answer within the given group, the count of each answer across that group's members plus the caller's own answer. Without a groupId, only the caller's own answers are counted.
  * @summary List "Wife Approved?" summaries
  */
-export const listApprovals = async ( options?: RequestInit): Promise<ShowApproval[]> => {
+export const listApprovals = async (params?: ListApprovalsParams, options?: RequestInit): Promise<ShowApproval[]> => {
 
-  return customFetch<ShowApproval[]>(getListApprovalsUrl(),
+  return customFetch<ShowApproval[]>(getListApprovalsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -905,23 +933,23 @@ export const listApprovals = async ( options?: RequestInit): Promise<ShowApprova
 
 
 
-export const getListApprovalsQueryKey = () => {
+export const getListApprovalsQueryKey = (params?: ListApprovalsParams,) => {
     return [
-    `/api/approvals`
+    `/api/approvals`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListApprovalsQueryOptions = <TData = Awaited<ReturnType<typeof listApprovals>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListApprovalsQueryOptions = <TData = Awaited<ReturnType<typeof listApprovals>>, TError = ErrorType<unknown>>(params?: ListApprovalsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListApprovalsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListApprovalsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listApprovals>>> = ({ signal }) => listApprovals({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listApprovals>>> = ({ signal }) => listApprovals(params, { signal, ...requestOptions });
 
 
 
@@ -939,11 +967,11 @@ export type ListApprovalsQueryError = ErrorType<unknown>
  */
 
 export function useListApprovals<TData = Awaited<ReturnType<typeof listApprovals>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListApprovalsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListApprovalsQueryOptions(options)
+  const queryOptions = getListApprovalsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -1104,21 +1132,28 @@ export const useClearApproval = <TError = ErrorType<unknown>,
       return useMutation(getClearApprovalMutationOptions(options));
     }
 
-export const getCheckInUrl = () => {
+export const getCheckInUrl = (params?: CheckInParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/activity/check-in`
+  return stringifiedParams.length > 0 ? `/api/activity/check-in?${stringifiedParams}` : `/api/activity/check-in`
 }
 
 /**
- * Records the current user's visit, returning the number of entries added by other group members since the user's previous visit. Updates the stored last-seen time to now.
+ * Records the caller's visit, returning the number of entries added by other members of the given group since the caller's previous visit. Updates the stored last-seen time to now. Without a groupId, newCount is always 0.
  * @summary Record a visit and get new-activity count
  */
-export const checkIn = async ( options?: RequestInit): Promise<CheckInResult> => {
+export const checkIn = async (params?: CheckInParams, options?: RequestInit): Promise<CheckInResult> => {
 
-  return customFetch<CheckInResult>(getCheckInUrl(),
+  return customFetch<CheckInResult>(getCheckInUrl(params),
   {
     ...options,
     method: 'POST'
@@ -1131,8 +1166,8 @@ export const checkIn = async ( options?: RequestInit): Promise<CheckInResult> =>
 
 
 export const getCheckInMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkIn>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof checkIn>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkIn>>, TError,{params?: CheckInParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkIn>>, TError,{params?: CheckInParams}, TContext> => {
 
 const mutationKey = ['checkIn'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1144,10 +1179,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkIn>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkIn>>, {params?: CheckInParams}> = (props) => {
+          const {params} = props ?? {};
 
-
-          return  checkIn(requestOptions)
+          return  checkIn(params,requestOptions)
         }
 
 
@@ -1165,31 +1200,329 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Record a visit and get new-activity count
  */
 export const useCheckIn = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkIn>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkIn>>, TError,{params?: CheckInParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof checkIn>>,
         TError,
-        void,
+        {params?: CheckInParams},
         TContext
       > => {
       return useMutation(getCheckInMutationOptions(options));
     }
 
-export const getCreateOrGetInviteUrl = () => {
+export const getListGroupsUrl = () => {
 
 
 
 
-  return `/api/invites`
+  return `/api/groups`
 }
 
 /**
- * Returns the caller's reusable invite. Creates one on first call and returns the existing invite on subsequent calls.
- * @summary Create or fetch my shareable invite link
+ * @summary List the groups I belong to
  */
-export const createOrGetInvite = async ( options?: RequestInit): Promise<Invite> => {
+export const listGroups = async ( options?: RequestInit): Promise<Group[]> => {
 
-  return customFetch<Invite>(getCreateOrGetInviteUrl(),
+  return customFetch<Group[]>(getListGroupsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListGroupsQueryKey = () => {
+    return [
+    `/api/groups`
+    ] as const;
+    }
+
+
+export const getListGroupsQueryOptions = <TData = Awaited<ReturnType<typeof listGroups>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listGroups>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListGroupsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listGroups>>> = ({ signal }) => listGroups({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGroups>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListGroupsQueryResult = NonNullable<Awaited<ReturnType<typeof listGroups>>>
+export type ListGroupsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List the groups I belong to
+ */
+
+export function useListGroups<TData = Awaited<ReturnType<typeof listGroups>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listGroups>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListGroupsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateGroupUrl = () => {
+
+
+
+
+  return `/api/groups`
+}
+
+/**
+ * @summary Create a new group
+ */
+export const createGroup = async (groupInput: GroupInput, options?: RequestInit): Promise<Group> => {
+
+  return customFetch<Group>(getCreateGroupUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      groupInput,)
+  }
+);}
+
+
+
+
+export const getCreateGroupMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGroup>>, TError,{data: BodyType<GroupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createGroup>>, TError,{data: BodyType<GroupInput>}, TContext> => {
+
+const mutationKey = ['createGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createGroup>>, {data: BodyType<GroupInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createGroup(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateGroupMutationResult = NonNullable<Awaited<ReturnType<typeof createGroup>>>
+    export type CreateGroupMutationBody = BodyType<GroupInput>
+    export type CreateGroupMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a new group
+ */
+export const useCreateGroup = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGroup>>, TError,{data: BodyType<GroupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createGroup>>,
+        TError,
+        {data: BodyType<GroupInput>},
+        TContext
+      > => {
+      return useMutation(getCreateGroupMutationOptions(options));
+    }
+
+export const getGetGroupUrl = (id: number,) => {
+
+
+
+
+  return `/api/groups/${id}`
+}
+
+/**
+ * Only members of the group may read it.
+ * @summary Get a group's details and members
+ */
+export const getGroup = async (id: number, options?: RequestInit): Promise<GroupDetail> => {
+
+  return customFetch<GroupDetail>(getGetGroupUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetGroupQueryKey = (id: number,) => {
+    return [
+    `/api/groups/${id}`
+    ] as const;
+    }
+
+
+export const getGetGroupQueryOptions = <TData = Awaited<ReturnType<typeof getGroup>>, TError = ErrorType<Error>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getGroup>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetGroupQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGroup>>> = ({ signal }) => getGroup(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGroup>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetGroupQueryResult = NonNullable<Awaited<ReturnType<typeof getGroup>>>
+export type GetGroupQueryError = ErrorType<Error>
+
+
+/**
+ * @summary Get a group's details and members
+ */
+
+export function useGetGroup<TData = Awaited<ReturnType<typeof getGroup>>, TError = ErrorType<Error>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getGroup>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetGroupQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getRenameGroupUrl = (id: number,) => {
+
+
+
+
+  return `/api/groups/${id}`
+}
+
+/**
+ * @summary Rename a group (owner only)
+ */
+export const renameGroup = async (id: number,
+    groupInput: GroupInput, options?: RequestInit): Promise<Group> => {
+
+  return customFetch<Group>(getRenameGroupUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      groupInput,)
+  }
+);}
+
+
+
+
+export const getRenameGroupMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renameGroup>>, TError,{id: number;data: BodyType<GroupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof renameGroup>>, TError,{id: number;data: BodyType<GroupInput>}, TContext> => {
+
+const mutationKey = ['renameGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof renameGroup>>, {id: number;data: BodyType<GroupInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  renameGroup(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RenameGroupMutationResult = NonNullable<Awaited<ReturnType<typeof renameGroup>>>
+    export type RenameGroupMutationBody = BodyType<GroupInput>
+    export type RenameGroupMutationError = ErrorType<Error>
+
+    /**
+ * @summary Rename a group (owner only)
+ */
+export const useRenameGroup = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renameGroup>>, TError,{id: number;data: BodyType<GroupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof renameGroup>>,
+        TError,
+        {id: number;data: BodyType<GroupInput>},
+        TContext
+      > => {
+      return useMutation(getRenameGroupMutationOptions(options));
+    }
+
+export const getLeaveGroupUrl = (id: number,) => {
+
+
+
+
+  return `/api/groups/${id}/leave`
+}
+
+/**
+ * Removes the caller from the group. If the owner leaves, ownership passes to the longest-standing remaining member; if no members remain, the group is deleted.
+ * @summary Leave a group
+ */
+export const leaveGroup = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getLeaveGroupUrl(id),
   {
     ...options,
     method: 'POST'
@@ -1201,11 +1534,11 @@ export const createOrGetInvite = async ( options?: RequestInit): Promise<Invite>
 
 
 
-export const getCreateOrGetInviteMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrGetInvite>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createOrGetInvite>>, TError,void, TContext> => {
+export const getLeaveGroupMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof leaveGroup>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof leaveGroup>>, TError,{id: number}, TContext> => {
 
-const mutationKey = ['createOrGetInvite'];
+const mutationKey = ['leaveGroup'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1215,10 +1548,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOrGetInvite>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof leaveGroup>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
 
-
-          return  createOrGetInvite(requestOptions)
+          return  leaveGroup(id,requestOptions)
         }
 
 
@@ -1228,22 +1561,93 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreateOrGetInviteMutationResult = NonNullable<Awaited<ReturnType<typeof createOrGetInvite>>>
+    export type LeaveGroupMutationResult = NonNullable<Awaited<ReturnType<typeof leaveGroup>>>
 
-    export type CreateOrGetInviteMutationError = ErrorType<unknown>
+    export type LeaveGroupMutationError = ErrorType<Error>
 
     /**
- * @summary Create or fetch my shareable invite link
+ * @summary Leave a group
  */
-export const useCreateOrGetInvite = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrGetInvite>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useLeaveGroup = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof leaveGroup>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof createOrGetInvite>>,
+        Awaited<ReturnType<typeof leaveGroup>>,
         TError,
-        void,
+        {id: number},
         TContext
       > => {
-      return useMutation(getCreateOrGetInviteMutationOptions(options));
+      return useMutation(getLeaveGroupMutationOptions(options));
+    }
+
+export const getCreateOrGetGroupInviteUrl = (id: number,) => {
+
+
+
+
+  return `/api/groups/${id}/invite`
+}
+
+/**
+ * Returns the group's reusable invite link, creating one on first call. Only members may generate it.
+ * @summary Create or fetch the group's shareable invite link
+ */
+export const createOrGetGroupInvite = async (id: number, options?: RequestInit): Promise<Invite> => {
+
+  return customFetch<Invite>(getCreateOrGetGroupInviteUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCreateOrGetGroupInviteMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrGetGroupInvite>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createOrGetGroupInvite>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['createOrGetGroupInvite'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOrGetGroupInvite>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  createOrGetGroupInvite(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateOrGetGroupInviteMutationResult = NonNullable<Awaited<ReturnType<typeof createOrGetGroupInvite>>>
+
+    export type CreateOrGetGroupInviteMutationError = ErrorType<Error>
+
+    /**
+ * @summary Create or fetch the group's shareable invite link
+ */
+export const useCreateOrGetGroupInvite = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrGetGroupInvite>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createOrGetGroupInvite>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getCreateOrGetGroupInviteMutationOptions(options));
     }
 
 export const getGetInvitePreviewUrl = (token: string,) => {
@@ -1255,7 +1659,7 @@ export const getGetInvitePreviewUrl = (token: string,) => {
 }
 
 /**
- * Public endpoint used by the invite landing page to show who invited the visitor before they sign up. Returns valid=false for unknown tokens.
+ * Public endpoint used by the invite landing page to show which group the visitor is being invited to before they sign up. Returns valid=false for unknown tokens.
  * @summary Look up an invite by token (public)
  */
 export const getInvitePreview = async (token: string, options?: RequestInit): Promise<InvitePreview> => {
@@ -1333,7 +1737,7 @@ export const getAcceptInviteUrl = (token: string,) => {
 }
 
 /**
- * Records that the authenticated caller joined via this invite. Idempotent; accepting the same invite twice is a no-op.
+ * Adds the authenticated caller to the invite's group. Idempotent; accepting when already a member is a no-op.
  * @summary Accept an invite after signing in
  */
 export const acceptInvite = async (token: string, options?: RequestInit): Promise<AcceptInviteResult> => {

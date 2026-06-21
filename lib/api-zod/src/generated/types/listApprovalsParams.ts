@@ -6,9 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface InvitePreview {
-  token: string;
-  groupName: string;
-  inviterName: string;
-  valid: boolean;
-}
+export type ListApprovalsParams = {
+/**
+ * Scope the tallies to members of this group.
+ */
+groupId?: number;
+};

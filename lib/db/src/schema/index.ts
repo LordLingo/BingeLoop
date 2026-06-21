@@ -22,3 +22,5 @@ export * from "./userActivity";
 export * from "./watchlist";
 export * from "./approvals";
 export * from "./invites";
+export * from "./groups";
+export * from "./groupMembers";

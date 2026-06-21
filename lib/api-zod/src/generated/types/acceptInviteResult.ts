@@ -8,5 +8,7 @@
 
 export interface AcceptInviteResult {
   joined: boolean;
-  inviterName: string;
+  /** @nullable */
+  groupId: number | null;
+  groupName: string;
 }

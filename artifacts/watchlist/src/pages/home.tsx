@@ -29,16 +29,24 @@ import {
 import { UserMenu } from "@/components/user-menu";
 import { NewActivityBadge } from "@/components/new-activity-badge";
 import { InviteDialog } from "@/components/invite-dialog";
+import { GroupSwitcher } from "@/components/group-switcher";
+import { useActiveGroup } from "@/components/active-group-context";
 
 export default function Home() {
   const [filterCategory, setFilterCategory] = useState<string | undefined>(undefined);
   const [filterType, setFilterType] = useState<"movie" | "tv" | undefined>(undefined);
   const [sort, setSort] = useState<ListEntriesSort>("newest");
 
-  const { data: stats } = useGetStats();
+  const { activeGroupId } = useActiveGroup();
+
+  const { data: stats } = useGetStats(
+    activeGroupId != null ? { groupId: activeGroupId } : undefined,
+  );
   const { data: categories } = useListCategories();
-  const { data: watchlist } = useListWatchlist({
-    query: { queryKey: getListWatchlistQueryKey() },
+  const watchlistParams =
+    activeGroupId != null ? { groupId: activeGroupId } : undefined;
+  const { data: watchlist } = useListWatchlist(watchlistParams, {
+    query: { queryKey: getListWatchlistQueryKey(watchlistParams) },
   });
 
   const savedIdByShow = new Map<string, number>();
@@ -48,14 +56,16 @@ export default function Home() {
 
   const approvalMap = useApprovalMap();
   
-  const { data: entries, isLoading } = useListEntries({
+  const entriesParams = {
+    ...(activeGroupId != null ? { groupId: activeGroupId } : {}),
     category: filterCategory,
     mediaType: filterType,
     sort,
-  }, {
+  };
+  const { data: entries, isLoading } = useListEntries(entriesParams, {
     query: {
-      queryKey: getListEntriesQueryKey({ category: filterCategory, mediaType: filterType, sort })
-    }
+      queryKey: getListEntriesQueryKey(entriesParams),
+    },
   });
 
   return (
@@ -66,6 +76,7 @@ export default function Home() {
           BINGELOOP
         </div>
         <div className="flex items-center gap-1">
+          <GroupSwitcher />
           <Link
             href="/watchlist"
             className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"

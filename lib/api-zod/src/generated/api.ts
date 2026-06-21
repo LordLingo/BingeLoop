@@ -18,10 +18,12 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * Returns all watchlist entries, optionally filtered by category or media type and sorted.
+ * Returns entries from members of the active group by default. Pass groupId to scope to a specific group (you must be a member), or userId to view a single member's entries (only allowed when you share a group). With neither, returns entries from everyone who shares a group with you.
  * @summary List watchlist entries
  */
 export const ListEntriesQueryParams = zod.object({
+  "userId": zod.coerce.string().optional().describe('View this member\'s entries instead of the group\'s. Requires a shared group.'),
+  "groupId": zod.coerce.number().optional().describe('Scope the list to members of this group. You must be a member.'),
   "category": zod.coerce.string().optional(),
   "mediaType": zod.enum(['movie', 'tv']).optional(),
   "sort": zod.enum(['newest', 'oldest', 'rating_high', 'rating_low', 'title']).optional()
@@ -131,9 +133,14 @@ export const DeleteEntryParams = zod.object({
 
 
 /**
- * Aggregate counts, average rating, category breakdown, and recent activity for the watchlist.
+ * Aggregate counts, average rating, and category breakdown. Pass groupId to aggregate across all members of a group (you must be a member), or userId for a single member's stats (only allowed when you share a group). With neither, aggregates across everyone who shares a group with you.
  * @summary Watchlist summary stats
  */
+export const GetStatsQueryParams = zod.object({
+  "userId": zod.coerce.string().optional().describe('View this member\'s stats instead of the group\'s. Requires a shared group.'),
+  "groupId": zod.coerce.number().optional().describe('Aggregate stats across members of this group. You must be a member.')
+})
+
 export const GetStatsResponse = zod.object({
   "total": zod.number(),
   "movieCount": zod.number(),
@@ -155,9 +162,14 @@ export const ListCategoriesResponse = zod.array(ListCategoriesResponseItem)
 
 
 /**
- * Returns the current user's saved shows, each annotated with the names of other group members who have rated or saved the same show.
+ * Returns the caller's saved shows by default, each annotated with the names of other members of the given group who have rated or saved the same show. Pass userId to view another member's saved shows (requires a shared group).
  * @summary List my saved watchlist items
  */
+export const ListWatchlistQueryParams = zod.object({
+  "userId": zod.coerce.string().optional().describe('View this member\'s saved shows instead of your own. Requires a shared group.'),
+  "groupId": zod.coerce.number().optional().describe('Scope the \"also engaged by\" names to members of this group.')
+})
+
 export const ListWatchlistResponseItem = zod.object({
   "id": zod.number(),
   "title": zod.string(),
@@ -189,9 +201,13 @@ export const DeleteWatchlistItemParams = zod.object({
 
 
 /**
- * Returns, for every show that has at least one answer, the count of each answer across all members plus the current user's own answer.
+ * Returns, for every show that has at least one answer within the given group, the count of each answer across that group's members plus the caller's own answer. Without a groupId, only the caller's own answers are counted.
  * @summary List "Wife Approved?" summaries
  */
+export const ListApprovalsQueryParams = zod.object({
+  "groupId": zod.coerce.number().optional().describe('Scope the tallies to members of this group.')
+})
+
 export const ListApprovalsResponseItem = zod.object({
   "titleKey": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
@@ -212,7 +228,8 @@ export const ListApprovalsResponse = zod.array(ListApprovalsResponseItem)
 export const SetApprovalBody = zod.object({
   "title": zod.string().min(1),
   "mediaType": zod.enum(['movie', 'tv']),
-  "approval": zod.enum(['yes', 'no', 'solo'])
+  "approval": zod.enum(['yes', 'no', 'solo']),
+  "groupId": zod.number().optional().describe('Scope the returned tallies to members of this group. Without it, only the caller\'s own answer is counted.')
 })
 
 export const SetApprovalResponse = zod.object({
@@ -230,7 +247,8 @@ export const SetApprovalResponse = zod.object({
  */
 export const ClearApprovalQueryParams = zod.object({
   "title": zod.coerce.string(),
-  "mediaType": zod.enum(['movie', 'tv'])
+  "mediaType": zod.enum(['movie', 'tv']),
+  "groupId": zod.coerce.number().optional().describe('Scope the returned tallies to members of this group.')
 })
 
 export const ClearApprovalResponse = zod.object({
@@ -244,9 +262,13 @@ export const ClearApprovalResponse = zod.object({
 
 
 /**
- * Records the current user's visit, returning the number of entries added by other group members since the user's previous visit. Updates the stored last-seen time to now.
+ * Records the caller's visit, returning the number of entries added by other members of the given group since the caller's previous visit. Updates the stored last-seen time to now. Without a groupId, newCount is always 0.
  * @summary Record a visit and get new-activity count
  */
+export const CheckInQueryParams = zod.object({
+  "groupId": zod.coerce.number().optional().describe('Count new entries from other members of this group.')
+})
+
 export const CheckInResponse = zod.object({
   "newCount": zod.number().describe('Entries added by other group members since the previous visit.'),
   "since": zod.coerce.date().nullable().describe('The previous last-seen time, or null on first visit.')
@@ -254,18 +276,107 @@ export const CheckInResponse = zod.object({
 
 
 /**
- * Returns the caller's reusable invite. Creates one on first call and returns the existing invite on subsequent calls.
- * @summary Create or fetch my shareable invite link
+ * @summary List the groups I belong to
  */
-export const CreateOrGetInviteResponse = zod.object({
-  "token": zod.string(),
-  "createdByName": zod.string(),
+export const ListGroupsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "ownerId": zod.string(),
+  "role": zod.enum(['owner', 'member']),
+  "memberCount": zod.number(),
+  "createdAt": zod.coerce.date()
+})
+export const ListGroupsResponse = zod.array(ListGroupsResponseItem)
+
+
+/**
+ * @summary Create a new group
+ */
+export const createGroupBodyNameMax = 60;
+
+
+
+export const CreateGroupBody = zod.object({
+  "name": zod.string().min(1).max(createGroupBodyNameMax)
+})
+
+
+/**
+ * Only members of the group may read it.
+ * @summary Get a group's details and members
+ */
+export const GetGroupParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetGroupResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "ownerId": zod.string(),
+  "role": zod.enum(['owner', 'member']),
+  "memberCount": zod.number(),
+  "createdAt": zod.coerce.date(),
+  "members": zod.array(zod.object({
+  "userId": zod.string(),
+  "displayName": zod.string(),
+  "role": zod.enum(['owner', 'member']),
+  "joinedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Rename a group (owner only)
+ */
+export const RenameGroupParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const renameGroupBodyNameMax = 60;
+
+
+
+export const RenameGroupBody = zod.object({
+  "name": zod.string().min(1).max(renameGroupBodyNameMax)
+})
+
+export const RenameGroupResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "ownerId": zod.string(),
+  "role": zod.enum(['owner', 'member']),
+  "memberCount": zod.number(),
   "createdAt": zod.coerce.date()
 })
 
 
 /**
- * Public endpoint used by the invite landing page to show who invited the visitor before they sign up. Returns valid=false for unknown tokens.
+ * Removes the caller from the group. If the owner leaves, ownership passes to the longest-standing remaining member; if no members remain, the group is deleted.
+ * @summary Leave a group
+ */
+export const LeaveGroupParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * Returns the group's reusable invite link, creating one on first call. Only members may generate it.
+ * @summary Create or fetch the group's shareable invite link
+ */
+export const CreateOrGetGroupInviteParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateOrGetGroupInviteResponse = zod.object({
+  "token": zod.string(),
+  "groupId": zod.number(),
+  "groupName": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * Public endpoint used by the invite landing page to show which group the visitor is being invited to before they sign up. Returns valid=false for unknown tokens.
  * @summary Look up an invite by token (public)
  */
 export const GetInvitePreviewParams = zod.object({
@@ -274,13 +385,14 @@ export const GetInvitePreviewParams = zod.object({
 
 export const GetInvitePreviewResponse = zod.object({
   "token": zod.string(),
+  "groupName": zod.string(),
   "inviterName": zod.string(),
   "valid": zod.boolean()
 })
 
 
 /**
- * Records that the authenticated caller joined via this invite. Idempotent; accepting the same invite twice is a no-op.
+ * Adds the authenticated caller to the invite's group. Idempotent; accepting when already a member is a no-op.
  * @summary Accept an invite after signing in
  */
 export const AcceptInviteParams = zod.object({
@@ -289,7 +401,8 @@ export const AcceptInviteParams = zod.object({
 
 export const AcceptInviteResponse = zod.object({
   "joined": zod.boolean(),
-  "inviterName": zod.string()
+  "groupId": zod.number().nullable(),
+  "groupName": zod.string()
 })
 
 

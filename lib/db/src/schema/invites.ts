@@ -14,28 +14,14 @@ export const invitesTable = pgTable(
   {
     id: serial("id").primaryKey(),
     token: text("token").notNull().unique(),
+    groupId: integer("group_id").notNull(),
     createdBy: text("created_by").notNull(),
     createdByName: text("created_by_name").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (table) => [uniqueIndex("invites_created_by_unique").on(table.createdBy)],
-);
-
-export const inviteAcceptancesTable = pgTable(
-  "invite_acceptances",
-  {
-    id: serial("id").primaryKey(),
-    inviteId: integer("invite_id").notNull(),
-    userId: text("user_id").notNull(),
-    acceptedAt: timestamp("accepted_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    uniqueIndex("invite_acceptance_unique").on(table.inviteId, table.userId),
-  ],
+  (table) => [uniqueIndex("invites_group_unique").on(table.groupId)],
 );
 
 export const insertInviteSchema = createInsertSchema(invitesTable).omit({
@@ -44,4 +30,3 @@ export const insertInviteSchema = createInsertSchema(invitesTable).omit({
 });
 export type InsertInvite = z.infer<typeof insertInviteSchema>;
 export type Invite = typeof invitesTable.$inferSelect;
-export type InviteAcceptance = typeof inviteAcceptancesTable.$inferSelect;

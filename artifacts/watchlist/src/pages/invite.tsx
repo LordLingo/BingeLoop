@@ -18,6 +18,7 @@ export default function InvitePage() {
   }, [token]);
 
   const inviterName = preview?.inviterName?.trim();
+  const groupName = preview?.groupName?.trim();
   const valid = preview?.valid ?? false;
 
   return (
@@ -53,8 +54,9 @@ export default function InvitePage() {
                   : "You've been invited"}
               </h1>
               <p className="text-muted-foreground">
-                Join the shared watchlist to log shows, rate them, and see what
-                everyone's watching.
+                {groupName
+                  ? `Join "${groupName}" to log shows, rate them, and see what the group's watching.`
+                  : "Join the group to log shows, rate them, and see what everyone's watching."}
               </p>
             </div>
 

@@ -1,9 +1,15 @@
 import { Router, type IRouter } from "express";
-import { eq, and, ne, inArray, desc, sql } from "drizzle-orm";
+import { eq, and, inArray, desc, sql } from "drizzle-orm";
 import { clerkClient } from "@clerk/express";
 import { db, entriesTable, watchlistItemsTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import {
+  getGroupMemberIds,
+  getMembership,
+  usersShareGroup,
+} from "../lib/groups";
+import {
+  ListWatchlistQueryParams,
   ListWatchlistResponse,
   CreateWatchlistItemBody,
   DeleteWatchlistItemParams,
@@ -18,16 +24,56 @@ function normalizeTitle(title: string): string {
 }
 
 router.get("/watchlist", async (req: AuthedRequest, res): Promise<void> => {
-  const userId = req.userId!;
+  const parsed = ListWatchlistQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const callerId = req.userId!;
+  const targetUserId = parsed.data.userId ?? callerId;
+  if (targetUserId !== callerId) {
+    const allowed = await usersShareGroup(callerId, targetUserId);
+    if (!allowed) {
+      res.status(403).json({ error: "You don't share a group with this user" });
+      return;
+    }
+  }
 
   const myItems = await db
     .select()
     .from(watchlistItemsTable)
-    .where(eq(watchlistItemsTable.userId, userId))
+    .where(eq(watchlistItemsTable.userId, targetUserId))
     .orderBy(desc(watchlistItemsTable.createdAt));
 
   if (myItems.length === 0) {
     res.json(ListWatchlistResponse.parse([]));
+    return;
+  }
+
+  // "Also engaged by" is scoped to other members of the given group.
+  let otherMemberIds: string[] = [];
+  if (parsed.data.groupId !== undefined) {
+    const membership = await getMembership(parsed.data.groupId, callerId);
+    if (membership) {
+      otherMemberIds = (await getGroupMemberIds(parsed.data.groupId)).filter(
+        (id) => id !== targetUserId,
+      );
+    }
+  }
+
+  if (otherMemberIds.length === 0) {
+    res.json(
+      ListWatchlistResponse.parse(
+        myItems.map((item) => ({
+          id: item.id,
+          title: item.title,
+          mediaType: item.mediaType,
+          createdAt: item.createdAt.toISOString(),
+          alsoEngagedBy: [],
+        })),
+      ),
+    );
     return;
   }
 
@@ -43,7 +89,7 @@ router.get("/watchlist", async (req: AuthedRequest, res): Promise<void> => {
     .from(entriesTable)
     .where(
       and(
-        ne(entriesTable.userId, userId),
+        inArray(entriesTable.userId, otherMemberIds),
         inArray(sql`lower(trim(${entriesTable.title}))`, keys),
       ),
     );
@@ -58,7 +104,7 @@ router.get("/watchlist", async (req: AuthedRequest, res): Promise<void> => {
     .from(watchlistItemsTable)
     .where(
       and(
-        ne(watchlistItemsTable.userId, userId),
+        inArray(watchlistItemsTable.userId, otherMemberIds),
         inArray(watchlistItemsTable.titleKey, keys),
       ),
     );

@@ -8,6 +8,7 @@
 
 export interface Invite {
   token: string;
-  createdByName: string;
+  groupId: number;
+  groupName: string;
   createdAt: Date;
 }

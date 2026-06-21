@@ -6,9 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface InvitePreview {
-  token: string;
-  groupName: string;
-  inviterName: string;
-  valid: boolean;
+export interface GroupInput {
+  /**
+     * @minLength 1
+     * @maxLength 60
+     */
+  name: string;
 }

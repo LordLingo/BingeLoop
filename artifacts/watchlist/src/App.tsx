@@ -8,11 +8,15 @@ import { shadcn } from "@clerk/themes";
 import { useEffect } from "react";
 
 import { NewActivityProvider } from "@/components/new-activity-context";
+import { ActiveGroupProvider, useActiveGroup } from "@/components/active-group-context";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AddEntry from "@/pages/add-entry";
 import ViewEntry from "@/pages/view-entry";
 import WatchlistPage from "@/pages/watchlist";
+import GroupPage from "@/pages/group";
+import MemberPage from "@/pages/member";
+import Onboarding from "@/pages/onboarding";
 import Landing from "@/pages/landing";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
@@ -60,10 +64,37 @@ function HomeRedirect() {
   );
 }
 
-function AuthRoute({ component: Component }: { component: React.ComponentType }) {
+function GroupGate({ children }: { children: React.ReactNode }) {
+  const { isLoading, hasGroups } = useActiveGroup();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
+  if (!hasGroups) return <Onboarding />;
+  return <>{children}</>;
+}
+
+function AuthRoute({
+  component: Component,
+  requireGroup = true,
+}: {
+  component: React.ComponentType;
+  requireGroup?: boolean;
+}) {
   return (
     <>
-      <Show when="signed-in"><Component /></Show>
+      <Show when="signed-in">
+        {requireGroup ? (
+          <GroupGate>
+            <Component />
+          </GroupGate>
+        ) : (
+          <Component />
+        )}
+      </Show>
       <Show when="signed-out"><Redirect to="/" /></Show>
     </>
   );
@@ -75,6 +106,8 @@ function Router() {
       <Route path="/" component={HomeRedirect} />
       <Route path="/library"><AuthRoute component={Home} /></Route>
       <Route path="/watchlist"><AuthRoute component={WatchlistPage} /></Route>
+      <Route path="/group"><AuthRoute component={GroupPage} /></Route>
+      <Route path="/member/:userId"><AuthRoute component={MemberPage} /></Route>
       <Route path="/add"><AuthRoute component={AddEntry} /></Route>
       <Route path="/entry/:id"><AuthRoute component={ViewEntry} /></Route>
       <Route path="/invite/:token" component={InvitePage} />
@@ -146,15 +179,17 @@ function App() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
-        <InviteAccepter />
-        <NewActivityProvider>
-          <TooltipProvider>
-            <WouterRouter base={basePath}>
-              <Router />
-            </WouterRouter>
-            <Toaster />
-          </TooltipProvider>
-        </NewActivityProvider>
+        <ActiveGroupProvider>
+          <InviteAccepter />
+          <NewActivityProvider>
+            <TooltipProvider>
+              <WouterRouter base={basePath}>
+                <Router />
+              </WouterRouter>
+              <Toaster />
+            </TooltipProvider>
+          </NewActivityProvider>
+        </ActiveGroupProvider>
       </QueryClientProvider>
     </ClerkProvider>
   );

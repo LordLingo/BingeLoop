@@ -10,6 +10,7 @@ import {
 import { Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useActiveGroup } from "@/components/active-group-context";
 
 const OPTIONS: { value: Approval; label: string }[] = [
   { value: "yes", label: "Yes" },
@@ -28,6 +29,7 @@ export function ApprovalControl({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { activeGroupId } = useActiveGroup();
   const set = useSetApproval();
   const clear = useClearApproval();
 
@@ -40,7 +42,7 @@ export function ApprovalControl({
   };
 
   const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: getListApprovalsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: ["/api/approvals"] });
 
   const onError = () =>
     toast({
@@ -53,12 +55,25 @@ export function ApprovalControl({
     if (pending) return;
     if (my === value) {
       clear.mutate(
-        { params: { title, mediaType } },
+        {
+          params: {
+            title,
+            mediaType,
+            ...(activeGroupId != null ? { groupId: activeGroupId } : {}),
+          },
+        },
         { onSuccess: invalidate, onError },
       );
     } else {
       set.mutate(
-        { data: { title, mediaType, approval: value } },
+        {
+          data: {
+            title,
+            mediaType,
+            approval: value,
+            ...(activeGroupId != null ? { groupId: activeGroupId } : {}),
+          },
+        },
         { onSuccess: invalidate, onError },
       );
     }

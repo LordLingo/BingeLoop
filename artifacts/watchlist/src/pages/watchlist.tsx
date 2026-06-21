@@ -9,10 +9,14 @@ import { format } from "date-fns";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
+import { useActiveGroup } from "@/components/active-group-context";
 
 export default function WatchlistPage() {
-  const { data: items, isLoading } = useListWatchlist({
-    query: { queryKey: getListWatchlistQueryKey() },
+  const { activeGroupId } = useActiveGroup();
+  const watchlistParams =
+    activeGroupId != null ? { groupId: activeGroupId } : undefined;
+  const { data: items, isLoading } = useListWatchlist(watchlistParams, {
+    query: { queryKey: getListWatchlistQueryKey(watchlistParams) },
   });
   const approvalMap = useApprovalMap();
 

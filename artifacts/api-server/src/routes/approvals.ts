@@ -1,8 +1,10 @@
 import { Router, type IRouter } from "express";
-import { eq, and, count } from "drizzle-orm";
+import { eq, and, count, inArray } from "drizzle-orm";
 import { db, showApprovalsTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
+import { getGroupMemberIds, getMembership } from "../lib/groups";
 import {
+  ListApprovalsQueryParams,
   ListApprovalsResponse,
   SetApprovalBody,
   SetApprovalResponse,
@@ -21,8 +23,21 @@ function normalizeTitle(title: string): string {
   return title.trim().toLowerCase();
 }
 
+// Returns the member ids whose answers count toward a show's tallies for this
+// caller: just the caller unless they pass a group they belong to.
+async function tallyMemberIds(
+  callerId: string,
+  groupId: number | undefined,
+): Promise<string[]> {
+  if (groupId === undefined) return [callerId];
+  const membership = await getMembership(groupId, callerId);
+  if (!membership) return [callerId];
+  return getGroupMemberIds(groupId);
+}
+
 async function summarizeShow(
-  userId: string,
+  memberIds: string[],
+  callerId: string,
   titleKey: string,
   mediaType: string,
 ) {
@@ -31,6 +46,7 @@ async function summarizeShow(
     .from(showApprovalsTable)
     .where(
       and(
+        inArray(showApprovalsTable.userId, memberIds),
         eq(showApprovalsTable.titleKey, titleKey),
         eq(showApprovalsTable.mediaType, mediaType),
       ),
@@ -48,7 +64,7 @@ async function summarizeShow(
     .from(showApprovalsTable)
     .where(
       and(
-        eq(showApprovalsTable.userId, userId),
+        eq(showApprovalsTable.userId, callerId),
         eq(showApprovalsTable.titleKey, titleKey),
         eq(showApprovalsTable.mediaType, mediaType),
       ),
@@ -65,7 +81,14 @@ async function summarizeShow(
 }
 
 router.get("/approvals", async (req: AuthedRequest, res): Promise<void> => {
-  const userId = req.userId!;
+  const parsed = ListApprovalsQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const callerId = req.userId!;
+  const memberIds = await tallyMemberIds(callerId, parsed.data.groupId);
 
   const grouped = await db
     .select({
@@ -75,6 +98,7 @@ router.get("/approvals", async (req: AuthedRequest, res): Promise<void> => {
       value: count(),
     })
     .from(showApprovalsTable)
+    .where(inArray(showApprovalsTable.userId, memberIds))
     .groupBy(
       showApprovalsTable.titleKey,
       showApprovalsTable.mediaType,
@@ -88,7 +112,7 @@ router.get("/approvals", async (req: AuthedRequest, res): Promise<void> => {
       approval: showApprovalsTable.approval,
     })
     .from(showApprovalsTable)
-    .where(eq(showApprovalsTable.userId, userId));
+    .where(eq(showApprovalsTable.userId, callerId));
 
   const key = (titleKey: string, mediaType: string) =>
     `${titleKey}::${mediaType}`;
@@ -148,13 +172,13 @@ router.put("/approvals", async (req: AuthedRequest, res): Promise<void> => {
     return;
   }
 
-  const userId = req.userId!;
+  const callerId = req.userId!;
   const titleKey = normalizeTitle(parsed.data.title);
   const { mediaType, approval } = parsed.data;
 
   await db
     .insert(showApprovalsTable)
-    .values({ userId, titleKey, mediaType, approval })
+    .values({ userId: callerId, titleKey, mediaType, approval })
     .onConflictDoUpdate({
       target: [
         showApprovalsTable.userId,
@@ -164,7 +188,8 @@ router.put("/approvals", async (req: AuthedRequest, res): Promise<void> => {
       set: { approval, updatedAt: new Date() },
     });
 
-  const summary = await summarizeShow(userId, titleKey, mediaType);
+  const memberIds = await tallyMemberIds(callerId, parsed.data.groupId);
+  const summary = await summarizeShow(memberIds, callerId, titleKey, mediaType);
   res.json(SetApprovalResponse.parse(summary));
 });
 
@@ -175,7 +200,7 @@ router.delete("/approvals", async (req: AuthedRequest, res): Promise<void> => {
     return;
   }
 
-  const userId = req.userId!;
+  const callerId = req.userId!;
   const titleKey = normalizeTitle(parsed.data.title);
   const { mediaType } = parsed.data;
 
@@ -183,13 +208,14 @@ router.delete("/approvals", async (req: AuthedRequest, res): Promise<void> => {
     .delete(showApprovalsTable)
     .where(
       and(
-        eq(showApprovalsTable.userId, userId),
+        eq(showApprovalsTable.userId, callerId),
         eq(showApprovalsTable.titleKey, titleKey),
         eq(showApprovalsTable.mediaType, mediaType),
       ),
     );
 
-  const summary = await summarizeShow(userId, titleKey, mediaType);
+  const memberIds = await tallyMemberIds(callerId, parsed.data.groupId);
+  const summary = await summarizeShow(memberIds, callerId, titleKey, mediaType);
   res.json(ClearApprovalResponse.parse(summary));
 });
 

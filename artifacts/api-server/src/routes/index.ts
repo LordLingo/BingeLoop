@@ -5,11 +5,13 @@ import activityRouter from "./activity";
 import watchlistRouter from "./watchlist";
 import approvalsRouter from "./approvals";
 import invitesRouter from "./invites";
+import groupsRouter from "./groups";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(invitesRouter);
+router.use(groupsRouter);
 router.use(entriesRouter);
 router.use(activityRouter);
 router.use(watchlistRouter);

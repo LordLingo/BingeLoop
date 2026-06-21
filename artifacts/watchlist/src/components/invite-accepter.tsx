@@ -6,14 +6,17 @@ import {
   acceptInvite,
   getListEntriesQueryKey,
   getGetStatsQueryKey,
+  getListGroupsQueryKey,
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { PENDING_INVITE_KEY } from "@/lib/invite";
+import { useActiveGroup } from "@/components/active-group-context";
 
 export function InviteAccepter() {
   const { isSignedIn, user } = useUser();
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { setActiveGroupId } = useActiveGroup();
   const [location, setLocation] = useLocation();
   const handling = useRef(false);
 
@@ -27,14 +30,16 @@ export function InviteAccepter() {
       try {
         const result = await acceptInvite(token);
         localStorage.removeItem(PENDING_INVITE_KEY);
+        await qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
         qc.invalidateQueries({ queryKey: getListEntriesQueryKey() });
         qc.invalidateQueries({ queryKey: getGetStatsQueryKey() });
+        if (result.groupId != null) {
+          setActiveGroupId(result.groupId);
+        }
         if (result.joined) {
           toast({
             title: "You're in!",
-            description: result.inviterName
-              ? `You joined ${result.inviterName}'s watchlist.`
-              : "You joined the shared watchlist.",
+            description: `You joined "${result.groupName}".`,
           });
         }
         setLocation("/library");
@@ -44,7 +49,7 @@ export function InviteAccepter() {
         handling.current = false;
       }
     })();
-  }, [isSignedIn, user, location, qc, toast, setLocation]);
+  }, [isSignedIn, user, location, qc, toast, setLocation, setActiveGroupId]);
 
   return null;
 }
