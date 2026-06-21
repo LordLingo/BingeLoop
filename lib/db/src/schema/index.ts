@@ -20,3 +20,4 @@
 export * from "./entries";
 export * from "./userActivity";
 export * from "./watchlist";
+export * from "./approvals";

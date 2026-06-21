@@ -95,6 +95,32 @@ export interface WatchlistInput {
   mediaType: MediaType;
 }
 
+export type Approval = typeof Approval[keyof typeof Approval];
+
+
+export const Approval = {
+  yes: 'yes',
+  no: 'no',
+  solo: 'solo',
+} as const;
+
+export interface ShowApproval {
+  titleKey: string;
+  mediaType: MediaType;
+  yes: number;
+  no: number;
+  solo: number;
+  /** The current user's own answer, or null if they haven't answered. */
+  myApproval: Approval | null;
+}
+
+export interface ApprovalInput {
+  /** @minLength 1 */
+  title: string;
+  mediaType: MediaType;
+  approval: Approval;
+}
+
 export interface CheckInResult {
   /** Entries added by other group members since the previous visit. */
   newCount: number;
@@ -121,4 +147,9 @@ export const ListEntriesSort = {
   rating_low: 'rating_low',
   title: 'title',
 } as const;
+
+export type ClearApprovalParams = {
+title: string;
+mediaType: MediaType;
+};
 

@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark } from "lucide-react";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
+import { ApprovalSummary } from "@/components/approval-summary";
+import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -42,6 +44,8 @@ export default function Home() {
   for (const item of watchlist ?? []) {
     savedIdByShow.set(`${item.title.trim().toLowerCase()}::${item.mediaType}`, item.id);
   }
+
+  const approvalMap = useApprovalMap();
   
   const { data: entries, isLoading } = useListEntries({
     category: filterCategory,
@@ -219,7 +223,7 @@ export default function Home() {
                     </span>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-border/50">
+                  <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between gap-2 flex-wrap">
                     <SaveToWatchlistButton
                       title={entry.title}
                       mediaType={entry.mediaType}
@@ -227,6 +231,12 @@ export default function Home() {
                         `${entry.title.trim().toLowerCase()}::${entry.mediaType}`,
                       )}
                     />
+                    {(() => {
+                      const a = approvalMap.get(approvalKey(entry.title, entry.mediaType));
+                      return a ? (
+                        <ApprovalSummary yes={a.yes} no={a.no} solo={a.solo} />
+                      ) : null;
+                    })()}
                   </div>
                 </Link>
               ))}

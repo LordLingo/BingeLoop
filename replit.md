@@ -24,8 +24,8 @@ A mobile-first web app where users log TV shows and movies, rate them 1–5 star
 
 - Frontend: `artifacts/watchlist/` (React + Vite, served at `/`)
 - API contract (source of truth): `lib/api-spec/openapi.yaml`
-- DB schema: `lib/db/src/schema/` (`entries.ts`, `userActivity.ts`, `watchlist.ts`)
-- API routes: `artifacts/api-server/src/routes/` (`entries.ts`, `activity.ts`, `watchlist.ts`); shared auth in `middlewares/requireAuth.ts`
+- DB schema: `lib/db/src/schema/` (`entries.ts`, `userActivity.ts`, `watchlist.ts`, `approvals.ts`)
+- API routes: `artifacts/api-server/src/routes/` (`entries.ts`, `activity.ts`, `watchlist.ts`, `approvals.ts`); shared auth in `middlewares/requireAuth.ts`
 - Generated hooks: `@workspace/api-client-react`; generated Zod: `@workspace/api-zod`
 
 ## Architecture decisions
@@ -36,6 +36,7 @@ A mobile-first web app where users log TV shows and movies, rate them 1–5 star
 - Auth is Replit-managed Clerk (email/password, cookie-based on web). `requireAuth` is mounted on the entries router, so `/entries`, `/stats`, `/categories` all require a session; `/healthz` stays public.
 - Single shared group: every signed-in user sees ALL entries (no per-user filtering). Each entry stores `userId` (Clerk id) and `addedBy` (display-name snapshot, resolved from Clerk on create) for "added by" attribution. If group scoping is ever needed, add a `groupId` and filter list/stats by it.
 - Personal watchlist: `watchlist_items` table (per-user saved shows) with `unique(userId, titleKey, mediaType)`. A "show" has no canonical entity — the same show across users is matched by `titleKey` (normalized `lower(trim(title))`) + `mediaType`. `GET /watchlist` returns the caller's saved items each annotated with `alsoEngagedBy`: display names of OTHER users who have rated (have an `entries` row) OR saved that same show, deduped by userId across both sources and caller-excluded. `POST /watchlist` is an idempotent upsert; `DELETE /watchlist/:id` is ownership-scoped (id + userId). Save/Saved toggle lives on each library card; `/watchlist` is the personal page.
+- Wife-approved poll: `show_approvals` table (per-user answer per show) with `unique(userId, titleKey, mediaType)` and `approval` in (`yes`,`no`,`solo`). Same "same-show" identity as watchlist (`titleKey` = normalized `lower(trim(title))` + `mediaType`). `GET /approvals` groups counts across ALL users by `(titleKey, mediaType, approval)` and overlays the caller's own answer as `myApproval`. `PUT /approvals` upserts the caller's answer (idempotent); `DELETE /approvals?title=&mediaType=` clears it (ownership-scoped on all three columns). Both write endpoints return the fresh `ShowApproval` summary. Interactive `ApprovalControl` (tap an option to set, tap again to clear) lives on the view-entry page; read-only `ApprovalSummary` (e.g. "3 Yes / 1 No") shows on library cards and the watchlist page.
 - New-activity badge: `user_activity` table stores per-user `lastSeenAt`. `POST /activity/check-in` reads the prior `lastSeenAt`, counts entries created since then by OTHER users (excludes the caller's own), updates `lastSeenAt` to now, and returns `{ newCount, since }`. The web client calls it once on library mount and shows a dismissible badge when `newCount > 0`. First visit returns 0 (no prior timestamp).
 
 ## Product

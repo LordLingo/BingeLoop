@@ -6,8 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './approval';
+export * from './approvalInput';
 export * from './categoryCount';
 export * from './checkInResult';
+export * from './clearApprovalParams';
 export * from './entry';
 export * from './entryInput';
 export * from './entryUpdate';
@@ -16,6 +19,7 @@ export * from './healthStatus';
 export * from './listEntriesParams';
 export * from './listEntriesSort';
 export * from './mediaType';
+export * from './showApproval';
 export * from './stats';
 export * from './watchlistInput';
 export * from './watchlistItem';

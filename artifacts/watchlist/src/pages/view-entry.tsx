@@ -30,6 +30,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { EntryForm } from "@/components/entry-form";
+import { ApprovalControl } from "@/components/approval-control";
+import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
 
 export default function ViewEntry() {
   const params = useParams();
@@ -48,6 +50,7 @@ export default function ViewEntry() {
 
   const deleteMutation = useDeleteEntry();
   const updateMutation = useUpdateEntry();
+  const approvalMap = useApprovalMap();
 
   if (isError) {
     return (
@@ -221,6 +224,13 @@ export default function ViewEntry() {
                 </div>
               </>
             )}
+
+            <Separator className="bg-border/60" />
+            <ApprovalControl
+              title={entry.title}
+              mediaType={entry.mediaType}
+              summary={approvalMap.get(approvalKey(entry.title, entry.mediaType))}
+            />
           </div>
         )}
       </main>

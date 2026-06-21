@@ -20,13 +20,16 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ApprovalInput,
   CheckInResult,
+  ClearApprovalParams,
   Entry,
   EntryInput,
   EntryUpdate,
   Error,
   HealthStatus,
   ListEntriesParams,
+  ShowApproval,
   Stats,
   WatchlistInput,
   WatchlistItem
@@ -870,6 +873,232 @@ export const useDeleteWatchlistItem = <TError = ErrorType<Error>,
         TContext
       > => {
       return useMutation(getDeleteWatchlistItemMutationOptions(options));
+    }
+
+export const getListApprovalsUrl = () => {
+
+
+
+
+  return `/api/approvals`
+}
+
+/**
+ * Returns, for every show that has at least one answer, the count of each answer across all members plus the current user's own answer.
+ * @summary List "Wife Approved?" summaries
+ */
+export const listApprovals = async ( options?: RequestInit): Promise<ShowApproval[]> => {
+
+  return customFetch<ShowApproval[]>(getListApprovalsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListApprovalsQueryKey = () => {
+    return [
+    `/api/approvals`
+    ] as const;
+    }
+
+
+export const getListApprovalsQueryOptions = <TData = Awaited<ReturnType<typeof listApprovals>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListApprovalsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listApprovals>>> = ({ signal }) => listApprovals({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListApprovalsQueryResult = NonNullable<Awaited<ReturnType<typeof listApprovals>>>
+export type ListApprovalsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List "Wife Approved?" summaries
+ */
+
+export function useListApprovals<TData = Awaited<ReturnType<typeof listApprovals>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListApprovalsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getSetApprovalUrl = () => {
+
+
+
+
+  return `/api/approvals`
+}
+
+/**
+ * @summary Set my "Wife Approved?" answer for a show
+ */
+export const setApproval = async (approvalInput: ApprovalInput, options?: RequestInit): Promise<ShowApproval> => {
+
+  return customFetch<ShowApproval>(getSetApprovalUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      approvalInput,)
+  }
+);}
+
+
+
+
+export const getSetApprovalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setApproval>>, TError,{data: BodyType<ApprovalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setApproval>>, TError,{data: BodyType<ApprovalInput>}, TContext> => {
+
+const mutationKey = ['setApproval'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setApproval>>, {data: BodyType<ApprovalInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setApproval(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetApprovalMutationResult = NonNullable<Awaited<ReturnType<typeof setApproval>>>
+    export type SetApprovalMutationBody = BodyType<ApprovalInput>
+    export type SetApprovalMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Set my "Wife Approved?" answer for a show
+ */
+export const useSetApproval = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setApproval>>, TError,{data: BodyType<ApprovalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setApproval>>,
+        TError,
+        {data: BodyType<ApprovalInput>},
+        TContext
+      > => {
+      return useMutation(getSetApprovalMutationOptions(options));
+    }
+
+export const getClearApprovalUrl = (params: ClearApprovalParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/approvals?${stringifiedParams}` : `/api/approvals`
+}
+
+/**
+ * @summary Clear my answer for a show
+ */
+export const clearApproval = async (params: ClearApprovalParams, options?: RequestInit): Promise<ShowApproval> => {
+
+  return customFetch<ShowApproval>(getClearApprovalUrl(params),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getClearApprovalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearApproval>>, TError,{params: ClearApprovalParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof clearApproval>>, TError,{params: ClearApprovalParams}, TContext> => {
+
+const mutationKey = ['clearApproval'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearApproval>>, {params: ClearApprovalParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  clearApproval(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClearApprovalMutationResult = NonNullable<Awaited<ReturnType<typeof clearApproval>>>
+
+    export type ClearApprovalMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Clear my answer for a show
+ */
+export const useClearApproval = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearApproval>>, TError,{params: ClearApprovalParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof clearApproval>>,
+        TError,
+        {params: ClearApprovalParams},
+        TContext
+      > => {
+      return useMutation(getClearApprovalMutationOptions(options));
     }
 
 export const getCheckInUrl = () => {

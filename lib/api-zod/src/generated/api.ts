@@ -189,6 +189,61 @@ export const DeleteWatchlistItemParams = zod.object({
 
 
 /**
+ * Returns, for every show that has at least one answer, the count of each answer across all members plus the current user's own answer.
+ * @summary List "Wife Approved?" summaries
+ */
+export const ListApprovalsResponseItem = zod.object({
+  "titleKey": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "yes": zod.number(),
+  "no": zod.number(),
+  "solo": zod.number(),
+  "myApproval": zod.union([zod.enum(['yes', 'no', 'solo']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+})
+export const ListApprovalsResponse = zod.array(ListApprovalsResponseItem)
+
+
+/**
+ * @summary Set my "Wife Approved?" answer for a show
+ */
+
+
+
+export const SetApprovalBody = zod.object({
+  "title": zod.string().min(1),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "approval": zod.enum(['yes', 'no', 'solo'])
+})
+
+export const SetApprovalResponse = zod.object({
+  "titleKey": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "yes": zod.number(),
+  "no": zod.number(),
+  "solo": zod.number(),
+  "myApproval": zod.union([zod.enum(['yes', 'no', 'solo']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+})
+
+
+/**
+ * @summary Clear my answer for a show
+ */
+export const ClearApprovalQueryParams = zod.object({
+  "title": zod.coerce.string(),
+  "mediaType": zod.enum(['movie', 'tv'])
+})
+
+export const ClearApprovalResponse = zod.object({
+  "titleKey": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "yes": zod.number(),
+  "no": zod.number(),
+  "solo": zod.number(),
+  "myApproval": zod.union([zod.enum(['yes', 'no', 'solo']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+})
+
+
+/**
  * Records the current user's visit, returning the number of entries added by other group members since the user's previous visit. Updates the stored last-seen time to now.
  * @summary Record a visit and get new-activity count
  */

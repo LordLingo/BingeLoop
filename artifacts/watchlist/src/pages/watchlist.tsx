@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Film, Tv, Bookmark, Users } from "lucide-react";
 import { format } from "date-fns";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
+import { ApprovalSummary } from "@/components/approval-summary";
+import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
 
 export default function WatchlistPage() {
   const { data: items, isLoading } = useListWatchlist({
     query: { queryKey: getListWatchlistQueryKey() },
   });
+  const approvalMap = useApprovalMap();
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -105,11 +108,21 @@ export default function WatchlistPage() {
                     </p>
                   )}
 
-                  <SaveToWatchlistButton
-                    title={item.title}
-                    mediaType={item.mediaType}
-                    savedItemId={item.id}
-                  />
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <SaveToWatchlistButton
+                      title={item.title}
+                      mediaType={item.mediaType}
+                      savedItemId={item.id}
+                    />
+                    {(() => {
+                      const a = approvalMap.get(
+                        approvalKey(item.title, item.mediaType),
+                      );
+                      return a ? (
+                        <ApprovalSummary yes={a.yes} no={a.no} solo={a.solo} />
+                      ) : null;
+                    })()}
+                  </div>
                 </div>
               </div>
             ))}

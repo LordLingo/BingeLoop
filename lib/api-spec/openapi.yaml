@@ -14,6 +14,8 @@ tags:
     description: Watchlist entry operations
   - name: watchlist
     description: Personal watchlist (saved shows) operations
+  - name: approvals
+    description: Per-member "Wife Approved?" answers per show
 paths:
   /healthz:
     get:
@@ -231,6 +233,62 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /approvals:
+    get:
+      operationId: listApprovals
+      tags: [approvals]
+      summary: List "Wife Approved?" summaries
+      description: >-
+        Returns, for every show that has at least one answer, the count of each
+        answer across all members plus the current user's own answer.
+      responses:
+        "200":
+          description: Approval summaries by show
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShowApproval"
+    put:
+      operationId: setApproval
+      tags: [approvals]
+      summary: Set my "Wife Approved?" answer for a show
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalInput"
+      responses:
+        "200":
+          description: Updated approval summary for the show
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShowApproval"
+    delete:
+      operationId: clearApproval
+      tags: [approvals]
+      summary: Clear my answer for a show
+      parameters:
+        - name: title
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: mediaType
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/MediaType"
+      responses:
+        "200":
+          description: Updated approval summary for the show
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShowApproval"
   /activity/check-in:
     post:
       operationId: checkIn
@@ -401,6 +459,48 @@ components:
           minLength: 1
         mediaType:
           $ref: "#/components/schemas/MediaType"
+    Approval:
+      type: string
+      enum: [yes, no, solo]
+    ShowApproval:
+      type: object
+      required:
+        - titleKey
+        - mediaType
+        - "yes"
+        - "no"
+        - solo
+        - myApproval
+      properties:
+        titleKey:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        "yes":
+          type: integer
+        "no":
+          type: integer
+        solo:
+          type: integer
+        myApproval:
+          description: The current user's own answer, or null if they haven't answered.
+          anyOf:
+            - $ref: "#/components/schemas/Approval"
+            - type: "null"
+    ApprovalInput:
+      type: object
+      required:
+        - title
+        - mediaType
+        - approval
+      properties:
+        title:
+          type: string
+          minLength: 1
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        approval:
+          $ref: "#/components/schemas/Approval"
     CheckInResult:
       type: object
       required:
