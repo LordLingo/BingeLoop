@@ -70,7 +70,7 @@ export function ApprovalControl({
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center gap-2 mb-3">
         <Heart className="h-4 w-4 text-primary" />
-        <span className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-base font-semibold uppercase tracking-wide text-muted-foreground">
           Wife Approved?
         </span>
       </div>
@@ -87,7 +87,7 @@ export function ApprovalControl({
               aria-pressed={active}
               data-testid={`button-approval-${opt.value}`}
               className={cn(
-                "rounded-xl border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50",
+                "rounded-xl border px-3 py-2 text-base font-medium transition-colors disabled:opacity-50",
                 active
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background text-foreground hover:bg-muted/50",
@@ -99,7 +99,7 @@ export function ApprovalControl({
         })}
       </div>
 
-      <p className="mt-3 text-sm text-muted-foreground" data-testid="text-approval-tally">
+      <p className="mt-3 text-base text-muted-foreground" data-testid="text-approval-tally">
         {total === 0 ? (
           "No answers yet — be the first."
         ) : (

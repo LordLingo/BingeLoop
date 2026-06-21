@@ -206,10 +206,10 @@ export default function ViewEntry() {
 
               <div className="flex items-center gap-4 mt-2">
                 <StarRating value={entry.rating} readonly size="lg" />
-                <span className="text-sm text-muted-foreground font-mono opacity-80 border-l border-border/50 pl-4">
+                <span className="text-base text-muted-foreground font-mono opacity-80 border-l border-border/50 pl-4">
                   {format(new Date(entry.createdAt), "MMM d, yyyy")}
                 </span>
-                <span className="text-sm text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-full border border-border/40 font-medium">
+                <span className="text-base text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-full border border-border/40 font-medium">
                   Logged by {entry.addedBy}
                 </span>
               </div>
@@ -219,8 +219,8 @@ export default function ViewEntry() {
               <>
                 <Separator className="bg-border/60" />
                 <div className="prose prose-p:leading-relaxed prose-p:text-foreground/80 max-w-none">
-                  <p className="text-sm font-semibold tracking-widest uppercase text-muted-foreground mb-3">Thoughts</p>
-                  <p className="text-lg leading-relaxed text-foreground whitespace-pre-wrap" data-testid="text-comment">{entry.comment}</p>
+                  <p className="text-base font-semibold tracking-widest uppercase text-muted-foreground mb-3">Thoughts</p>
+                  <p className="text-[18px] leading-loose text-foreground whitespace-pre-wrap" data-testid="text-comment">{entry.comment}</p>
                 </div>
               </>
             )}
