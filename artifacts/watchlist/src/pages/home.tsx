@@ -72,17 +72,17 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="flex justify-between items-center px-6 pt-6 pb-2 text-foreground">
-        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-foreground">
+    <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
+      <div className="flex justify-between items-center gap-2 px-4 sm:px-6 pt-6 pb-2 text-foreground">
+        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-foreground min-w-0">
           <Film className="w-6 h-6 text-primary shrink-0" />
-          BINGELOOP
+          <span className="truncate">BINGELOOP</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <GroupSwitcher />
           <Link
             href="/watchlist"
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+            className="flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
             data-testid="link-my-watchlist"
           >
             <Bookmark className="w-4 h-4" />
@@ -130,7 +130,7 @@ export default function Home() {
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-          <ScrollArea className="w-full whitespace-nowrap pb-2 -mb-2">
+          <ScrollArea className="w-full min-w-0 max-w-full whitespace-nowrap pb-2 -mb-2">
             <div className="flex gap-2 w-max">
               <Button 
                 variant={!filterCategory && !filterType ? "secondary" : "outline"} 

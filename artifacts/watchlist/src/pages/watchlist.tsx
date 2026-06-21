@@ -24,7 +24,7 @@ export default function WatchlistPage() {
   const spiceMap = useSpiceMap();
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
       <div className="flex items-center gap-2 px-4 pt-6 pb-2 text-foreground">
         <Link
           href="/library"

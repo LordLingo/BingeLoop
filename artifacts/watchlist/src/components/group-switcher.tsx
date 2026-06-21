@@ -24,14 +24,14 @@ export function GroupSwitcher() {
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="h-9 gap-2 rounded-full border-border/60 bg-card/60 px-3"
+            className="h-9 gap-2 rounded-full border-border/60 bg-card/60 px-2.5 sm:px-3"
             data-testid="button-group-switcher"
           >
-            <Users className="h-4 w-4 text-primary" />
-            <span className="max-w-[8rem] truncate text-sm font-semibold">
+            <Users className="h-4 w-4 text-primary shrink-0" />
+            <span className="max-w-[5.5rem] sm:max-w-[8rem] truncate text-sm font-semibold">
               {activeGroup?.name ?? "Select group"}
             </span>
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">

@@ -10,14 +10,14 @@ export function UserMenu() {
   if (!user) return null;
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex flex-col items-end">
-        <span className="text-sm font-semibold leading-none">{user.firstName || user.emailAddresses[0]?.emailAddress?.split("@")[0]}</span>
+    <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-col items-end min-w-0">
+        <span className="text-sm font-semibold leading-none truncate max-w-[4.5rem] sm:max-w-[10rem]">{user.firstName || user.emailAddresses[0]?.emailAddress?.split("@")[0]}</span>
       </div>
       <Button
         variant="ghost"
         size="icon"
-        className="rounded-full text-muted-foreground hover:text-foreground"
+        className="rounded-full text-muted-foreground hover:text-foreground shrink-0"
         onClick={() => signOut({ redirectUrl: basePath })}
         title="Log out"
       >
