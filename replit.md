@@ -24,8 +24,8 @@ A mobile-first web app where users log TV shows and movies, rate them 1–5 star
 
 - Frontend: `artifacts/watchlist/` (React + Vite, served at `/`)
 - API contract (source of truth): `lib/api-spec/openapi.yaml`
-- DB schema: `lib/db/src/schema/entries.ts`
-- API routes: `artifacts/api-server/src/routes/entries.ts`
+- DB schema: `lib/db/src/schema/` (`entries.ts`, `userActivity.ts`)
+- API routes: `artifacts/api-server/src/routes/` (`entries.ts`, `activity.ts`); shared auth in `middlewares/requireAuth.ts`
 - Generated hooks: `@workspace/api-client-react`; generated Zod: `@workspace/api-zod`
 
 ## Architecture decisions
@@ -35,6 +35,7 @@ A mobile-first web app where users log TV shows and movies, rate them 1–5 star
 - `/stats` aggregates in the handler (totals, avg rating, per-category counts) rather than via SQL aggregation, for simplicity at this scale.
 - Auth is Replit-managed Clerk (email/password, cookie-based on web). `requireAuth` is mounted on the entries router, so `/entries`, `/stats`, `/categories` all require a session; `/healthz` stays public.
 - Single shared group: every signed-in user sees ALL entries (no per-user filtering). Each entry stores `userId` (Clerk id) and `addedBy` (display-name snapshot, resolved from Clerk on create) for "added by" attribution. If group scoping is ever needed, add a `groupId` and filter list/stats by it.
+- New-activity badge: `user_activity` table stores per-user `lastSeenAt`. `POST /activity/check-in` reads the prior `lastSeenAt`, counts entries created since then by OTHER users (excludes the caller's own), updates `lastSeenAt` to now, and returns `{ newCount, since }`. The web client calls it once on library mount and shows a dismissible badge when `newCount > 0`. First visit returns 0 (no prior timestamp).
 
 ## Product
 

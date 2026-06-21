@@ -154,3 +154,13 @@ export const ListCategoriesResponseItem = zod.string()
 export const ListCategoriesResponse = zod.array(ListCategoriesResponseItem)
 
 
+/**
+ * Records the current user's visit, returning the number of entries added by other group members since the user's previous visit. Updates the stored last-seen time to now.
+ * @summary Record a visit and get new-activity count
+ */
+export const CheckInResponse = zod.object({
+  "newCount": zod.number().describe('Entries added by other group members since the previous visit.'),
+  "since": zod.coerce.date().nullable().describe('The previous last-seen time, or null on first visit.')
+})
+
+

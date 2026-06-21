@@ -7,6 +7,7 @@ import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
 import { useEffect } from "react";
 
+import { NewActivityProvider } from "@/components/new-activity-context";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AddEntry from "@/pages/add-entry";
@@ -140,12 +141,14 @@ function App() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
-        <TooltipProvider>
-          <WouterRouter base={basePath}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
+        <NewActivityProvider>
+          <TooltipProvider>
+            <WouterRouter base={basePath}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </NewActivityProvider>
       </QueryClientProvider>
     </ClerkProvider>
   );

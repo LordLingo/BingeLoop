@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { UserMenu } from "@/components/user-menu";
+import { NewActivityBadge } from "@/components/new-activity-badge";
 
 export default function Home() {
   const [filterCategory, setFilterCategory] = useState<string | undefined>(undefined);
@@ -84,6 +85,8 @@ export default function Home() {
       </section>
 
       <main className="max-w-3xl mx-auto px-4 space-y-6">
+        <NewActivityBadge />
+
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <ScrollArea className="w-full whitespace-nowrap pb-2 -mb-2">

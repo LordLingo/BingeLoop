@@ -7,6 +7,7 @@
  */
 
 export * from './categoryCount';
+export * from './checkInResult';
 export * from './entry';
 export * from './entryInput';
 export * from './entryUpdate';

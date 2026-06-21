@@ -1,13 +1,8 @@
-import {
-  Router,
-  type IRouter,
-  type Request,
-  type Response,
-  type NextFunction,
-} from "express";
+import { Router, type IRouter } from "express";
 import { eq, desc, asc, and } from "drizzle-orm";
-import { getAuth, clerkClient } from "@clerk/express";
+import { clerkClient } from "@clerk/express";
 import { db, entriesTable } from "@workspace/db";
+import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import {
   ListEntriesQueryParams,
   ListEntriesResponse,
@@ -23,25 +18,6 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-
-interface AuthedRequest extends Request {
-  userId?: string;
-}
-
-const requireAuth = (
-  req: AuthedRequest,
-  res: Response,
-  next: NextFunction,
-): void => {
-  const auth = getAuth(req);
-  const userId = auth?.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  req.userId = userId;
-  next();
-};
 
 router.use(requireAuth);
 

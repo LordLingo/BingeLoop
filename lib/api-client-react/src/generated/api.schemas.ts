@@ -80,6 +80,16 @@ export interface Stats {
   byCategory: CategoryCount[];
 }
 
+export interface CheckInResult {
+  /** Entries added by other group members since the previous visit. */
+  newCount: number;
+  /**
+     * The previous last-seen time, or null on first visit.
+     * @nullable
+     */
+  since: string | null;
+}
+
 export type ListEntriesParams = {
 category?: string;
 mediaType?: MediaType;

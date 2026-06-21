@@ -175,6 +175,22 @@ paths:
                 type: array
                 items:
                   type: string
+  /activity/check-in:
+    post:
+      operationId: checkIn
+      tags: [activity]
+      summary: Record a visit and get new-activity count
+      description: >-
+        Records the current user's visit, returning the number of entries added
+        by other group members since the user's previous visit. Updates the
+        stored last-seen time to now.
+      responses:
+        "200":
+          description: New-activity summary since the previous visit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckInResult"
 components:
   schemas:
     HealthStatus:
@@ -295,3 +311,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CategoryCount"
+    CheckInResult:
+      type: object
+      required:
+        - newCount
+        - since
+      properties:
+        newCount:
+          type: integer
+          description: Entries added by other group members since the previous visit.
+        since:
+          type: ["string", "null"]
+          format: date-time
+          description: The previous last-seen time, or null on first visit.

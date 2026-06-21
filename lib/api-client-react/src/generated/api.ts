@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CheckInResult,
   Entry,
   EntryInput,
   EntryUpdate,
@@ -649,4 +650,75 @@ export function useListCategories<TData = Awaited<ReturnType<typeof listCategori
 
 
 
+
+export const getCheckInUrl = () => {
+
+
+
+
+  return `/api/activity/check-in`
+}
+
+/**
+ * Records the current user's visit, returning the number of entries added by other group members since the user's previous visit. Updates the stored last-seen time to now.
+ * @summary Record a visit and get new-activity count
+ */
+export const checkIn = async ( options?: RequestInit): Promise<CheckInResult> => {
+
+  return customFetch<CheckInResult>(getCheckInUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCheckInMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkIn>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkIn>>, TError,void, TContext> => {
+
+const mutationKey = ['checkIn'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkIn>>, void> = () => {
+
+
+          return  checkIn(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckInMutationResult = NonNullable<Awaited<ReturnType<typeof checkIn>>>
+
+    export type CheckInMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Record a visit and get new-activity count
+ */
+export const useCheckIn = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkIn>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof checkIn>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCheckInMutationOptions(options));
+    }
 
