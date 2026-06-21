@@ -3,12 +3,7 @@ import { eq, desc, asc, and, inArray } from "drizzle-orm";
 import { clerkClient } from "@clerk/express";
 import { db, entriesTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
-import {
-  usersShareGroup,
-  isMember,
-  getGroupMemberIds,
-  getSharedMemberIds,
-} from "../lib/groups";
+import { usersShareGroup, isMember, getGroupMemberIds } from "../lib/groups";
 import {
   ListEntriesQueryParams,
   ListEntriesResponse,
@@ -78,8 +73,7 @@ router.get("/stats", async (req: AuthedRequest, res): Promise<void> => {
     const memberIds = await getGroupMemberIds(groupId);
     memberFilter = inArray(entriesTable.userId, memberIds);
   } else {
-    const memberIds = await getSharedMemberIds(callerId);
-    memberFilter = inArray(entriesTable.userId, memberIds);
+    memberFilter = eq(entriesTable.userId, callerId);
   }
 
   const rows = await db.select().from(entriesTable).where(memberFilter);
@@ -142,8 +136,7 @@ router.get("/entries", async (req: AuthedRequest, res): Promise<void> => {
     const memberIds = await getGroupMemberIds(groupId);
     memberFilter = inArray(entriesTable.userId, memberIds);
   } else {
-    const memberIds = await getSharedMemberIds(callerId);
-    memberFilter = inArray(entriesTable.userId, memberIds);
+    memberFilter = eq(entriesTable.userId, callerId);
   }
 
   const conditions = [memberFilter];

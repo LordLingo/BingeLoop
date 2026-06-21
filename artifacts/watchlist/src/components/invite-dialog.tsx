@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCreateOrGetGroupInvite } from "@workspace/api-client-react";
 import {
   Dialog,
@@ -23,6 +23,10 @@ export function InviteDialog() {
   const [copied, setCopied] = useState(false);
   const create = useCreateOrGetGroupInvite();
   const [link, setLink] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLink(null);
+  }, [activeGroupId]);
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);

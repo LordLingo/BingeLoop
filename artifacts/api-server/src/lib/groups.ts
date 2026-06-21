@@ -37,18 +37,6 @@ export async function getGroupMemberIds(groupId: number): Promise<string[]> {
   return rows.map((r) => r.userId);
 }
 
-export async function getSharedMemberIds(userId: string): Promise<string[]> {
-  const groupIds = await getMemberGroupIds(userId);
-  if (groupIds.length === 0) return [userId];
-  const rows = await db
-    .select({ userId: groupMembersTable.userId })
-    .from(groupMembersTable)
-    .where(inArray(groupMembersTable.groupId, groupIds));
-  const ids = new Set<string>(rows.map((r) => r.userId));
-  ids.add(userId);
-  return Array.from(ids);
-}
-
 export async function usersShareGroup(
   userA: string,
   userB: string,

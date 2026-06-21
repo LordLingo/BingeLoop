@@ -6,8 +6,10 @@ import {
   getGetStatsQueryKey,
   useGetGroup,
   getGetGroupQueryKey,
+  useListWatchlist,
+  getListWatchlistQueryKey,
 } from "@workspace/api-client-react";
-import { ChevronLeft, Film, Tv, Star, User } from "lucide-react";
+import { ChevronLeft, Film, Tv, Star, User, Bookmark } from "lucide-react";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,6 +39,11 @@ export default function MemberPage() {
   const { data: entries, isLoading } = useListEntries(
     { userId, sort: "newest" },
     { query: { queryKey: getListEntriesQueryKey({ userId, sort: "newest" }) } },
+  );
+
+  const { data: savedItems } = useListWatchlist(
+    { userId },
+    { query: { queryKey: getListWatchlistQueryKey({ userId }) } },
   );
 
   return (
@@ -153,6 +160,45 @@ export default function MemberPage() {
               </Link>
             ))}
           </div>
+        )}
+
+        {savedItems && savedItems.length > 0 && (
+          <section className="mt-10">
+            <div className="flex items-center gap-2 mb-4 text-foreground">
+              <Bookmark className="w-5 h-5 text-primary" />
+              <h2 className="text-2xl font-serif tracking-wide">
+                Saved to Watchlist
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {savedItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="poster-card flex flex-col bg-card border border-border rounded-2xl p-5"
+                  data-testid={`card-saved-${item.id}`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <Badge
+                      variant="outline"
+                      className="bg-background text-xs uppercase tracking-wider font-semibold"
+                    >
+                      Saved
+                    </Badge>
+                    <div className="text-muted-foreground">
+                      {item.mediaType === "movie" ? (
+                        <Film className="w-4 h-4" />
+                      ) : (
+                        <Tv className="w-4 h-4" />
+                      )}
+                    </div>
+                  </div>
+                  <h3 className="text-2xl font-serif tracking-wide line-clamp-2">
+                    {item.title}
+                  </h3>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
       </main>
     </div>
