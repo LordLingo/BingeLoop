@@ -201,10 +201,13 @@ export default function ViewEntry() {
                 {entry.title}
               </h1>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 mt-2">
                 <StarRating value={entry.rating} readonly size="lg" />
-                <span className="text-sm text-muted-foreground font-mono opacity-80">
+                <span className="text-sm text-muted-foreground font-mono opacity-80 border-l border-border/50 pl-4">
                   {format(new Date(entry.createdAt), "MMM d, yyyy")}
+                </span>
+                <span className="text-sm text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-full border border-border/40 font-medium">
+                  Logged by {entry.addedBy}
                 </span>
               </div>
             </div>

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+  <path d="M30 15v30h-6v-30h6zm10 0v30h-6v-30h6zm-20 0v30h-6v-30h6z" fill="#9f2a46"/>
+  <text x="50" y="42" font-family="'Playfair Display', serif" font-weight="800" font-size="32" fill="#9f2a46" letter-spacing="-0.5">Watchlist</text>
+</svg>

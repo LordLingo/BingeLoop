@@ -9,6 +9,8 @@ export const entriesTable = pgTable("entries", {
   rating: integer("rating").notNull(),
   category: text("category").notNull(),
   comment: text("comment"),
+  userId: text("user_id").notNull(),
+  addedBy: text("added_by").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

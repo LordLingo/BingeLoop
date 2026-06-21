@@ -1,5 +1,12 @@
-import { Router, type IRouter } from "express";
+import {
+  Router,
+  type IRouter,
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
 import { eq, desc, asc, and } from "drizzle-orm";
+import { getAuth, clerkClient } from "@clerk/express";
 import { db, entriesTable } from "@workspace/db";
 import {
   ListEntriesQueryParams,
@@ -16,6 +23,27 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+interface AuthedRequest extends Request {
+  userId?: string;
+}
+
+const requireAuth = (
+  req: AuthedRequest,
+  res: Response,
+  next: NextFunction,
+): void => {
+  const auth = getAuth(req);
+  const userId = auth?.userId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  req.userId = userId;
+  next();
+};
+
+router.use(requireAuth);
 
 const CATEGORIES = [
   "Drama",
@@ -107,7 +135,7 @@ router.get("/entries", async (req, res): Promise<void> => {
   res.json(ListEntriesResponse.parse(rows));
 });
 
-router.post("/entries", async (req, res): Promise<void> => {
+router.post("/entries", async (req: AuthedRequest, res): Promise<void> => {
   const parsed = CreateEntryBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -119,6 +147,14 @@ router.post("/entries", async (req, res): Promise<void> => {
     return;
   }
 
+  const userId = req.userId!;
+  const user = await clerkClient.users.getUser(userId);
+  const addedBy =
+    [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
+    user.username ||
+    user.primaryEmailAddress?.emailAddress ||
+    "Unknown";
+
   const [entry] = await db
     .insert(entriesTable)
     .values({
@@ -127,6 +163,8 @@ router.post("/entries", async (req, res): Promise<void> => {
       rating: parsed.data.rating,
       category: parsed.data.category,
       comment: parsed.data.comment ?? null,
+      userId,
+      addedBy,
     })
     .returning();
 

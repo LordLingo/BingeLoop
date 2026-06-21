@@ -19,5 +19,7 @@ export interface Entry {
   category: string;
   /** @nullable */
   comment?: string | null;
+  /** Display name of the user who added this entry. */
+  addedBy: string;
   createdAt: Date;
 }

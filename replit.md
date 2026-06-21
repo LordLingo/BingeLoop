@@ -33,6 +33,8 @@ A mobile-first web app where users log TV shows and movies, rate them 1–5 star
 - Categories are a server-defined canonical list (`CATEGORIES` in `entries.ts`), exposed via `GET /categories` and enforced on create/update. To add a category, edit that array.
 - On create, `comment` is an optional string (null is rejected); on update, `comment` is nullable so it can be cleared.
 - `/stats` aggregates in the handler (totals, avg rating, per-category counts) rather than via SQL aggregation, for simplicity at this scale.
+- Auth is Replit-managed Clerk (email/password, cookie-based on web). `requireAuth` is mounted on the entries router, so `/entries`, `/stats`, `/categories` all require a session; `/healthz` stays public.
+- Single shared group: every signed-in user sees ALL entries (no per-user filtering). Each entry stores `userId` (Clerk id) and `addedBy` (display-name snapshot, resolved from Clerk on create) for "added by" attribution. If group scoping is ever needed, add a `groupId` and filter list/stats by it.
 
 ## Product
 

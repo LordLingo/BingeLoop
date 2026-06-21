@@ -38,6 +38,7 @@ export const ListEntriesResponseItem = zod.object({
   "rating": zod.number().min(1).max(listEntriesResponseRatingMax),
   "category": zod.string(),
   "comment": zod.string().nullish(),
+  "addedBy": zod.string().describe('Display name of the user who added this entry.'),
   "createdAt": zod.coerce.date()
 })
 export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
@@ -79,6 +80,7 @@ export const GetEntryResponse = zod.object({
   "rating": zod.number().min(1).max(getEntryResponseRatingMax),
   "category": zod.string(),
   "comment": zod.string().nullish(),
+  "addedBy": zod.string().describe('Display name of the user who added this entry.'),
   "createdAt": zod.coerce.date()
 })
 
@@ -115,6 +117,7 @@ export const UpdateEntryResponse = zod.object({
   "rating": zod.number().min(1).max(updateEntryResponseRatingMax),
   "category": zod.string(),
   "comment": zod.string().nullish(),
+  "addedBy": zod.string().describe('Display name of the user who added this entry.'),
   "createdAt": zod.coerce.date()
 })
 

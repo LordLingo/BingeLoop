@@ -202,6 +202,7 @@ components:
         - mediaType
         - rating
         - category
+        - addedBy
         - createdAt
       properties:
         id:
@@ -218,6 +219,9 @@ components:
           type: string
         comment:
           type: ["string", "null"]
+        addedBy:
+          type: string
+          description: Display name of the user who added this entry.
         createdAt:
           type: string
           format: date-time

@@ -21,6 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { UserMenu } from "@/components/user-menu";
+
 export default function Home() {
   const [filterCategory, setFilterCategory] = useState<string | undefined>(undefined);
   const [filterType, setFilterType] = useState<"movie" | "tv" | undefined>(undefined);
@@ -41,8 +43,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      <div className="bg-primary flex justify-between items-center px-6 pt-6 pb-2 text-primary-foreground">
+        <div className="flex items-center gap-2 font-serif font-bold text-xl tracking-tight">
+          <Film className="w-5 h-5 opacity-80" />
+          Watchlist
+        </div>
+        <UserMenu />
+      </div>
       {/* Hero Stats */}
-      <section className="bg-primary text-primary-foreground pt-12 pb-8 px-6 rounded-b-[2.5rem] shadow-sm mb-6">
+      <section className="bg-primary text-primary-foreground pt-6 pb-8 px-6 rounded-b-[2.5rem] shadow-sm mb-6">
         <div className="max-w-3xl mx-auto space-y-6">
           <h1 className="text-4xl font-serif font-bold tracking-tight">Your Library</h1>
           
@@ -175,7 +184,12 @@ export default function Home() {
                   </h3>
                   
                   <div className="mt-auto flex items-center justify-between">
-                    <StarRating value={entry.rating} readonly size="sm" />
+                    <div className="flex items-center gap-3">
+                      <StarRating value={entry.rating} readonly size="sm" />
+                      <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/50">
+                        by {entry.addedBy}
+                      </span>
+                    </div>
                     <span className="text-xs text-muted-foreground font-mono">
                       {format(new Date(entry.createdAt), "MMM d")}
                     </span>
