@@ -1,6 +1,6 @@
-# Watchlist
+# BingeLoop
 
-A mobile-first web app where users log TV shows and movies, rate them 1–5 stars, leave a comment, and tag a category (Drama, Comedy, Thriller, etc.).
+A mobile-first web app (brand name: BingeLoop) where users log TV shows and movies, rate them 1–5 stars, leave a comment, and tag a category (Drama, Comedy, Thriller, etc.).
 
 ## Run & Operate
 

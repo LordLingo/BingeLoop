@@ -26,7 +26,7 @@ export default function InvitePage() {
       <div className="z-10 w-full max-w-md text-center space-y-6">
         <div className="flex items-center justify-center gap-2.5 font-serif text-3xl tracking-[0.18em] text-primary">
           <Film className="w-7 h-7 shrink-0" />
-          WATCHLIST
+          BINGELOOP
         </div>
 
         {isLoading ? (

@@ -133,12 +133,12 @@ function App() {
         signIn: {
           start: {
             title: "Welcome back",
-            subtitle: "Sign in to access the group watchlist",
+            subtitle: "Sign in to access BingeLoop",
           },
         },
         signUp: {
           start: {
-            title: "Join the Watchlist",
+            title: "Join BingeLoop",
             subtitle: "Create an account to start logging",
           },
         },

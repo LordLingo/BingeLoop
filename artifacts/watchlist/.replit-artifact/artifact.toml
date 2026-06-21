@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Watchlist"
+title = "BingeLoop"
 version = "1.0.0"
 id = "artifacts/watchlist"
 router = "path"

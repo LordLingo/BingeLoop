@@ -63,7 +63,7 @@ export default function Home() {
       <div className="flex justify-between items-center px-6 pt-6 pb-2 text-foreground">
         <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-primary">
           <Film className="w-6 h-6 text-primary shrink-0" />
-          WATCHLIST
+          BINGELOOP
         </div>
         <div className="flex items-center gap-1">
           <Link

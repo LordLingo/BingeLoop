@@ -8,7 +8,7 @@ export default function Landing() {
       <header className="px-6 py-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-2 text-primary font-serif font-bold text-2xl tracking-tight">
           <Library className="w-6 h-6" />
-          Watchlist
+          BingeLoop
         </div>
         <div className="flex items-center gap-4">
           <Link href="/sign-in">
