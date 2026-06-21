@@ -4,11 +4,14 @@ import {
   useListEntries, 
   useGetStats, 
   useListCategories, 
+  useListWatchlist,
   getListEntriesQueryKey,
+  getListWatchlistQueryKey,
   ListEntriesSort
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Plus, Film, Tv, Star, ArrowUpDown } from "lucide-react";
+import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark } from "lucide-react";
+import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -31,6 +34,14 @@ export default function Home() {
 
   const { data: stats } = useGetStats();
   const { data: categories } = useListCategories();
+  const { data: watchlist } = useListWatchlist({
+    query: { queryKey: getListWatchlistQueryKey() },
+  });
+
+  const savedIdByShow = new Map<string, number>();
+  for (const item of watchlist ?? []) {
+    savedIdByShow.set(`${item.title.trim().toLowerCase()}::${item.mediaType}`, item.id);
+  }
   
   const { data: entries, isLoading } = useListEntries({
     category: filterCategory,
@@ -49,7 +60,17 @@ export default function Home() {
           <Film className="w-5 h-5 opacity-80" />
           Watchlist
         </div>
-        <UserMenu />
+        <div className="flex items-center gap-1">
+          <Link
+            href="/watchlist"
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium hover:bg-white/10 transition-colors"
+            data-testid="link-my-watchlist"
+          >
+            <Bookmark className="w-4 h-4" />
+            <span className="hidden sm:inline">My Watchlist</span>
+          </Link>
+          <UserMenu />
+        </div>
       </div>
       {/* Hero Stats */}
       <section className="bg-primary text-primary-foreground pt-6 pb-8 px-6 rounded-b-[2.5rem] shadow-sm mb-6">
@@ -196,6 +217,16 @@ export default function Home() {
                     <span className="text-xs text-muted-foreground font-mono">
                       {format(new Date(entry.createdAt), "MMM d")}
                     </span>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-border/50">
+                    <SaveToWatchlistButton
+                      title={entry.title}
+                      mediaType={entry.mediaType}
+                      savedItemId={savedIdByShow.get(
+                        `${entry.title.trim().toLowerCase()}::${entry.mediaType}`,
+                      )}
+                    />
                   </div>
                 </Link>
               ))}

@@ -17,3 +17,5 @@ export * from './listEntriesParams';
 export * from './listEntriesSort';
 export * from './mediaType';
 export * from './stats';
+export * from './watchlistInput';
+export * from './watchlistItem';

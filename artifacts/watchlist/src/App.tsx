@@ -12,6 +12,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AddEntry from "@/pages/add-entry";
 import ViewEntry from "@/pages/view-entry";
+import WatchlistPage from "@/pages/watchlist";
 import Landing from "@/pages/landing";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
@@ -71,6 +72,7 @@ function Router() {
     <Switch>
       <Route path="/" component={HomeRedirect} />
       <Route path="/library"><AuthRoute component={Home} /></Route>
+      <Route path="/watchlist"><AuthRoute component={WatchlistPage} /></Route>
       <Route path="/add"><AuthRoute component={AddEntry} /></Route>
       <Route path="/entry/:id"><AuthRoute component={ViewEntry} /></Route>
       <Route path="/sign-in/*?" component={SignInPage} />

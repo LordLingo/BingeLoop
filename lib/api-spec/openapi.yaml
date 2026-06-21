@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: entries
     description: Watchlist entry operations
+  - name: watchlist
+    description: Personal watchlist (saved shows) operations
 paths:
   /healthz:
     get:
@@ -175,6 +177,60 @@ paths:
                 type: array
                 items:
                   type: string
+  /watchlist:
+    get:
+      operationId: listWatchlist
+      tags: [watchlist]
+      summary: List my saved watchlist items
+      description: >-
+        Returns the current user's saved shows, each annotated with the names of
+        other group members who have rated or saved the same show.
+      responses:
+        "200":
+          description: A list of saved watchlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WatchlistItem"
+    post:
+      operationId: createWatchlistItem
+      tags: [watchlist]
+      summary: Save a show to my watchlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistInput"
+      responses:
+        "201":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+  /watchlist/{id}:
+    delete:
+      operationId: deleteWatchlistItem
+      tags: [watchlist]
+      summary: Remove a show from my watchlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /activity/check-in:
     post:
       operationId: checkIn
@@ -311,6 +367,40 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CategoryCount"
+    WatchlistItem:
+      type: object
+      required:
+        - id
+        - title
+        - mediaType
+        - createdAt
+        - alsoEngagedBy
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        createdAt:
+          type: string
+          format: date-time
+        alsoEngagedBy:
+          type: array
+          description: Display names of other group members who rated or saved this show.
+          items:
+            type: string
+    WatchlistInput:
+      type: object
+      required:
+        - title
+        - mediaType
+      properties:
+        title:
+          type: string
+          minLength: 1
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
     CheckInResult:
       type: object
       required:

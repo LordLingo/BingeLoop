@@ -155,6 +155,40 @@ export const ListCategoriesResponse = zod.array(ListCategoriesResponseItem)
 
 
 /**
+ * Returns the current user's saved shows, each annotated with the names of other group members who have rated or saved the same show.
+ * @summary List my saved watchlist items
+ */
+export const ListWatchlistResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "createdAt": zod.coerce.date(),
+  "alsoEngagedBy": zod.array(zod.string()).describe('Display names of other group members who rated or saved this show.')
+})
+export const ListWatchlistResponse = zod.array(ListWatchlistResponseItem)
+
+
+/**
+ * @summary Save a show to my watchlist
+ */
+
+
+
+export const CreateWatchlistItemBody = zod.object({
+  "title": zod.string().min(1),
+  "mediaType": zod.enum(['movie', 'tv'])
+})
+
+
+/**
+ * @summary Remove a show from my watchlist
+ */
+export const DeleteWatchlistItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
  * Records the current user's visit, returning the number of entries added by other group members since the user's previous visit. Updates the stored last-seen time to now.
  * @summary Record a visit and get new-activity count
  */

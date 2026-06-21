@@ -80,6 +80,21 @@ export interface Stats {
   byCategory: CategoryCount[];
 }
 
+export interface WatchlistItem {
+  id: number;
+  title: string;
+  mediaType: MediaType;
+  createdAt: string;
+  /** Display names of other group members who rated or saved this show. */
+  alsoEngagedBy: string[];
+}
+
+export interface WatchlistInput {
+  /** @minLength 1 */
+  title: string;
+  mediaType: MediaType;
+}
+
 export interface CheckInResult {
   /** Entries added by other group members since the previous visit. */
   newCount: number;
