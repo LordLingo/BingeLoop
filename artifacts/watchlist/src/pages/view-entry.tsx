@@ -220,7 +220,7 @@ export default function ViewEntry() {
                 <Separator className="bg-border/60" />
                 <div className="prose prose-p:leading-relaxed prose-p:text-foreground/80 max-w-none">
                   <p className="text-base font-semibold tracking-widest uppercase text-muted-foreground mb-3">Thoughts</p>
-                  <p className="text-[18px] leading-loose text-foreground whitespace-pre-wrap" data-testid="text-comment">{entry.comment}</p>
+                  <p className="text-lg leading-loose text-foreground whitespace-pre-wrap" data-testid="text-comment">{entry.comment}</p>
                 </div>
               </>
             )}
