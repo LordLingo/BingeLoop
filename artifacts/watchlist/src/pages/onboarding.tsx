@@ -10,7 +10,7 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex justify-between items-center px-6 pt-6 pb-2 text-foreground">
-        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-primary">
+        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-foreground">
           <Film className="w-6 h-6 text-primary shrink-0" />
           BINGELOOP
         </div>

@@ -25,8 +25,8 @@ export default function InvitePage() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[36rem] h-72 bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="z-10 w-full max-w-md text-center space-y-6">
-        <div className="flex items-center justify-center gap-2.5 font-serif text-3xl tracking-[0.18em] text-primary">
-          <Film className="w-7 h-7 shrink-0" />
+        <div className="flex items-center justify-center gap-2.5 font-serif text-3xl tracking-[0.18em] text-foreground">
+          <Film className="w-7 h-7 text-primary shrink-0" />
           BINGELOOP
         </div>
 

@@ -168,7 +168,7 @@ export default function GroupPage() {
         >
           <ChevronLeft className="w-5 h-5" />
         </Link>
-        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-primary">
+        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-foreground">
           <Users className="w-6 h-6 text-primary shrink-0" />
           GROUP
         </div>

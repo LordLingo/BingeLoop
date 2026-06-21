@@ -6,8 +6,8 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans">
       <header className="px-6 py-6 flex items-center justify-between z-10">
-        <div className="flex items-center gap-2 text-primary font-serif font-bold text-2xl tracking-tight">
-          <Library className="w-6 h-6" />
+        <div className="flex items-center gap-2 text-foreground font-serif font-bold text-2xl tracking-tight">
+          <Library className="w-6 h-6 text-primary" />
           BingeLoop
         </div>
         <div className="flex items-center gap-4">
@@ -31,7 +31,7 @@ export default function Landing() {
           </Badge>
           
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-serif font-bold tracking-tight leading-[1.1] mb-8 text-foreground">
-            Log your <span className="text-primary italic">film & TV</span><br />
+            Log your <span className="text-foreground italic">film & TV</span><br />
             with your friend group.
           </h1>
           

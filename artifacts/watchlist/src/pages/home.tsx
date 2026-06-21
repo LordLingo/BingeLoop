@@ -71,7 +71,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="flex justify-between items-center px-6 pt-6 pb-2 text-foreground">
-        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-primary">
+        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-foreground">
           <Film className="w-6 h-6 text-primary shrink-0" />
           BINGELOOP
         </div>
@@ -95,18 +95,18 @@ export default function Home() {
           <h1 className="text-5xl font-serif tracking-wide text-foreground">Your Library</h1>
           
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white/[0.03] rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-              <div className="text-4xl font-serif text-primary">{stats?.total || 0}</div>
+            <div className="bg-black/[0.03] rounded-2xl p-4 border border-black/10">
+              <div className="text-4xl font-serif text-foreground">{stats?.total || 0}</div>
               <div className="text-sm text-muted-foreground font-medium tracking-wide uppercase">Logged</div>
             </div>
-            <div className="bg-white/[0.03] rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+            <div className="bg-black/[0.03] rounded-2xl p-4 border border-black/10">
               <div className="text-4xl font-serif flex items-center gap-2 text-foreground">
                 {stats?.averageRating ? Number(stats.averageRating).toFixed(1) : "-"}
                 <Star className="w-5 h-5 fill-accent text-accent" />
               </div>
               <div className="text-sm text-muted-foreground font-medium tracking-wide uppercase">Avg Rating</div>
             </div>
-            <div className="bg-white/[0.03] rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+            <div className="bg-black/[0.03] rounded-2xl p-4 border border-black/10">
               <div className="flex gap-3 h-full items-center">
                 <div className="flex-1 flex flex-col justify-center">
                   <div className="text-xl font-semibold flex items-center gap-1.5 text-foreground">

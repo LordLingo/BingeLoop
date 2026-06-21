@@ -56,79 +56,86 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Light theme. :root and .dark are kept identical (html has class="dark"); edit BOTH. */
 :root {
-  --background: 0 0% 7%;
-  --foreground: 40 30% 92%;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 7%;
 
-  --card: 30 5% 11%;
-  --card-foreground: 40 30% 92%;
-  --card-border: 0 0% 18%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 7%;
+  --card-border: 0 0% 88%;
 
-  --popover: 30 5% 10%;
-  --popover-foreground: 40 30% 92%;
-  --popover-border: 0 0% 18%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 7%;
+  --popover-border: 0 0% 88%;
 
   --primary: 46 100% 45%;
   --primary-foreground: 0 0% 8%;
   --primary-border: 46 100% 38%;
 
-  --secondary: 0 0% 16%;
-  --secondary-foreground: 40 30% 92%;
-  --secondary-border: 0 0% 24%;
+  --secondary: 0 0% 94%;
+  --secondary-foreground: 0 0% 12%;
+  --secondary-border: 0 0% 85%;
 
-  --muted: 0 0% 15%;
-  --muted-foreground: 40 8% 60%;
-  --muted-border: 0 0% 22%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 38%;
+  --muted-border: 0 0% 88%;
 
   --accent: 46 100% 50%;
   --accent-foreground: 0 0% 8%;
   --accent-border: 46 100% 42%;
 
-  --destructive: 0 72% 51%;
+  --destructive: 0 72% 48%;
   --destructive-foreground: 0 0% 100%;
-  --destructive-border: 0 72% 42%;
+  --destructive-border: 0 72% 40%;
 
-  --border: 0 0% 16%;
-  --input: 0 0% 18%;
+  --border: 0 0% 88%;
+  --input: 0 0% 85%;
   --ring: 46 100% 45%;
   --radius: 0.75rem;
+
+  --badge-outline: hsl(0 0% 82%);
+  --button-outline: hsl(0 0% 82%);
 }
 
 .dark {
-  --background: 0 0% 7%;
-  --foreground: 40 30% 92%;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 7%;
 
-  --card: 30 5% 11%;
-  --card-foreground: 40 30% 92%;
-  --card-border: 0 0% 18%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 7%;
+  --card-border: 0 0% 88%;
 
-  --popover: 30 5% 10%;
-  --popover-foreground: 40 30% 92%;
-  --popover-border: 0 0% 18%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 7%;
+  --popover-border: 0 0% 88%;
 
   --primary: 46 100% 45%;
   --primary-foreground: 0 0% 8%;
   --primary-border: 46 100% 38%;
 
-  --secondary: 0 0% 16%;
-  --secondary-foreground: 40 30% 92%;
-  --secondary-border: 0 0% 24%;
+  --secondary: 0 0% 94%;
+  --secondary-foreground: 0 0% 12%;
+  --secondary-border: 0 0% 85%;
 
-  --muted: 0 0% 15%;
-  --muted-foreground: 40 8% 60%;
-  --muted-border: 0 0% 22%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 38%;
+  --muted-border: 0 0% 88%;
 
   --accent: 46 100% 50%;
   --accent-foreground: 0 0% 8%;
   --accent-border: 46 100% 42%;
 
-  --destructive: 0 72% 51%;
+  --destructive: 0 72% 48%;
   --destructive-foreground: 0 0% 100%;
-  --destructive-border: 0 72% 42%;
+  --destructive-border: 0 72% 40%;
 
-  --border: 0 0% 16%;
-  --input: 0 0% 18%;
+  --border: 0 0% 88%;
+  --input: 0 0% 85%;
   --ring: 46 100% 45%;
+
+  --badge-outline: hsl(0 0% 82%);
+  --button-outline: hsl(0 0% 82%);
 }
 
 @layer base {
@@ -137,12 +144,6 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background-image: radial-gradient(
-      ellipse 80% 60% at 50% -10%,
-      hsl(46 60% 12% / 0.55) 0%,
-      hsl(var(--background)) 60%
-    );
-    background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif tracking-wide;
@@ -151,20 +152,35 @@
 }
 
 @layer components {
+  /* Show cards: navy gradient surface. Design tokens are re-scoped to
+     dark-surface values so all card internals (badges, save button, dates,
+     dividers) that use token-based color utilities stay readable on navy. */
   .poster-card {
+    --card: 213 50% 18%;
+    --card-foreground: 0 0% 100%;
+    --foreground: 0 0% 100%;
+    --muted-foreground: 213 18% 80%;
+    --background: 213 48% 19%;
+    --muted: 213 30% 32%;
+    --border: 213 25% 40%;
+    --input: 213 25% 40%;
+    --badge-outline: hsl(0 0% 100% / 0.25);
+    --button-outline: hsl(0 0% 100% / 0.22);
+    color: hsl(var(--foreground));
+    background-image: linear-gradient(155deg, #1e3a5f 0%, #142841 100%);
     box-shadow:
-      0 16px 40px -16px rgb(0 0 0 / 0.85),
-      0 2px 8px -2px rgb(0 0 0 / 0.6);
+      0 12px 30px -14px rgb(15 30 55 / 0.45),
+      0 2px 6px -2px rgb(0 0 0 / 0.12);
   }
   .poster-card:hover {
     box-shadow:
-      0 24px 56px -16px rgb(0 0 0 / 0.9),
-      0 0 0 1px hsl(var(--primary) / 0.25);
+      0 20px 44px -16px rgb(15 30 55 / 0.55),
+      0 0 0 1px hsl(var(--primary) / 0.45);
   }
   .cinematic-panel {
     background-image: linear-gradient(
       180deg,
-      hsl(30 6% 13%) 0%,
+      hsl(0 0% 97%) 0%,
       hsl(var(--background)) 100%
     );
   }

@@ -3,3 +3,5 @@
 - [Canonical category contract](canonical-category-contract.md) — server validates `category` against canonical `CATEGORIES`; the UI must constrain it (Select from `/categories`), never free-text, or submits 400.
 - [Orval zod response naming](orval-zod-naming.md) — `@workspace/api-zod` exports the response *schema* as `<OperationId>Response` (value); `<SchemaName>` is only the TS type. Import the `Response` one for `.parse()`.
 - [API router auth ordering](api-router-auth-ordering.md) — public routes must mount before entriesRouter, whose router.use(requireAuth) (no path) 401s any later-reached request.
+- [CSS comment glob trap](css-comment-glob-trap.md) — `*/` inside a CSS comment (e.g. `bg-*/text-*`) closes it early and silently breaks the next rule; no build error.
+- [Per-surface inverted theme](per-surface-theme-scoping.md) — to invert one surface against the global theme, re-scope the design-token CSS vars on that surface's class, not per-component overrides.
