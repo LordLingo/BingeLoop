@@ -16,6 +16,8 @@ tags:
     description: Personal watchlist (saved shows) operations
   - name: approvals
     description: Per-member "Wife Approved?" answers per show
+  - name: invites
+    description: Shareable invite links to join the group
 paths:
   /healthz:
     get:
@@ -305,6 +307,69 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CheckInResult"
+  /invites:
+    post:
+      operationId: createOrGetInvite
+      tags: [invites]
+      summary: Create or fetch my shareable invite link
+      description: >-
+        Returns the caller's reusable invite. Creates one on first call and
+        returns the existing invite on subsequent calls.
+      responses:
+        "200":
+          description: The caller's invite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+  /invites/{token}:
+    get:
+      operationId: getInvitePreview
+      tags: [invites]
+      summary: Look up an invite by token (public)
+      description: >-
+        Public endpoint used by the invite landing page to show who invited the
+        visitor before they sign up. Returns valid=false for unknown tokens.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invite preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitePreview"
+  /invites/{token}/accept:
+    post:
+      operationId: acceptInvite
+      tags: [invites]
+      summary: Accept an invite after signing in
+      description: >-
+        Records that the authenticated caller joined via this invite. Idempotent;
+        accepting the same invite twice is a no-op.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Acceptance result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptInviteResult"
+        "404":
+          description: Invite not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     HealthStatus:
@@ -321,6 +386,43 @@ components:
           type: string
       required:
         - error
+    Invite:
+      type: object
+      required:
+        - token
+        - createdByName
+        - createdAt
+      properties:
+        token:
+          type: string
+        createdByName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    InvitePreview:
+      type: object
+      required:
+        - token
+        - inviterName
+        - valid
+      properties:
+        token:
+          type: string
+        inviterName:
+          type: string
+        valid:
+          type: boolean
+    AcceptInviteResult:
+      type: object
+      required:
+        - joined
+        - inviterName
+      properties:
+        joined:
+          type: boolean
+        inviterName:
+          type: string
     MediaType:
       type: string
       enum: [movie, tv]

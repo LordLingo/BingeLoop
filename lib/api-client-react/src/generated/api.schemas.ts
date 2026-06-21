@@ -13,6 +13,23 @@ export interface Error {
   error: string;
 }
 
+export interface Invite {
+  token: string;
+  createdByName: string;
+  createdAt: string;
+}
+
+export interface InvitePreview {
+  token: string;
+  inviterName: string;
+  valid: boolean;
+}
+
+export interface AcceptInviteResult {
+  joined: boolean;
+  inviterName: string;
+}
+
 export type MediaType = typeof MediaType[keyof typeof MediaType];
 
 

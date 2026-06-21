@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AcceptInviteResult,
   ApprovalInput,
   CheckInResult,
   ClearApprovalParams,
@@ -28,6 +29,8 @@ import type {
   EntryUpdate,
   Error,
   HealthStatus,
+  Invite,
+  InvitePreview,
   ListEntriesParams,
   ShowApproval,
   Stats,
@@ -1170,5 +1173,225 @@ export const useCheckIn = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCheckInMutationOptions(options));
+    }
+
+export const getCreateOrGetInviteUrl = () => {
+
+
+
+
+  return `/api/invites`
+}
+
+/**
+ * Returns the caller's reusable invite. Creates one on first call and returns the existing invite on subsequent calls.
+ * @summary Create or fetch my shareable invite link
+ */
+export const createOrGetInvite = async ( options?: RequestInit): Promise<Invite> => {
+
+  return customFetch<Invite>(getCreateOrGetInviteUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCreateOrGetInviteMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrGetInvite>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createOrGetInvite>>, TError,void, TContext> => {
+
+const mutationKey = ['createOrGetInvite'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOrGetInvite>>, void> = () => {
+
+
+          return  createOrGetInvite(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateOrGetInviteMutationResult = NonNullable<Awaited<ReturnType<typeof createOrGetInvite>>>
+
+    export type CreateOrGetInviteMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create or fetch my shareable invite link
+ */
+export const useCreateOrGetInvite = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrGetInvite>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createOrGetInvite>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCreateOrGetInviteMutationOptions(options));
+    }
+
+export const getGetInvitePreviewUrl = (token: string,) => {
+
+
+
+
+  return `/api/invites/${token}`
+}
+
+/**
+ * Public endpoint used by the invite landing page to show who invited the visitor before they sign up. Returns valid=false for unknown tokens.
+ * @summary Look up an invite by token (public)
+ */
+export const getInvitePreview = async (token: string, options?: RequestInit): Promise<InvitePreview> => {
+
+  return customFetch<InvitePreview>(getGetInvitePreviewUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetInvitePreviewQueryKey = (token: string,) => {
+    return [
+    `/api/invites/${token}`
+    ] as const;
+    }
+
+
+export const getGetInvitePreviewQueryOptions = <TData = Awaited<ReturnType<typeof getInvitePreview>>, TError = ErrorType<unknown>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInvitePreview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInvitePreviewQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInvitePreview>>> = ({ signal }) => getInvitePreview(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(token), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInvitePreview>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetInvitePreviewQueryResult = NonNullable<Awaited<ReturnType<typeof getInvitePreview>>>
+export type GetInvitePreviewQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Look up an invite by token (public)
+ */
+
+export function useGetInvitePreview<TData = Awaited<ReturnType<typeof getInvitePreview>>, TError = ErrorType<unknown>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInvitePreview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetInvitePreviewQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getAcceptInviteUrl = (token: string,) => {
+
+
+
+
+  return `/api/invites/${token}/accept`
+}
+
+/**
+ * Records that the authenticated caller joined via this invite. Idempotent; accepting the same invite twice is a no-op.
+ * @summary Accept an invite after signing in
+ */
+export const acceptInvite = async (token: string, options?: RequestInit): Promise<AcceptInviteResult> => {
+
+  return customFetch<AcceptInviteResult>(getAcceptInviteUrl(token),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getAcceptInviteMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvite>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof acceptInvite>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['acceptInvite'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptInvite>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  acceptInvite(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcceptInviteMutationResult = NonNullable<Awaited<ReturnType<typeof acceptInvite>>>
+
+    export type AcceptInviteMutationError = ErrorType<Error>
+
+    /**
+ * @summary Accept an invite after signing in
+ */
+export const useAcceptInvite = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvite>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof acceptInvite>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+      return useMutation(getAcceptInviteMutationOptions(options));
     }
 

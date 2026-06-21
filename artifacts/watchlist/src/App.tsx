@@ -16,6 +16,8 @@ import WatchlistPage from "@/pages/watchlist";
 import Landing from "@/pages/landing";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
+import InvitePage from "@/pages/invite";
+import { InviteAccepter } from "@/components/invite-accepter";
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -75,6 +77,7 @@ function Router() {
       <Route path="/watchlist"><AuthRoute component={WatchlistPage} /></Route>
       <Route path="/add"><AuthRoute component={AddEntry} /></Route>
       <Route path="/entry/:id"><AuthRoute component={ViewEntry} /></Route>
+      <Route path="/invite/:token" component={InvitePage} />
       <Route path="/sign-in/*?" component={SignInPage} />
       <Route path="/sign-up/*?" component={SignUpPage} />
       <Route component={NotFound} />
@@ -143,6 +146,7 @@ function App() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
+        <InviteAccepter />
         <NewActivityProvider>
           <TooltipProvider>
             <WouterRouter base={basePath}>

@@ -253,3 +253,43 @@ export const CheckInResponse = zod.object({
 })
 
 
+/**
+ * Returns the caller's reusable invite. Creates one on first call and returns the existing invite on subsequent calls.
+ * @summary Create or fetch my shareable invite link
+ */
+export const CreateOrGetInviteResponse = zod.object({
+  "token": zod.string(),
+  "createdByName": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * Public endpoint used by the invite landing page to show who invited the visitor before they sign up. Returns valid=false for unknown tokens.
+ * @summary Look up an invite by token (public)
+ */
+export const GetInvitePreviewParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const GetInvitePreviewResponse = zod.object({
+  "token": zod.string(),
+  "inviterName": zod.string(),
+  "valid": zod.boolean()
+})
+
+
+/**
+ * Records that the authenticated caller joined via this invite. Idempotent; accepting the same invite twice is a no-op.
+ * @summary Accept an invite after signing in
+ */
+export const AcceptInviteParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const AcceptInviteResponse = zod.object({
+  "joined": zod.boolean(),
+  "inviterName": zod.string()
+})
+
+

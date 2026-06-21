@@ -2,3 +2,4 @@
 - [Drizzle NOT NULL backfill](drizzle-notnull-backfill.md) — adding a NOT NULL column via `drizzle-kit push` to a table with existing rows fails; clear/backfill rows first.
 - [Canonical category contract](canonical-category-contract.md) — server validates `category` against canonical `CATEGORIES`; the UI must constrain it (Select from `/categories`), never free-text, or submits 400.
 - [Orval zod response naming](orval-zod-naming.md) — `@workspace/api-zod` exports the response *schema* as `<OperationId>Response` (value); `<SchemaName>` is only the TS type. Import the `Response` one for `.parse()`.
+- [API router auth ordering](api-router-auth-ordering.md) — public routes must mount before entriesRouter, whose router.use(requireAuth) (no path) 401s any later-reached request.

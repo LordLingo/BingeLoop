@@ -28,6 +28,7 @@ import {
 
 import { UserMenu } from "@/components/user-menu";
 import { NewActivityBadge } from "@/components/new-activity-badge";
+import { InviteDialog } from "@/components/invite-dialog";
 
 export default function Home() {
   const [filterCategory, setFilterCategory] = useState<string | undefined>(undefined);
@@ -73,6 +74,7 @@ export default function Home() {
             <Bookmark className="w-4 h-4" />
             <span className="hidden sm:inline">My Watchlist</span>
           </Link>
+          <InviteDialog />
           <UserMenu />
         </div>
       </div>
