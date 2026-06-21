@@ -1,6 +1,6 @@
-# [Project name]
+# Watchlist
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A mobile-first web app where users log TV shows and movies, rate them 1–5 stars, leave a comment, and tag a category (Drama, Comedy, Thriller, etc.).
 
 ## Run & Operate
 
@@ -22,15 +22,21 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- Frontend: `artifacts/watchlist/` (React + Vite, served at `/`)
+- API contract (source of truth): `lib/api-spec/openapi.yaml`
+- DB schema: `lib/db/src/schema/entries.ts`
+- API routes: `artifacts/api-server/src/routes/entries.ts`
+- Generated hooks: `@workspace/api-client-react`; generated Zod: `@workspace/api-zod`
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Categories are a server-defined canonical list (`CATEGORIES` in `entries.ts`), exposed via `GET /categories` and enforced on create/update. To add a category, edit that array.
+- On create, `comment` is an optional string (null is rejected); on update, `comment` is nullable so it can be cleared.
+- `/stats` aggregates in the handler (totals, avg rating, per-category counts) rather than via SQL aggregation, for simplicity at this scale.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Users browse their watch library with category/media-type filters and sorting, see summary stats (total logged, average rating, movie/TV split, category breakdown), and add/edit/delete entries — each with a title, movie/TV type, 1–5 star rating, category, and optional comment.
 
 ## User preferences
 

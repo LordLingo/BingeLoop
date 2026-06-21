@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: entries
+    description: Watchlist entry operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,155 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /entries:
+    get:
+      operationId: listEntries
+      tags: [entries]
+      summary: List watchlist entries
+      description: Returns all watchlist entries, optionally filtered by category or media type and sorted.
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: mediaType
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/MediaType"
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [newest, oldest, rating_high, rating_low, title]
+      responses:
+        "200":
+          description: A list of entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Entry"
+    post:
+      operationId: createEntry
+      tags: [entries]
+      summary: Create a watchlist entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entry"
+  /entries/{id}:
+    get:
+      operationId: getEntry
+      tags: [entries]
+      summary: Get a single entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entry"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      operationId: updateEntry
+      tags: [entries]
+      summary: Update an entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntryUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entry"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      operationId: deleteEntry
+      tags: [entries]
+      summary: Delete an entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /stats:
+    get:
+      operationId: getStats
+      tags: [entries]
+      summary: Watchlist summary stats
+      description: Aggregate counts, average rating, category breakdown, and recent activity for the watchlist.
+      responses:
+        "200":
+          description: Stats summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [entries]
+      summary: List available categories
+      description: Returns the canonical list of categories that can be assigned to entries.
+      responses:
+        "200":
+          description: A list of category names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
 components:
   schemas:
     HealthStatus:
@@ -33,4 +184,110 @@ components:
           type: string
       required:
         - status
-
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    MediaType:
+      type: string
+      enum: [movie, tv]
+    Entry:
+      type: object
+      required:
+        - id
+        - title
+        - mediaType
+        - rating
+        - category
+        - createdAt
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        category:
+          type: string
+        comment:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+    EntryInput:
+      type: object
+      required:
+        - title
+        - mediaType
+        - rating
+        - category
+      properties:
+        title:
+          type: string
+          minLength: 1
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        category:
+          type: string
+          minLength: 1
+        comment:
+          type: string
+    EntryUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        category:
+          type: string
+          minLength: 1
+        comment:
+          type: ["string", "null"]
+    CategoryCount:
+      type: object
+      required:
+        - category
+        - count
+      properties:
+        category:
+          type: string
+        count:
+          type: integer
+    Stats:
+      type: object
+      required:
+        - total
+        - movieCount
+        - tvCount
+        - averageRating
+        - byCategory
+      properties:
+        total:
+          type: integer
+        movieCount:
+          type: integer
+        tvCount:
+          type: integer
+        averageRating:
+          type: number
+        byCategory:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryCount"
