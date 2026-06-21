@@ -73,23 +73,25 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
-      <div className="flex justify-between items-center gap-2 px-4 sm:px-6 pt-6 pb-2 text-foreground">
-        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-foreground min-w-0">
+      <div className="flex flex-col gap-3 px-4 sm:px-6 pt-6 pb-2 text-foreground">
+        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-foreground">
           <Film className="w-6 h-6 text-primary shrink-0" />
-          <span className="truncate">BINGELOOP</span>
+          BINGELOOP
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center justify-between gap-2">
           <GroupSwitcher />
-          <Link
-            href="/watchlist"
-            className="flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
-            data-testid="link-my-watchlist"
-          >
-            <Bookmark className="w-4 h-4" />
-            <span className="hidden sm:inline">My Watchlist</span>
-          </Link>
-          <InviteDialog />
-          <UserMenu />
+          <div className="flex items-center gap-1 shrink-0">
+            <Link
+              href="/watchlist"
+              className="flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+              data-testid="link-my-watchlist"
+            >
+              <Bookmark className="w-4 h-4" />
+              <span className="hidden sm:inline">My Watchlist</span>
+            </Link>
+            <InviteDialog />
+            <UserMenu />
+          </div>
         </div>
       </div>
       {/* Hero Stats */}
