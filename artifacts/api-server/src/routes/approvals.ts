@@ -24,14 +24,16 @@ function normalizeTitle(title: string): string {
 }
 
 // Returns the member ids whose answers count toward a show's tallies for this
-// caller: just the caller unless they pass a group they belong to.
-async function tallyMemberIds(
+// caller: just the caller when no group is given, or all members of the group.
+// Returns null when the caller passed a group they don't belong to, so the
+// route can respond with a 403 (consistent with /entries and /stats).
+async function resolveMemberIds(
   callerId: string,
   groupId: number | undefined,
-): Promise<string[]> {
+): Promise<string[] | null> {
   if (groupId === undefined) return [callerId];
   const membership = await getMembership(groupId, callerId);
-  if (!membership) return [callerId];
+  if (!membership) return null;
   return getGroupMemberIds(groupId);
 }
 
@@ -88,7 +90,11 @@ router.get("/approvals", async (req: AuthedRequest, res): Promise<void> => {
   }
 
   const callerId = req.userId!;
-  const memberIds = await tallyMemberIds(callerId, parsed.data.groupId);
+  const memberIds = await resolveMemberIds(callerId, parsed.data.groupId);
+  if (memberIds === null) {
+    res.status(403).json({ error: "You are not a member of this group" });
+    return;
+  }
 
   const grouped = await db
     .select({
@@ -188,7 +194,11 @@ router.put("/approvals", async (req: AuthedRequest, res): Promise<void> => {
       set: { approval, updatedAt: new Date() },
     });
 
-  const memberIds = await tallyMemberIds(callerId, parsed.data.groupId);
+  const memberIds = await resolveMemberIds(callerId, parsed.data.groupId);
+  if (memberIds === null) {
+    res.status(403).json({ error: "You are not a member of this group" });
+    return;
+  }
   const summary = await summarizeShow(memberIds, callerId, titleKey, mediaType);
   res.json(SetApprovalResponse.parse(summary));
 });
@@ -214,7 +224,11 @@ router.delete("/approvals", async (req: AuthedRequest, res): Promise<void> => {
       ),
     );
 
-  const memberIds = await tallyMemberIds(callerId, parsed.data.groupId);
+  const memberIds = await resolveMemberIds(callerId, parsed.data.groupId);
+  if (memberIds === null) {
+    res.status(403).json({ error: "You are not a member of this group" });
+    return;
+  }
   const summary = await summarizeShow(memberIds, callerId, titleKey, mediaType);
   res.json(ClearApprovalResponse.parse(summary));
 });

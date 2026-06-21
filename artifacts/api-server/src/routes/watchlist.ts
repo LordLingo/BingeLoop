@@ -5,7 +5,7 @@ import { db, entriesTable, watchlistItemsTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import {
   getGroupMemberIds,
-  getMembership,
+  isMember,
   usersShareGroup,
 } from "../lib/groups";
 import {
@@ -40,6 +40,14 @@ router.get("/watchlist", async (req: AuthedRequest, res): Promise<void> => {
     }
   }
 
+  if (parsed.data.groupId !== undefined) {
+    const allowed = await isMember(parsed.data.groupId, callerId);
+    if (!allowed) {
+      res.status(403).json({ error: "You are not a member of this group" });
+      return;
+    }
+  }
+
   const myItems = await db
     .select()
     .from(watchlistItemsTable)
@@ -52,14 +60,12 @@ router.get("/watchlist", async (req: AuthedRequest, res): Promise<void> => {
   }
 
   // "Also engaged by" is scoped to other members of the given group.
+  // Membership was already verified above, so a groupId here is always valid.
   let otherMemberIds: string[] = [];
   if (parsed.data.groupId !== undefined) {
-    const membership = await getMembership(parsed.data.groupId, callerId);
-    if (membership) {
-      otherMemberIds = (await getGroupMemberIds(parsed.data.groupId)).filter(
-        (id) => id !== targetUserId,
-      );
-    }
+    otherMemberIds = (await getGroupMemberIds(parsed.data.groupId)).filter(
+      (id) => id !== targetUserId,
+    );
   }
 
   if (otherMemberIds.length === 0) {
