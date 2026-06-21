@@ -262,6 +262,64 @@ export const ClearApprovalResponse = zod.object({
 
 
 /**
+ * Returns, for every show that has at least one answer within the given group, the count of each answer across that group's members plus the caller's own answer. Without a groupId, only the caller's own answers are counted.
+ * @summary List "Spicy?" summaries
+ */
+export const ListSpiceQueryParams = zod.object({
+  "groupId": zod.coerce.number().optional().describe('Scope the tallies to members of this group.')
+})
+
+export const ListSpiceResponseItem = zod.object({
+  "titleKey": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "yes": zod.number(),
+  "no": zod.number(),
+  "mySpicy": zod.union([zod.enum(['yes', 'no']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+})
+export const ListSpiceResponse = zod.array(ListSpiceResponseItem)
+
+
+/**
+ * @summary Set my "Spicy?" answer for a show
+ */
+
+
+
+export const SetSpicyBody = zod.object({
+  "title": zod.string().min(1),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "spicy": zod.enum(['yes', 'no']),
+  "groupId": zod.number().optional().describe('Scope the returned tallies to members of this group. Without it, only the caller\'s own answer is counted.')
+})
+
+export const SetSpicyResponse = zod.object({
+  "titleKey": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "yes": zod.number(),
+  "no": zod.number(),
+  "mySpicy": zod.union([zod.enum(['yes', 'no']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+})
+
+
+/**
+ * @summary Clear my spicy answer for a show
+ */
+export const ClearSpicyQueryParams = zod.object({
+  "title": zod.coerce.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "groupId": zod.coerce.number().optional().describe('Scope the returned tallies to members of this group.')
+})
+
+export const ClearSpicyResponse = zod.object({
+  "titleKey": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "yes": zod.number(),
+  "no": zod.number(),
+  "mySpicy": zod.union([zod.enum(['yes', 'no']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+})
+
+
+/**
  * Records the caller's visit, returning the number of entries added by other members of the given group since the caller's previous visit. Updates the stored last-seen time to now. Without a groupId, newCount is always 0.
  * @summary Record a visit and get new-activity count
  */

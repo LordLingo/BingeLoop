@@ -14,6 +14,8 @@ import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark } from "lucide-react";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
+import { SpicySummary } from "@/components/spicy-summary";
+import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -55,6 +57,7 @@ export default function Home() {
   }
 
   const approvalMap = useApprovalMap();
+  const spiceMap = useSpiceMap();
   
   const entriesParams = {
     ...(activeGroupId != null ? { groupId: activeGroupId } : {}),
@@ -249,6 +252,10 @@ export default function Home() {
                       return a ? (
                         <ApprovalSummary yes={a.yes} no={a.no} solo={a.solo} />
                       ) : null;
+                    })()}
+                    {(() => {
+                      const s = spiceMap.get(spiceKey(entry.title, entry.mediaType));
+                      return s ? <SpicySummary yes={s.yes} /> : null;
                     })()}
                   </div>
                 </Link>

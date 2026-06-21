@@ -16,6 +16,8 @@ tags:
     description: Personal watchlist (saved shows) operations
   - name: approvals
     description: Per-member "Wife Approved?" answers per show
+  - name: spice
+    description: Per-member "Spicy?" (adult content) flags per show
   - name: invites
     description: Shareable invite links to join a group
   - name: groups
@@ -350,6 +352,77 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ShowApproval"
+  /spice:
+    get:
+      operationId: listSpice
+      tags: [spice]
+      summary: List "Spicy?" summaries
+      description: >-
+        Returns, for every show that has at least one answer within the given
+        group, the count of each answer across that group's members plus the
+        caller's own answer. Without a groupId, only the caller's own answers
+        are counted.
+      parameters:
+        - name: groupId
+          in: query
+          required: false
+          description: Scope the tallies to members of this group.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Spicy summaries by show
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShowSpicy"
+    put:
+      operationId: setSpicy
+      tags: [spice]
+      summary: Set my "Spicy?" answer for a show
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpicyInput"
+      responses:
+        "200":
+          description: Updated spicy summary for the show
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShowSpicy"
+    delete:
+      operationId: clearSpicy
+      tags: [spice]
+      summary: Clear my spicy answer for a show
+      parameters:
+        - name: title
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: mediaType
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/MediaType"
+        - name: groupId
+          in: query
+          required: false
+          description: Scope the returned tallies to members of this group.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated spicy summary for the show
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShowSpicy"
   /activity/check-in:
     post:
       operationId: checkIn
@@ -893,6 +966,50 @@ components:
           $ref: "#/components/schemas/MediaType"
         approval:
           $ref: "#/components/schemas/Approval"
+        groupId:
+          type: integer
+          description: >-
+            Scope the returned tallies to members of this group. Without it,
+            only the caller's own answer is counted.
+    Spicy:
+      type: string
+      enum: [yes, no]
+    ShowSpicy:
+      type: object
+      required:
+        - titleKey
+        - mediaType
+        - "yes"
+        - "no"
+        - mySpicy
+      properties:
+        titleKey:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        "yes":
+          type: integer
+        "no":
+          type: integer
+        mySpicy:
+          description: The current user's own answer, or null if they haven't answered.
+          anyOf:
+            - $ref: "#/components/schemas/Spicy"
+            - type: "null"
+    SpicyInput:
+      type: object
+      required:
+        - title
+        - mediaType
+        - spicy
+      properties:
+        title:
+          type: string
+          minLength: 1
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        spicy:
+          $ref: "#/components/schemas/Spicy"
         groupId:
           type: integer
           description: >-

@@ -202,6 +202,32 @@ export interface ApprovalInput {
   groupId?: number;
 }
 
+export type Spicy = typeof Spicy[keyof typeof Spicy];
+
+
+export const Spicy = {
+  yes: 'yes',
+  no: 'no',
+} as const;
+
+export interface ShowSpicy {
+  titleKey: string;
+  mediaType: MediaType;
+  yes: number;
+  no: number;
+  /** The current user's own answer, or null if they haven't answered. */
+  mySpicy: Spicy | null;
+}
+
+export interface SpicyInput {
+  /** @minLength 1 */
+  title: string;
+  mediaType: MediaType;
+  spicy: Spicy;
+  /** Scope the returned tallies to members of this group. Without it, only the caller's own answer is counted. */
+  groupId?: number;
+}
+
 export interface CheckInResult {
   /** Entries added by other group members since the previous visit. */
   newCount: number;
@@ -267,6 +293,22 @@ groupId?: number;
 };
 
 export type ClearApprovalParams = {
+title: string;
+mediaType: MediaType;
+/**
+ * Scope the returned tallies to members of this group.
+ */
+groupId?: number;
+};
+
+export type ListSpiceParams = {
+/**
+ * Scope the tallies to members of this group.
+ */
+groupId?: number;
+};
+
+export type ClearSpicyParams = {
 title: string;
 mediaType: MediaType;
 /**

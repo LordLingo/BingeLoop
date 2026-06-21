@@ -32,6 +32,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescri
 import { EntryForm } from "@/components/entry-form";
 import { ApprovalControl } from "@/components/approval-control";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
+import { SpicyControl } from "@/components/spicy-control";
+import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 
 export default function ViewEntry() {
   const params = useParams();
@@ -51,6 +53,7 @@ export default function ViewEntry() {
   const deleteMutation = useDeleteEntry();
   const updateMutation = useUpdateEntry();
   const approvalMap = useApprovalMap();
+  const spiceMap = useSpiceMap();
 
   if (isError) {
     return (
@@ -230,6 +233,11 @@ export default function ViewEntry() {
               title={entry.title}
               mediaType={entry.mediaType}
               summary={approvalMap.get(approvalKey(entry.title, entry.mediaType))}
+            />
+            <SpicyControl
+              title={entry.title}
+              mediaType={entry.mediaType}
+              summary={spiceMap.get(spiceKey(entry.title, entry.mediaType))}
             />
           </div>
         )}

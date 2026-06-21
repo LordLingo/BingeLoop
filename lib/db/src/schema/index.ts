@@ -21,6 +21,7 @@ export * from "./entries";
 export * from "./userActivity";
 export * from "./watchlist";
 export * from "./approvals";
+export * from "./spice";
 export * from "./invites";
 export * from "./groups";
 export * from "./groupMembers";

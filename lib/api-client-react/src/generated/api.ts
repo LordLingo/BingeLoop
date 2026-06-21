@@ -25,6 +25,7 @@ import type {
   CheckInParams,
   CheckInResult,
   ClearApprovalParams,
+  ClearSpicyParams,
   Entry,
   EntryInput,
   EntryUpdate,
@@ -38,8 +39,11 @@ import type {
   InvitePreview,
   ListApprovalsParams,
   ListEntriesParams,
+  ListSpiceParams,
   ListWatchlistParams,
   ShowApproval,
+  ShowSpicy,
+  SpicyInput,
   Stats,
   WatchlistInput,
   WatchlistItem
@@ -1130,6 +1134,239 @@ export const useClearApproval = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getClearApprovalMutationOptions(options));
+    }
+
+export const getListSpiceUrl = (params?: ListSpiceParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/spice?${stringifiedParams}` : `/api/spice`
+}
+
+/**
+ * Returns, for every show that has at least one answer within the given group, the count of each answer across that group's members plus the caller's own answer. Without a groupId, only the caller's own answers are counted.
+ * @summary List "Spicy?" summaries
+ */
+export const listSpice = async (params?: ListSpiceParams, options?: RequestInit): Promise<ShowSpicy[]> => {
+
+  return customFetch<ShowSpicy[]>(getListSpiceUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSpiceQueryKey = (params?: ListSpiceParams,) => {
+    return [
+    `/api/spice`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSpiceQueryOptions = <TData = Awaited<ReturnType<typeof listSpice>>, TError = ErrorType<unknown>>(params?: ListSpiceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSpice>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSpiceQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSpice>>> = ({ signal }) => listSpice(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSpice>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSpiceQueryResult = NonNullable<Awaited<ReturnType<typeof listSpice>>>
+export type ListSpiceQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List "Spicy?" summaries
+ */
+
+export function useListSpice<TData = Awaited<ReturnType<typeof listSpice>>, TError = ErrorType<unknown>>(
+ params?: ListSpiceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSpice>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSpiceQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getSetSpicyUrl = () => {
+
+
+
+
+  return `/api/spice`
+}
+
+/**
+ * @summary Set my "Spicy?" answer for a show
+ */
+export const setSpicy = async (spicyInput: SpicyInput, options?: RequestInit): Promise<ShowSpicy> => {
+
+  return customFetch<ShowSpicy>(getSetSpicyUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      spicyInput,)
+  }
+);}
+
+
+
+
+export const getSetSpicyMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setSpicy>>, TError,{data: BodyType<SpicyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setSpicy>>, TError,{data: BodyType<SpicyInput>}, TContext> => {
+
+const mutationKey = ['setSpicy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setSpicy>>, {data: BodyType<SpicyInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setSpicy(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetSpicyMutationResult = NonNullable<Awaited<ReturnType<typeof setSpicy>>>
+    export type SetSpicyMutationBody = BodyType<SpicyInput>
+    export type SetSpicyMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Set my "Spicy?" answer for a show
+ */
+export const useSetSpicy = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setSpicy>>, TError,{data: BodyType<SpicyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setSpicy>>,
+        TError,
+        {data: BodyType<SpicyInput>},
+        TContext
+      > => {
+      return useMutation(getSetSpicyMutationOptions(options));
+    }
+
+export const getClearSpicyUrl = (params: ClearSpicyParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/spice?${stringifiedParams}` : `/api/spice`
+}
+
+/**
+ * @summary Clear my spicy answer for a show
+ */
+export const clearSpicy = async (params: ClearSpicyParams, options?: RequestInit): Promise<ShowSpicy> => {
+
+  return customFetch<ShowSpicy>(getClearSpicyUrl(params),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getClearSpicyMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearSpicy>>, TError,{params: ClearSpicyParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof clearSpicy>>, TError,{params: ClearSpicyParams}, TContext> => {
+
+const mutationKey = ['clearSpicy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearSpicy>>, {params: ClearSpicyParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  clearSpicy(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClearSpicyMutationResult = NonNullable<Awaited<ReturnType<typeof clearSpicy>>>
+
+    export type ClearSpicyMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Clear my spicy answer for a show
+ */
+export const useClearSpicy = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearSpicy>>, TError,{params: ClearSpicyParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof clearSpicy>>,
+        TError,
+        {params: ClearSpicyParams},
+        TContext
+      > => {
+      return useMutation(getClearSpicyMutationOptions(options));
     }
 
 export const getCheckInUrl = (params?: CheckInParams,) => {

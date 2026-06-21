@@ -1,23 +1,23 @@
 import { Router, type IRouter } from "express";
 import { eq, and, count, inArray } from "drizzle-orm";
-import { db, showApprovalsTable } from "@workspace/db";
+import { db, showSpiceTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import { getGroupMemberIds, getMembership } from "../lib/groups";
 import {
-  ListApprovalsQueryParams,
-  ListApprovalsResponse,
-  SetApprovalBody,
-  SetApprovalResponse,
-  ClearApprovalQueryParams,
-  ClearApprovalResponse,
+  ListSpiceQueryParams,
+  ListSpiceResponse,
+  SetSpicyBody,
+  SetSpicyResponse,
+  ClearSpicyQueryParams,
+  ClearSpicyResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
 router.use(requireAuth);
 
-const APPROVALS = ["yes", "no", "solo"] as const;
-type ApprovalValue = (typeof APPROVALS)[number];
+const SPICY_VALUES = ["yes", "no"] as const;
+type SpicyValue = (typeof SPICY_VALUES)[number];
 
 function normalizeTitle(title: string): string {
   return title.trim().toLowerCase();
@@ -44,46 +44,44 @@ async function summarizeShow(
   mediaType: string,
 ) {
   const rows = await db
-    .select({ approval: showApprovalsTable.approval })
-    .from(showApprovalsTable)
+    .select({ spicy: showSpiceTable.spicy })
+    .from(showSpiceTable)
     .where(
       and(
-        inArray(showApprovalsTable.userId, memberIds),
-        eq(showApprovalsTable.titleKey, titleKey),
-        eq(showApprovalsTable.mediaType, mediaType),
+        inArray(showSpiceTable.userId, memberIds),
+        eq(showSpiceTable.titleKey, titleKey),
+        eq(showSpiceTable.mediaType, mediaType),
       ),
     );
 
-  const counts = { yes: 0, no: 0, solo: 0 };
+  const counts = { yes: 0, no: 0 };
   for (const r of rows) {
-    if (r.approval === "yes" || r.approval === "no" || r.approval === "solo") {
-      counts[r.approval] += 1;
+    if (r.spicy === "yes" || r.spicy === "no") {
+      counts[r.spicy] += 1;
     }
   }
 
   const [mine] = await db
-    .select({ approval: showApprovalsTable.approval })
-    .from(showApprovalsTable)
+    .select({ spicy: showSpiceTable.spicy })
+    .from(showSpiceTable)
     .where(
       and(
-        eq(showApprovalsTable.userId, callerId),
-        eq(showApprovalsTable.titleKey, titleKey),
-        eq(showApprovalsTable.mediaType, mediaType),
+        eq(showSpiceTable.userId, callerId),
+        eq(showSpiceTable.titleKey, titleKey),
+        eq(showSpiceTable.mediaType, mediaType),
       ),
     );
 
-  const myApproval =
-    mine?.approval === "yes" ||
-    mine?.approval === "no" ||
-    mine?.approval === "solo"
-      ? (mine.approval as ApprovalValue)
+  const mySpicy =
+    mine?.spicy === "yes" || mine?.spicy === "no"
+      ? (mine.spicy as SpicyValue)
       : null;
 
-  return { titleKey, mediaType, ...counts, myApproval };
+  return { titleKey, mediaType, ...counts, mySpicy };
 }
 
-router.get("/approvals", async (req: AuthedRequest, res): Promise<void> => {
-  const parsed = ListApprovalsQueryParams.safeParse(req.query);
+router.get("/spice", async (req: AuthedRequest, res): Promise<void> => {
+  const parsed = ListSpiceQueryParams.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
@@ -98,27 +96,27 @@ router.get("/approvals", async (req: AuthedRequest, res): Promise<void> => {
 
   const grouped = await db
     .select({
-      titleKey: showApprovalsTable.titleKey,
-      mediaType: showApprovalsTable.mediaType,
-      approval: showApprovalsTable.approval,
+      titleKey: showSpiceTable.titleKey,
+      mediaType: showSpiceTable.mediaType,
+      spicy: showSpiceTable.spicy,
       value: count(),
     })
-    .from(showApprovalsTable)
-    .where(inArray(showApprovalsTable.userId, memberIds))
+    .from(showSpiceTable)
+    .where(inArray(showSpiceTable.userId, memberIds))
     .groupBy(
-      showApprovalsTable.titleKey,
-      showApprovalsTable.mediaType,
-      showApprovalsTable.approval,
+      showSpiceTable.titleKey,
+      showSpiceTable.mediaType,
+      showSpiceTable.spicy,
     );
 
   const mine = await db
     .select({
-      titleKey: showApprovalsTable.titleKey,
-      mediaType: showApprovalsTable.mediaType,
-      approval: showApprovalsTable.approval,
+      titleKey: showSpiceTable.titleKey,
+      mediaType: showSpiceTable.mediaType,
+      spicy: showSpiceTable.spicy,
     })
-    .from(showApprovalsTable)
-    .where(eq(showApprovalsTable.userId, callerId));
+    .from(showSpiceTable)
+    .where(eq(showSpiceTable.userId, callerId));
 
   const key = (titleKey: string, mediaType: string) =>
     `${titleKey}::${mediaType}`;
@@ -130,8 +128,7 @@ router.get("/approvals", async (req: AuthedRequest, res): Promise<void> => {
       mediaType: string;
       yes: number;
       no: number;
-      solo: number;
-      myApproval: ApprovalValue | null;
+      mySpicy: SpicyValue | null;
     }
   >();
 
@@ -144,35 +141,27 @@ router.get("/approvals", async (req: AuthedRequest, res): Promise<void> => {
         mediaType: row.mediaType,
         yes: 0,
         no: 0,
-        solo: 0,
-        myApproval: null,
+        mySpicy: null,
       };
       byShow.set(k, show);
     }
-    if (
-      row.approval === "yes" ||
-      row.approval === "no" ||
-      row.approval === "solo"
-    ) {
-      show[row.approval] = row.value;
+    if (row.spicy === "yes" || row.spicy === "no") {
+      show[row.spicy] = row.value;
     }
   }
 
   for (const m of mine) {
     const show = byShow.get(key(m.titleKey, m.mediaType));
-    if (
-      show &&
-      (m.approval === "yes" || m.approval === "no" || m.approval === "solo")
-    ) {
-      show.myApproval = m.approval;
+    if (show && (m.spicy === "yes" || m.spicy === "no")) {
+      show.mySpicy = m.spicy;
     }
   }
 
-  res.json(ListApprovalsResponse.parse(Array.from(byShow.values())));
+  res.json(ListSpiceResponse.parse(Array.from(byShow.values())));
 });
 
-router.put("/approvals", async (req: AuthedRequest, res): Promise<void> => {
-  const parsed = SetApprovalBody.safeParse(req.body);
+router.put("/spice", async (req: AuthedRequest, res): Promise<void> => {
+  const parsed = SetSpicyBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
@@ -180,7 +169,7 @@ router.put("/approvals", async (req: AuthedRequest, res): Promise<void> => {
 
   const callerId = req.userId!;
   const titleKey = normalizeTitle(parsed.data.title);
-  const { mediaType, approval } = parsed.data;
+  const { mediaType, spicy } = parsed.data;
 
   const memberIds = await resolveMemberIds(callerId, parsed.data.groupId);
   if (memberIds === null) {
@@ -189,23 +178,23 @@ router.put("/approvals", async (req: AuthedRequest, res): Promise<void> => {
   }
 
   await db
-    .insert(showApprovalsTable)
-    .values({ userId: callerId, titleKey, mediaType, approval })
+    .insert(showSpiceTable)
+    .values({ userId: callerId, titleKey, mediaType, spicy })
     .onConflictDoUpdate({
       target: [
-        showApprovalsTable.userId,
-        showApprovalsTable.titleKey,
-        showApprovalsTable.mediaType,
+        showSpiceTable.userId,
+        showSpiceTable.titleKey,
+        showSpiceTable.mediaType,
       ],
-      set: { approval, updatedAt: new Date() },
+      set: { spicy, updatedAt: new Date() },
     });
 
   const summary = await summarizeShow(memberIds, callerId, titleKey, mediaType);
-  res.json(SetApprovalResponse.parse(summary));
+  res.json(SetSpicyResponse.parse(summary));
 });
 
-router.delete("/approvals", async (req: AuthedRequest, res): Promise<void> => {
-  const parsed = ClearApprovalQueryParams.safeParse(req.query);
+router.delete("/spice", async (req: AuthedRequest, res): Promise<void> => {
+  const parsed = ClearSpicyQueryParams.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
@@ -222,17 +211,17 @@ router.delete("/approvals", async (req: AuthedRequest, res): Promise<void> => {
   }
 
   await db
-    .delete(showApprovalsTable)
+    .delete(showSpiceTable)
     .where(
       and(
-        eq(showApprovalsTable.userId, callerId),
-        eq(showApprovalsTable.titleKey, titleKey),
-        eq(showApprovalsTable.mediaType, mediaType),
+        eq(showSpiceTable.userId, callerId),
+        eq(showSpiceTable.titleKey, titleKey),
+        eq(showSpiceTable.mediaType, mediaType),
       ),
     );
 
   const summary = await summarizeShow(memberIds, callerId, titleKey, mediaType);
-  res.json(ClearApprovalResponse.parse(summary));
+  res.json(ClearSpicyResponse.parse(summary));
 });
 
 export default router;

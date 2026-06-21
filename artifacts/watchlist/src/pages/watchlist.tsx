@@ -9,6 +9,8 @@ import { format } from "date-fns";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
+import { SpicySummary } from "@/components/spicy-summary";
+import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 import { useActiveGroup } from "@/components/active-group-context";
 
 export default function WatchlistPage() {
@@ -19,6 +21,7 @@ export default function WatchlistPage() {
     query: { queryKey: getListWatchlistQueryKey(watchlistParams) },
   });
   const approvalMap = useApprovalMap();
+  const spiceMap = useSpiceMap();
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -125,6 +128,12 @@ export default function WatchlistPage() {
                       return a ? (
                         <ApprovalSummary yes={a.yes} no={a.no} solo={a.solo} />
                       ) : null;
+                    })()}
+                    {(() => {
+                      const s = spiceMap.get(
+                        spiceKey(item.title, item.mediaType),
+                      );
+                      return s ? <SpicySummary yes={s.yes} /> : null;
                     })()}
                   </div>
                 </div>
