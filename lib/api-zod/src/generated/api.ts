@@ -320,6 +320,42 @@ export const ClearSpicyResponse = zod.object({
 
 
 /**
+ * Returns the flat list of comments for a show (matched by normalized title + mediaType) authored by members of the given group, oldest first. Replies reference their parent via parentId; clients nest them. Without a groupId, only the caller's own comments are returned.
+ * @summary List the discussion for a show
+ */
+export const ListCommentsQueryParams = zod.object({
+  "title": zod.coerce.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "groupId": zod.coerce.number().optional().describe('Scope the thread to members of this group.')
+})
+
+export const ListCommentsResponseItem = zod.object({
+  "id": zod.number(),
+  "parentId": zod.union([zod.number(),zod.null()]).describe('The id of the comment this is a reply to, or null for a top-level comment.'),
+  "authorName": zod.string(),
+  "body": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+export const ListCommentsResponse = zod.array(ListCommentsResponseItem)
+
+
+/**
+ * @summary Post a comment or reply on a show
+ */
+
+
+
+
+export const CreateCommentBody = zod.object({
+  "title": zod.string().min(1),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "body": zod.string().min(1),
+  "parentId": zod.number().optional().describe('When replying to a specific comment, its id.'),
+  "groupId": zod.number().optional().describe('Authorize and scope the thread against members of this group. Without it, only the caller\'s own comments are visible.')
+})
+
+
+/**
  * Records the caller's visit, returning the number of entries added by other members of the given group since the caller's previous visit. Updates the stored last-seen time to now. Without a groupId, newCount is always 0.
  * @summary Record a visit and get new-activity count
  */

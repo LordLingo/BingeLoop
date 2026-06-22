@@ -228,6 +228,27 @@ export interface SpicyInput {
   groupId?: number;
 }
 
+export interface Comment {
+  id: number;
+  /** The id of the comment this is a reply to, or null for a top-level comment. */
+  parentId: number | null;
+  authorName: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface CommentInput {
+  /** @minLength 1 */
+  title: string;
+  mediaType: MediaType;
+  /** @minLength 1 */
+  body: string;
+  /** When replying to a specific comment, its id. */
+  parentId?: number;
+  /** Authorize and scope the thread against members of this group. Without it, only the caller's own comments are visible. */
+  groupId?: number;
+}
+
 export interface CheckInResult {
   /** Entries added by other group members since the previous visit. */
   newCount: number;
@@ -313,6 +334,15 @@ title: string;
 mediaType: MediaType;
 /**
  * Scope the returned tallies to members of this group.
+ */
+groupId?: number;
+};
+
+export type ListCommentsParams = {
+title: string;
+mediaType: MediaType;
+/**
+ * Scope the thread to members of this group.
  */
 groupId?: number;
 };

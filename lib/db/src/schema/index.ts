@@ -25,3 +25,4 @@ export * from "./spice";
 export * from "./invites";
 export * from "./groups";
 export * from "./groupMembers";
+export * from "./comments";

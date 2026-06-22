@@ -5,6 +5,7 @@ import activityRouter from "./activity";
 import watchlistRouter from "./watchlist";
 import approvalsRouter from "./approvals";
 import spiceRouter from "./spice";
+import commentsRouter from "./comments";
 import invitesRouter from "./invites";
 import groupsRouter from "./groups";
 
@@ -18,5 +19,6 @@ router.use(activityRouter);
 router.use(watchlistRouter);
 router.use(approvalsRouter);
 router.use(spiceRouter);
+router.use(commentsRouter);
 
 export default router;

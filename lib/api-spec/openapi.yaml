@@ -18,6 +18,8 @@ tags:
     description: Per-member "Wife Approved?" answers per show
   - name: spice
     description: Per-member "Spicy?" (adult content) flags per show
+  - name: comments
+    description: Threaded per-show discussion among group members
   - name: invites
     description: Shareable invite links to join a group
   - name: groups
@@ -423,6 +425,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ShowSpicy"
+  /comments:
+    get:
+      operationId: listComments
+      tags: [comments]
+      summary: List the discussion for a show
+      description: >-
+        Returns the flat list of comments for a show (matched by normalized
+        title + mediaType) authored by members of the given group, oldest
+        first. Replies reference their parent via parentId; clients nest them.
+        Without a groupId, only the caller's own comments are returned.
+      parameters:
+        - name: title
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: mediaType
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/MediaType"
+        - name: groupId
+          in: query
+          required: false
+          description: Scope the thread to members of this group.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comments for the show, oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+    post:
+      operationId: createComment
+      tags: [comments]
+      summary: Post a comment or reply on a show
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: The created comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
   /activity/check-in:
     post:
       operationId: checkIn
@@ -1015,6 +1070,52 @@ components:
           description: >-
             Scope the returned tallies to members of this group. Without it,
             only the caller's own answer is counted.
+    Comment:
+      type: object
+      required:
+        - id
+        - parentId
+        - authorName
+        - body
+        - createdAt
+      properties:
+        id:
+          type: integer
+        parentId:
+          description: The id of the comment this is a reply to, or null for a top-level comment.
+          anyOf:
+            - type: integer
+            - type: "null"
+        authorName:
+          type: string
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    CommentInput:
+      type: object
+      required:
+        - title
+        - mediaType
+        - body
+      properties:
+        title:
+          type: string
+          minLength: 1
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        body:
+          type: string
+          minLength: 1
+        parentId:
+          type: integer
+          description: When replying to a specific comment, its id.
+        groupId:
+          type: integer
+          description: >-
+            Authorize and scope the thread against members of this group.
+            Without it, only the caller's own comments are visible.
     CheckInResult:
       type: object
       required:

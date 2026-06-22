@@ -34,6 +34,7 @@ import { ApprovalControl } from "@/components/approval-control";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
 import { SpicyControl } from "@/components/spicy-control";
 import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
+import { CommentThread } from "@/components/comment-thread";
 
 export default function ViewEntry() {
   const params = useParams();
@@ -227,6 +228,9 @@ export default function ViewEntry() {
                 </div>
               </>
             )}
+
+            <Separator className="bg-border/60" />
+            <CommentThread title={entry.title} mediaType={entry.mediaType} />
 
             <Separator className="bg-border/60" />
             <ApprovalControl
