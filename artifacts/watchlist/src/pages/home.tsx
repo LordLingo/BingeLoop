@@ -231,9 +231,29 @@ export default function Home() {
                 <Link 
                   key={entry.id} 
                   href={`/entry/${entry.id}`}
-                  className="poster-card group flex flex-col bg-card hover:bg-muted/30 transition-all border border-border rounded-2xl p-5"
+                  className="poster-card group flex bg-card hover:bg-muted/30 transition-all border border-border rounded-2xl overflow-hidden"
                   data-testid={`card-entry-${entry.id}`}
                 >
+                  <div className="w-[38%] shrink-0 self-stretch relative bg-muted/40">
+                    {entry.posterPath ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w500${entry.posterPath}`}
+                        alt={entry.title}
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover"
+                        data-testid={`poster-entry-${entry.id}`}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/40">
+                        {entry.mediaType === "movie" ? (
+                          <Film className="w-10 h-10" />
+                        ) : (
+                          <Tv className="w-10 h-10" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-col p-5">
                   <div className="flex justify-between items-start mb-3">
                     <Badge variant="outline" className="bg-background text-xs uppercase tracking-wider font-semibold">
                       {entry.category}
@@ -288,6 +308,7 @@ export default function Home() {
                       const s = spiceMap.get(spiceKey(entry.title, entry.mediaType));
                       return s ? <SpicySummary yes={s.yes} /> : null;
                     })()}
+                  </div>
                   </div>
                 </Link>
               ))}
