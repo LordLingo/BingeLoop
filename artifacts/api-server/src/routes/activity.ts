@@ -18,6 +18,8 @@ import {
   CheckInResponse,
   ListActivityFeedQueryParams,
   ListActivityFeedResponse,
+  GetWeeklyDigestQueryParams,
+  GetWeeklyDigestResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -329,5 +331,125 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
 
   res.json(ListActivityFeedResponse.parse(items.slice(0, limit)));
 });
+
+router.get(
+  "/activity/digest",
+  async (req: AuthedRequest, res): Promise<void> => {
+    const parsed = GetWeeklyDigestQueryParams.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+
+    const callerId = req.userId!;
+    const { groupId } = parsed.data;
+
+    const memberIds = await resolveMemberIds(callerId, groupId);
+    if (memberIds === null) {
+      res.status(403).json({ error: "You are not a member of this group" });
+      return;
+    }
+
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    if (memberIds.length === 0) {
+      res.json(
+        GetWeeklyDigestResponse.parse({
+          since: since.toISOString(),
+          newRatings: 0,
+          newComments: 0,
+          newSaves: 0,
+          topShow: null,
+          mostActive: null,
+        }),
+      );
+      return;
+    }
+
+    // Pull the week's source rows for the resolved members. Names are the
+    // snapshots stored on each row (addedBy / authorName), so no display-name
+    // resolution is needed for the "most active" tally.
+    const [entryRows, commentRows, watchRows, topRows] = await Promise.all([
+      db
+        .select({ addedBy: entriesTable.addedBy })
+        .from(entriesTable)
+        .where(
+          and(
+            inArray(entriesTable.userId, memberIds),
+            gt(entriesTable.createdAt, since),
+          ),
+        ),
+      db
+        .select({ authorName: showCommentsTable.authorName })
+        .from(showCommentsTable)
+        .where(
+          and(
+            inArray(showCommentsTable.userId, memberIds),
+            gt(showCommentsTable.createdAt, since),
+          ),
+        ),
+      db
+        .select({ addedBy: watchlistItemsTable.addedBy })
+        .from(watchlistItemsTable)
+        .where(
+          and(
+            inArray(watchlistItemsTable.userId, memberIds),
+            gt(watchlistItemsTable.createdAt, since),
+          ),
+        ),
+      db
+        .select({
+          id: entriesTable.id,
+          title: entriesTable.title,
+          mediaType: entriesTable.mediaType,
+          rating: entriesTable.rating,
+          addedBy: entriesTable.addedBy,
+        })
+        .from(entriesTable)
+        .where(
+          and(
+            inArray(entriesTable.userId, memberIds),
+            gt(entriesTable.createdAt, since),
+          ),
+        )
+        .orderBy(desc(entriesTable.rating), desc(entriesTable.createdAt))
+        .limit(1),
+    ]);
+
+    // Most active member by total actions (ratings + comments + saves).
+    const actionsByName = new Map<string, number>();
+    const bump = (name: string) =>
+      actionsByName.set(name, (actionsByName.get(name) ?? 0) + 1);
+    for (const r of entryRows) bump(r.addedBy);
+    for (const c of commentRows) bump(c.authorName);
+    for (const w of watchRows) bump(w.addedBy);
+
+    let mostActive: { name: string; count: number } | null = null;
+    for (const [name, c] of actionsByName) {
+      if (!mostActive || c > mostActive.count) mostActive = { name, count: c };
+    }
+
+    const top = topRows[0];
+
+    res.json(
+      GetWeeklyDigestResponse.parse({
+        since: since.toISOString(),
+        newRatings: entryRows.length,
+        newComments: commentRows.length,
+        newSaves: watchRows.length,
+        topShow: top
+          ? {
+              title: top.title,
+              mediaType: top.mediaType,
+              rating: top.rating,
+              addedBy: top.addedBy,
+              entryId: top.id,
+            }
+          : null,
+        mostActive,
+      }),
+    );
+  },
+);
 
 export default router;

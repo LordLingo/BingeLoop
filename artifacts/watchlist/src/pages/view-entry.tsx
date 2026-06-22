@@ -35,6 +35,8 @@ import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
 import { SpicyControl } from "@/components/spicy-control";
 import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 import { CommentThread } from "@/components/comment-thread";
+import { ReactionBar } from "@/components/reaction-bar";
+import { useReactionMap, reactionKey } from "@/hooks/use-reactions";
 import { WatchTrailerButton } from "@/components/watch-trailer-button";
 import { StreamingBadge } from "@/components/streaming-badge";
 
@@ -57,6 +59,7 @@ export default function ViewEntry() {
   const updateMutation = useUpdateEntry();
   const approvalMap = useApprovalMap();
   const spiceMap = useSpiceMap();
+  const reactionMap = useReactionMap();
 
   if (isError) {
     return (
@@ -231,6 +234,12 @@ export default function ViewEntry() {
               )}
 
               <WatchTrailerButton title={entry.title} />
+
+              <ReactionBar
+                targetType="entry"
+                targetId={entry.id}
+                summary={reactionMap.get(reactionKey("entry", entry.id))}
+              />
             </div>
 
             {entry.comment && (

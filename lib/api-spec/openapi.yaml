@@ -28,6 +28,8 @@ tags:
     description: New-activity check-in
   - name: topFour
     description: Member Top Four favorites
+  - name: reactions
+    description: Lightweight emoji reactions on entries and comments
   - name: lists
     description: Member-curated named lists of movies and shows
 paths:
@@ -587,6 +589,104 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ActivityItem"
+        "403":
+          description: Caller is not a member of the group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /activity/digest:
+    get:
+      operationId: getWeeklyDigest
+      tags: [activity]
+      summary: Weekly digest for a group
+      description: >-
+        Returns a summary of the last 7 days for the given group: counts of new
+        ratings, comments and watchlist saves, the week's top-rated pick, and
+        the most active member. Without a groupId, only the caller's own
+        activity is summarized. Returns 403 if the caller passed a group they
+        are not a member of.
+      parameters:
+        - name: groupId
+          in: query
+          required: false
+          description: Scope the digest to members of this group.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Weekly digest summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyDigest"
+        "403":
+          description: Caller is not a member of the group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /reactions:
+    get:
+      operationId: listReactions
+      tags: [reactions]
+      summary: List emoji reaction summaries
+      description: >-
+        Returns, for every entry or comment that has at least one reaction from
+        a member of the given group, the per-emoji counts plus the caller's own
+        reactions. Without a groupId, only the caller's own reactions are
+        counted. Returns 403 if the caller passed a group they are not a member
+        of.
+      parameters:
+        - name: groupId
+          in: query
+          required: false
+          description: Scope the reactions to members of this group.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reaction summaries by target
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReactionSummary"
+        "403":
+          description: Caller is not a member of the group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      operationId: toggleReaction
+      tags: [reactions]
+      summary: Toggle my emoji reaction on a target
+      description: >-
+        Adds the emoji reaction for the caller on the target if absent, or
+        removes it if already present. Returns the updated reaction summary for
+        that target. Returns 403 if the caller passed a group they are not a
+        member of, or 400 if the target is not visible to the group.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReactionInput"
+      responses:
+        "200":
+          description: Updated reaction summary for the target
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReactionSummary"
+        "400":
+          description: Invalid target
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "403":
           description: Caller is not a member of the group
           content:
@@ -1537,6 +1637,121 @@ components:
           description: >-
             Scope the returned tallies to members of this group. Without it,
             only the caller's own answer is counted.
+    ReactionEmoji:
+      type: string
+      enum: ["👍", "❤️", "😂", "😮", "🔥"]
+    ReactionTargetType:
+      type: string
+      enum: [entry, comment]
+    ReactionCount:
+      type: object
+      required:
+        - emoji
+        - count
+      properties:
+        emoji:
+          $ref: "#/components/schemas/ReactionEmoji"
+        count:
+          type: integer
+    ReactionSummary:
+      type: object
+      required:
+        - targetType
+        - targetId
+        - emojis
+        - mine
+      properties:
+        targetType:
+          $ref: "#/components/schemas/ReactionTargetType"
+        targetId:
+          type: integer
+        emojis:
+          type: array
+          description: Per-emoji counts across the group, only for emojis with at least one reaction.
+          items:
+            $ref: "#/components/schemas/ReactionCount"
+        mine:
+          type: array
+          description: The emojis the current user has reacted with on this target.
+          items:
+            $ref: "#/components/schemas/ReactionEmoji"
+    ReactionInput:
+      type: object
+      required:
+        - targetType
+        - targetId
+        - emoji
+      properties:
+        targetType:
+          $ref: "#/components/schemas/ReactionTargetType"
+        targetId:
+          type: integer
+        emoji:
+          $ref: "#/components/schemas/ReactionEmoji"
+        groupId:
+          type: integer
+          description: >-
+            Scope the returned summary to members of this group. Without it,
+            only the caller's own reactions are counted.
+    WeeklyDigest:
+      type: object
+      required:
+        - since
+        - newRatings
+        - newComments
+        - newSaves
+        - topShow
+        - mostActive
+      properties:
+        since:
+          type: string
+          format: date-time
+          description: Start of the digest window (7 days ago).
+        newRatings:
+          type: integer
+        newComments:
+          type: integer
+        newSaves:
+          type: integer
+        topShow:
+          description: The week's highest-rated new entry, or null if there were none.
+          anyOf:
+            - $ref: "#/components/schemas/DigestTopShow"
+            - type: "null"
+        mostActive:
+          description: The member with the most actions this week, or null if there were none.
+          anyOf:
+            - $ref: "#/components/schemas/DigestMostActive"
+            - type: "null"
+    DigestTopShow:
+      type: object
+      required:
+        - title
+        - mediaType
+        - rating
+        - addedBy
+        - entryId
+      properties:
+        title:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        rating:
+          type: integer
+        addedBy:
+          type: string
+        entryId:
+          type: integer
+    DigestMostActive:
+      type: object
+      required:
+        - name
+        - count
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
     Comment:
       type: object
       required:

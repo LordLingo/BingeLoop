@@ -18,6 +18,9 @@ import { ApprovalSummary } from "@/components/approval-summary";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
 import { SpicySummary } from "@/components/spicy-summary";
 import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
+import { ReactionBar } from "@/components/reaction-bar";
+import { useReactionMap, reactionKey } from "@/hooks/use-reactions";
+import { WeeklyDigestCard } from "@/components/weekly-digest-card";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -60,6 +63,7 @@ export default function Home() {
 
   const approvalMap = useApprovalMap();
   const spiceMap = useSpiceMap();
+  const reactionMap = useReactionMap();
   
   const entriesParams = {
     ...(activeGroupId != null ? { groupId: activeGroupId } : {}),
@@ -147,6 +151,7 @@ export default function Home() {
 
       <main className="max-w-3xl mx-auto px-4 space-y-6">
         <NewActivityBadge />
+        <WeeklyDigestCard />
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -315,6 +320,14 @@ export default function Home() {
                       const s = spiceMap.get(spiceKey(entry.title, entry.mediaType));
                       return s ? <SpicySummary yes={s.yes} /> : null;
                     })()}
+                  </div>
+                  <div className="mt-3">
+                    <ReactionBar
+                      targetType="entry"
+                      targetId={entry.id}
+                      summary={reactionMap.get(reactionKey("entry", entry.id))}
+                      size="sm"
+                    />
                   </div>
                   </div>
                 </Link>

@@ -36,6 +36,7 @@ import type {
   EntryUpdate,
   Error,
   GetStatsParams,
+  GetWeeklyDigestParams,
   Group,
   GroupDetail,
   GroupInput,
@@ -49,10 +50,13 @@ import type {
   ListEntriesParams,
   ListItem,
   ListListsParams,
+  ListReactionsParams,
   ListSpiceParams,
   ListSummary,
   ListTopFourParams,
   ListWatchlistParams,
+  ReactionInput,
+  ReactionSummary,
   ShowApproval,
   ShowSpicy,
   SpicyInput,
@@ -65,7 +69,8 @@ import type {
   TopFourPick,
   UpdateListInput,
   WatchlistInput,
-  WatchlistItem
+  WatchlistItem,
+  WeeklyDigest
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1876,6 +1881,248 @@ export function useListActivityFeed<TData = Awaited<ReturnType<typeof listActivi
 
 
 
+
+export const getGetWeeklyDigestUrl = (params?: GetWeeklyDigestParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/activity/digest?${stringifiedParams}` : `/api/activity/digest`
+}
+
+/**
+ * Returns a summary of the last 7 days for the given group: counts of new ratings, comments and watchlist saves, the week's top-rated pick, and the most active member. Without a groupId, only the caller's own activity is summarized. Returns 403 if the caller passed a group they are not a member of.
+ * @summary Weekly digest for a group
+ */
+export const getWeeklyDigest = async (params?: GetWeeklyDigestParams, options?: RequestInit): Promise<WeeklyDigest> => {
+
+  return customFetch<WeeklyDigest>(getGetWeeklyDigestUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWeeklyDigestQueryKey = (params?: GetWeeklyDigestParams,) => {
+    return [
+    `/api/activity/digest`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetWeeklyDigestQueryOptions = <TData = Awaited<ReturnType<typeof getWeeklyDigest>>, TError = ErrorType<Error>>(params?: GetWeeklyDigestParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWeeklyDigest>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWeeklyDigestQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWeeklyDigest>>> = ({ signal }) => getWeeklyDigest(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWeeklyDigest>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWeeklyDigestQueryResult = NonNullable<Awaited<ReturnType<typeof getWeeklyDigest>>>
+export type GetWeeklyDigestQueryError = ErrorType<Error>
+
+
+/**
+ * @summary Weekly digest for a group
+ */
+
+export function useGetWeeklyDigest<TData = Awaited<ReturnType<typeof getWeeklyDigest>>, TError = ErrorType<Error>>(
+ params?: GetWeeklyDigestParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWeeklyDigest>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWeeklyDigestQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListReactionsUrl = (params?: ListReactionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/reactions?${stringifiedParams}` : `/api/reactions`
+}
+
+/**
+ * Returns, for every entry or comment that has at least one reaction from a member of the given group, the per-emoji counts plus the caller's own reactions. Without a groupId, only the caller's own reactions are counted. Returns 403 if the caller passed a group they are not a member of.
+ * @summary List emoji reaction summaries
+ */
+export const listReactions = async (params?: ListReactionsParams, options?: RequestInit): Promise<ReactionSummary[]> => {
+
+  return customFetch<ReactionSummary[]>(getListReactionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListReactionsQueryKey = (params?: ListReactionsParams,) => {
+    return [
+    `/api/reactions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListReactionsQueryOptions = <TData = Awaited<ReturnType<typeof listReactions>>, TError = ErrorType<Error>>(params?: ListReactionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listReactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListReactionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listReactions>>> = ({ signal }) => listReactions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listReactions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListReactionsQueryResult = NonNullable<Awaited<ReturnType<typeof listReactions>>>
+export type ListReactionsQueryError = ErrorType<Error>
+
+
+/**
+ * @summary List emoji reaction summaries
+ */
+
+export function useListReactions<TData = Awaited<ReturnType<typeof listReactions>>, TError = ErrorType<Error>>(
+ params?: ListReactionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listReactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListReactionsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getToggleReactionUrl = () => {
+
+
+
+
+  return `/api/reactions`
+}
+
+/**
+ * Adds the emoji reaction for the caller on the target if absent, or removes it if already present. Returns the updated reaction summary for that target. Returns 403 if the caller passed a group they are not a member of, or 400 if the target is not visible to the group.
+ * @summary Toggle my emoji reaction on a target
+ */
+export const toggleReaction = async (reactionInput: ReactionInput, options?: RequestInit): Promise<ReactionSummary> => {
+
+  return customFetch<ReactionSummary>(getToggleReactionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      reactionInput,)
+  }
+);}
+
+
+
+
+export const getToggleReactionMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleReaction>>, TError,{data: BodyType<ReactionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof toggleReaction>>, TError,{data: BodyType<ReactionInput>}, TContext> => {
+
+const mutationKey = ['toggleReaction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof toggleReaction>>, {data: BodyType<ReactionInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  toggleReaction(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ToggleReactionMutationResult = NonNullable<Awaited<ReturnType<typeof toggleReaction>>>
+    export type ToggleReactionMutationBody = BodyType<ReactionInput>
+    export type ToggleReactionMutationError = ErrorType<Error>
+
+    /**
+ * @summary Toggle my emoji reaction on a target
+ */
+export const useToggleReaction = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleReaction>>, TError,{data: BodyType<ReactionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof toggleReaction>>,
+        TError,
+        {data: BodyType<ReactionInput>},
+        TContext
+      > => {
+      return useMutation(getToggleReactionMutationOptions(options));
+    }
 
 export const getListTopFourUrl = (params?: ListTopFourParams,) => {
   const normalizedParams = new URLSearchParams();

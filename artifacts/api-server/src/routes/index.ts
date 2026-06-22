@@ -8,6 +8,7 @@ import spiceRouter from "./spice";
 import commentsRouter from "./comments";
 import topFourRouter from "./topFour";
 import listsRouter from "./lists";
+import reactionsRouter from "./reactions";
 import invitesRouter from "./invites";
 import groupsRouter from "./groups";
 import tmdbRouter from "./tmdb";
@@ -25,6 +26,7 @@ router.use(spiceRouter);
 router.use(commentsRouter);
 router.use(topFourRouter);
 router.use(listsRouter);
+router.use(reactionsRouter);
 router.use(tmdbRouter);
 
 export default router;

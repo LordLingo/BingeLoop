@@ -294,6 +294,72 @@ export interface SpicyInput {
   groupId?: number;
 }
 
+export type ReactionEmoji = typeof ReactionEmoji[keyof typeof ReactionEmoji];
+
+
+export const ReactionEmoji = {
+  '👍': '👍',
+  '❤️': '❤️',
+  '😂': '😂',
+  '😮': '😮',
+  '🔥': '🔥',
+} as const;
+
+export type ReactionTargetType = typeof ReactionTargetType[keyof typeof ReactionTargetType];
+
+
+export const ReactionTargetType = {
+  entry: 'entry',
+  comment: 'comment',
+} as const;
+
+export interface ReactionCount {
+  emoji: ReactionEmoji;
+  count: number;
+}
+
+export interface ReactionSummary {
+  targetType: ReactionTargetType;
+  targetId: number;
+  /** Per-emoji counts across the group, only for emojis with at least one reaction. */
+  emojis: ReactionCount[];
+  /** The emojis the current user has reacted with on this target. */
+  mine: ReactionEmoji[];
+}
+
+export interface ReactionInput {
+  targetType: ReactionTargetType;
+  targetId: number;
+  emoji: ReactionEmoji;
+  /** Scope the returned summary to members of this group. Without it, only the caller's own reactions are counted. */
+  groupId?: number;
+}
+
+export interface DigestTopShow {
+  title: string;
+  mediaType: MediaType;
+  rating: number;
+  addedBy: string;
+  entryId: number;
+}
+
+export interface DigestMostActive {
+  name: string;
+  count: number;
+}
+
+export interface WeeklyDigest {
+  /** Start of the digest window (7 days ago). */
+  since: string;
+  newRatings: number;
+  newComments: number;
+  newSaves: number;
+  /** The week's highest-rated new entry, or null if there were none. */
+  topShow: DigestTopShow | null;
+  /** The member with the most actions this week, or null if there were none. */
+  mostActive: DigestMostActive | null;
+}
+
 export interface Comment {
   id: number;
   /** The id of the comment this is a reply to, or null for a top-level comment. */
@@ -554,6 +620,20 @@ groupId?: number;
  * @maximum 100
  */
 limit?: number;
+};
+
+export type GetWeeklyDigestParams = {
+/**
+ * Scope the digest to members of this group.
+ */
+groupId?: number;
+};
+
+export type ListReactionsParams = {
+/**
+ * Scope the reactions to members of this group.
+ */
+groupId?: number;
 };
 
 export type ListTopFourParams = {

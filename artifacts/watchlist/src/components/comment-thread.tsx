@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useActiveGroup } from "@/components/active-group-context";
+import { ReactionBar } from "@/components/reaction-bar";
+import { useReactionMap, reactionKey } from "@/hooks/use-reactions";
 
 export function CommentThread({
   title,
@@ -36,6 +38,7 @@ export function CommentThread({
   });
 
   const create = useCreateComment();
+  const reactionMap = useReactionMap();
   const [newBody, setNewBody] = useState("");
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyBody, setReplyBody] = useState("");
@@ -112,17 +115,25 @@ export function CommentThread({
         >
           {c.body}
         </p>
-        <button
-          type="button"
-          onClick={() => {
-            setReplyingTo(replyingTo === c.id ? null : c.id);
-            setReplyBody("");
-          }}
-          className="mt-1 text-xs font-medium text-primary hover:text-primary/80"
-          data-testid={`button-reply-${c.id}`}
-        >
-          {replyingTo === c.id ? "Cancel" : "Reply"}
-        </button>
+        <div className="mt-2 flex items-center gap-3 flex-wrap">
+          <ReactionBar
+            targetType="comment"
+            targetId={c.id}
+            summary={reactionMap.get(reactionKey("comment", c.id))}
+            size="sm"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setReplyingTo(replyingTo === c.id ? null : c.id);
+              setReplyBody("");
+            }}
+            className="text-xs font-medium text-primary hover:text-primary/80"
+            data-testid={`button-reply-${c.id}`}
+          >
+            {replyingTo === c.id ? "Cancel" : "Reply"}
+          </button>
+        </div>
 
         {replyingTo === c.id && (
           <div className="mt-2 space-y-2">

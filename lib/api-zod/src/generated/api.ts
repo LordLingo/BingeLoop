@@ -463,6 +463,75 @@ export const ListActivityFeedResponse = zod.array(ListActivityFeedResponseItem)
 
 
 /**
+ * Returns a summary of the last 7 days for the given group: counts of new ratings, comments and watchlist saves, the week's top-rated pick, and the most active member. Without a groupId, only the caller's own activity is summarized. Returns 403 if the caller passed a group they are not a member of.
+ * @summary Weekly digest for a group
+ */
+export const GetWeeklyDigestQueryParams = zod.object({
+  "groupId": zod.coerce.number().optional().describe('Scope the digest to members of this group.')
+})
+
+export const GetWeeklyDigestResponse = zod.object({
+  "since": zod.coerce.date().describe('Start of the digest window (7 days ago).'),
+  "newRatings": zod.number(),
+  "newComments": zod.number(),
+  "newSaves": zod.number(),
+  "topShow": zod.union([zod.object({
+  "title": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "rating": zod.number(),
+  "addedBy": zod.string(),
+  "entryId": zod.number()
+}),zod.null()]).describe('The week\'s highest-rated new entry, or null if there were none.'),
+  "mostActive": zod.union([zod.object({
+  "name": zod.string(),
+  "count": zod.number()
+}),zod.null()]).describe('The member with the most actions this week, or null if there were none.')
+})
+
+
+/**
+ * Returns, for every entry or comment that has at least one reaction from a member of the given group, the per-emoji counts plus the caller's own reactions. Without a groupId, only the caller's own reactions are counted. Returns 403 if the caller passed a group they are not a member of.
+ * @summary List emoji reaction summaries
+ */
+export const ListReactionsQueryParams = zod.object({
+  "groupId": zod.coerce.number().optional().describe('Scope the reactions to members of this group.')
+})
+
+export const ListReactionsResponseItem = zod.object({
+  "targetType": zod.enum(['entry', 'comment']),
+  "targetId": zod.number(),
+  "emojis": zod.array(zod.object({
+  "emoji": zod.enum(['👍', '❤️', '😂', '😮', '🔥']),
+  "count": zod.number()
+})).describe('Per-emoji counts across the group, only for emojis with at least one reaction.'),
+  "mine": zod.array(zod.enum(['👍', '❤️', '😂', '😮', '🔥'])).describe('The emojis the current user has reacted with on this target.')
+})
+export const ListReactionsResponse = zod.array(ListReactionsResponseItem)
+
+
+/**
+ * Adds the emoji reaction for the caller on the target if absent, or removes it if already present. Returns the updated reaction summary for that target. Returns 403 if the caller passed a group they are not a member of, or 400 if the target is not visible to the group.
+ * @summary Toggle my emoji reaction on a target
+ */
+export const ToggleReactionBody = zod.object({
+  "targetType": zod.enum(['entry', 'comment']),
+  "targetId": zod.number(),
+  "emoji": zod.enum(['👍', '❤️', '😂', '😮', '🔥']),
+  "groupId": zod.number().optional().describe('Scope the returned summary to members of this group. Without it, only the caller\'s own reactions are counted.')
+})
+
+export const ToggleReactionResponse = zod.object({
+  "targetType": zod.enum(['entry', 'comment']),
+  "targetId": zod.number(),
+  "emojis": zod.array(zod.object({
+  "emoji": zod.enum(['👍', '❤️', '😂', '😮', '🔥']),
+  "count": zod.number()
+})).describe('Per-emoji counts across the group, only for emojis with at least one reaction.'),
+  "mine": zod.array(zod.enum(['👍', '❤️', '😂', '😮', '🔥'])).describe('The emojis the current user has reacted with on this target.')
+})
+
+
+/**
  * Returns the caller's own Top Four picks by default, ordered by position. Pass userId to view another member's picks (requires a shared group). The list has 0-4 items.
  * @summary Get a member's Top Four favorites
  */
