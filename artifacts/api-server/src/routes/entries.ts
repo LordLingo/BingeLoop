@@ -202,6 +202,11 @@ router.post("/entries", async (req: AuthedRequest, res): Promise<void> => {
       comment: parsed.data.comment ?? null,
       userId,
       addedBy,
+      tmdbId: parsed.data.tmdbId ?? null,
+      posterPath: parsed.data.posterPath ?? null,
+      streamingProvider: parsed.data.streamingProvider ?? null,
+      streamingLogo: parsed.data.streamingLogo ?? null,
+      network: parsed.data.network ?? null,
     })
     .returning();
 

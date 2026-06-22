@@ -114,6 +114,31 @@ export interface Entry {
   comment?: string | null;
   /** Display name of the user who added this entry. */
   addedBy: string;
+  /**
+     * TMDB id of the selected show.
+     * @nullable
+     */
+  tmdbId?: number | null;
+  /**
+     * TMDB poster path (e.g. /abc.jpg).
+     * @nullable
+     */
+  posterPath?: string | null;
+  /**
+     * US streaming service name from TMDB watch/providers.
+     * @nullable
+     */
+  streamingProvider?: string | null;
+  /**
+     * TMDB logo path for the streaming provider.
+     * @nullable
+     */
+  streamingLogo?: string | null;
+  /**
+     * Network name (TV shows only).
+     * @nullable
+     */
+  network?: string | null;
   createdAt: string;
 }
 
@@ -129,6 +154,16 @@ export interface EntryInput {
   /** @minLength 1 */
   category: string;
   comment?: string;
+  /** @nullable */
+  tmdbId?: number | null;
+  /** @nullable */
+  posterPath?: string | null;
+  /** @nullable */
+  streamingProvider?: string | null;
+  /** @nullable */
+  streamingLogo?: string | null;
+  /** @nullable */
+  network?: string | null;
 }
 
 export interface EntryUpdate {
@@ -144,6 +179,35 @@ export interface EntryUpdate {
   category?: string;
   /** @nullable */
   comment?: string | null;
+  /** @nullable */
+  tmdbId?: number | null;
+  /** @nullable */
+  posterPath?: string | null;
+  /** @nullable */
+  streamingProvider?: string | null;
+  /** @nullable */
+  streamingLogo?: string | null;
+  /** @nullable */
+  network?: string | null;
+}
+
+export interface TmdbSearchResult {
+  tmdbId: number;
+  mediaType: MediaType;
+  title: string;
+  /** @nullable */
+  year?: string | null;
+  /** @nullable */
+  posterPath?: string | null;
+}
+
+export interface TmdbDetails {
+  /** @nullable */
+  streamingProvider?: string | null;
+  /** @nullable */
+  streamingLogo?: string | null;
+  /** @nullable */
+  network?: string | null;
 }
 
 export interface CategoryCount {
@@ -404,6 +468,18 @@ userId?: string;
  * Aggregate stats across members of this group. You must be a member.
  */
 groupId?: number;
+};
+
+export type TmdbSearchParams = {
+/**
+ * @minLength 1
+ */
+query: string;
+};
+
+export type TmdbDetailsParams = {
+tmdbId: number;
+mediaType: MediaType;
 };
 
 export type ListWatchlistParams = {

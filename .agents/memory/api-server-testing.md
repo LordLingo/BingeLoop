@@ -24,6 +24,11 @@ Orval/zod schemas, so fields not in the OpenAPI schema are dropped from the body
 the `Entry` response has NO `userId` — assert on `addedBy` (the attribution snapshot)
 instead. Seed `addedBy` equal to the user id to make visibility assertions easy.
 
+**Gotcha — req.log is missing in tests:** pino-http is only mounted in `app.ts`, not in
+`testApp.ts`, so `req.log` is undefined under test. Route catch blocks that call
+`req.log.error(...)` would otherwise crash and turn an intended 4xx/502 into a 500. `testApp.ts`
+injects a no-op `req.log` middleware to keep handlers behaving as in production.
+
 **Config note:** `vitest.config.ts` sets `server.deps.inline: [/@workspace\//]` because the
 workspace packages (e.g. `@workspace/db`) ship TS source and must be transformed, and
 `fileParallelism: false` since all test files share one database.

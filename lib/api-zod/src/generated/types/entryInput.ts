@@ -19,4 +19,14 @@ export interface EntryInput {
   /** @minLength 1 */
   category: string;
   comment?: string;
+  /** @nullable */
+  tmdbId?: number | null;
+  /** @nullable */
+  posterPath?: string | null;
+  /** @nullable */
+  streamingProvider?: string | null;
+  /** @nullable */
+  streamingLogo?: string | null;
+  /** @nullable */
+  network?: string | null;
 }

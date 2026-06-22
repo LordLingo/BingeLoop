@@ -11,6 +11,11 @@ export const entriesTable = pgTable("entries", {
   comment: text("comment"),
   userId: text("user_id").notNull(),
   addedBy: text("added_by").notNull(),
+  tmdbId: integer("tmdb_id"),
+  posterPath: text("poster_path"),
+  streamingProvider: text("streaming_provider"),
+  streamingLogo: text("streaming_logo"),
+  network: text("network"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

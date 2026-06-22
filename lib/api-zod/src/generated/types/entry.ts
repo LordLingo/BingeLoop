@@ -21,5 +21,30 @@ export interface Entry {
   comment?: string | null;
   /** Display name of the user who added this entry. */
   addedBy: string;
+  /**
+     * TMDB id of the selected show.
+     * @nullable
+     */
+  tmdbId?: number | null;
+  /**
+     * TMDB poster path (e.g. /abc.jpg).
+     * @nullable
+     */
+  posterPath?: string | null;
+  /**
+     * US streaming service name from TMDB watch/providers.
+     * @nullable
+     */
+  streamingProvider?: string | null;
+  /**
+     * TMDB logo path for the streaming provider.
+     * @nullable
+     */
+  streamingLogo?: string | null;
+  /**
+     * Network name (TV shows only).
+     * @nullable
+     */
+  network?: string | null;
   createdAt: Date;
 }

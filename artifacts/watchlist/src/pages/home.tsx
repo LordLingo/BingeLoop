@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark, Activity, ListVideo } from "lucide-react";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
 import { WatchTrailerButton } from "@/components/watch-trailer-button";
+import { StreamingBadge } from "@/components/streaming-badge";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
 import { SpicySummary } from "@/components/spicy-summary";
@@ -257,6 +258,16 @@ export default function Home() {
                       {format(new Date(entry.createdAt), "MMM d")}
                     </span>
                   </div>
+
+                  {(entry.streamingProvider || entry.network) && (
+                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                      <StreamingBadge
+                        streamingProvider={entry.streamingProvider}
+                        streamingLogo={entry.streamingLogo}
+                        network={entry.network}
+                      />
+                    </div>
+                  )}
 
                   <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between gap-2 flex-wrap">
                     <SaveToWatchlistButton

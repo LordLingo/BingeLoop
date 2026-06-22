@@ -218,6 +218,52 @@ paths:
                 type: array
                 items:
                   type: string
+  /tmdb/search:
+    get:
+      operationId: tmdbSearch
+      tags: [tmdb]
+      summary: Search TMDB for movies and TV shows
+      description: Proxies TMDB search/multi (movies and TV only). Used to pick a show when logging an entry.
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Matching shows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TmdbSearchResult"
+  /tmdb/details:
+    get:
+      operationId: tmdbDetails
+      tags: [tmdb]
+      summary: Get streaming provider and network for a TMDB show
+      description: Returns the US streaming provider (watch/providers) and, for TV, the network name.
+      parameters:
+        - name: tmdbId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: mediaType
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/MediaType"
+      responses:
+        "200":
+          description: Streaming and network details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TmdbDetails"
   /watchlist:
     get:
       operationId: listWatchlist
@@ -1184,6 +1230,21 @@ components:
         addedBy:
           type: string
           description: Display name of the user who added this entry.
+        tmdbId:
+          type: ["integer", "null"]
+          description: TMDB id of the selected show.
+        posterPath:
+          type: ["string", "null"]
+          description: TMDB poster path (e.g. /abc.jpg).
+        streamingProvider:
+          type: ["string", "null"]
+          description: US streaming service name from TMDB watch/providers.
+        streamingLogo:
+          type: ["string", "null"]
+          description: TMDB logo path for the streaming provider.
+        network:
+          type: ["string", "null"]
+          description: Network name (TV shows only).
         createdAt:
           type: string
           format: date-time
@@ -1209,6 +1270,16 @@ components:
           minLength: 1
         comment:
           type: string
+        tmdbId:
+          type: ["integer", "null"]
+        posterPath:
+          type: ["string", "null"]
+        streamingProvider:
+          type: ["string", "null"]
+        streamingLogo:
+          type: ["string", "null"]
+        network:
+          type: ["string", "null"]
     EntryUpdate:
       type: object
       properties:
@@ -1225,6 +1296,42 @@ components:
           type: string
           minLength: 1
         comment:
+          type: ["string", "null"]
+        tmdbId:
+          type: ["integer", "null"]
+        posterPath:
+          type: ["string", "null"]
+        streamingProvider:
+          type: ["string", "null"]
+        streamingLogo:
+          type: ["string", "null"]
+        network:
+          type: ["string", "null"]
+    TmdbSearchResult:
+      type: object
+      required:
+        - tmdbId
+        - mediaType
+        - title
+      properties:
+        tmdbId:
+          type: integer
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        title:
+          type: string
+        year:
+          type: ["string", "null"]
+        posterPath:
+          type: ["string", "null"]
+    TmdbDetails:
+      type: object
+      properties:
+        streamingProvider:
+          type: ["string", "null"]
+        streamingLogo:
+          type: ["string", "null"]
+        network:
           type: ["string", "null"]
     CategoryCount:
       type: object

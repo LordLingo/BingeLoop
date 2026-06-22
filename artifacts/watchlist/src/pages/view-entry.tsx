@@ -36,6 +36,7 @@ import { SpicyControl } from "@/components/spicy-control";
 import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 import { CommentThread } from "@/components/comment-thread";
 import { WatchTrailerButton } from "@/components/watch-trailer-button";
+import { StreamingBadge } from "@/components/streaming-badge";
 
 export default function ViewEntry() {
   const params = useParams();
@@ -218,6 +219,16 @@ export default function ViewEntry() {
                   Logged by {entry.addedBy}
                 </span>
               </div>
+
+              {(entry.streamingProvider || entry.network) && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <StreamingBadge
+                    streamingProvider={entry.streamingProvider}
+                    streamingLogo={entry.streamingLogo}
+                    network={entry.network}
+                  />
+                </div>
+              )}
 
               <WatchTrailerButton title={entry.title} />
             </div>

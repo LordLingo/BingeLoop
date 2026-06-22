@@ -20,4 +20,14 @@ export interface EntryUpdate {
   category?: string;
   /** @nullable */
   comment?: string | null;
+  /** @nullable */
+  tmdbId?: number | null;
+  /** @nullable */
+  posterPath?: string | null;
+  /** @nullable */
+  streamingProvider?: string | null;
+  /** @nullable */
+  streamingLogo?: string | null;
+  /** @nullable */
+  network?: string | null;
 }

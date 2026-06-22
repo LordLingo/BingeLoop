@@ -41,6 +41,11 @@ export const ListEntriesResponseItem = zod.object({
   "category": zod.string(),
   "comment": zod.string().nullish(),
   "addedBy": zod.string().describe('Display name of the user who added this entry.'),
+  "tmdbId": zod.number().nullish().describe('TMDB id of the selected show.'),
+  "posterPath": zod.string().nullish().describe('TMDB poster path (e.g. \/abc.jpg).'),
+  "streamingProvider": zod.string().nullish().describe('US streaming service name from TMDB watch\/providers.'),
+  "streamingLogo": zod.string().nullish().describe('TMDB logo path for the streaming provider.'),
+  "network": zod.string().nullish().describe('Network name (TV shows only).'),
   "createdAt": zod.coerce.date()
 })
 export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
@@ -60,7 +65,12 @@ export const CreateEntryBody = zod.object({
   "mediaType": zod.enum(['movie', 'tv']),
   "rating": zod.number().min(1).max(createEntryBodyRatingMax),
   "category": zod.string().min(1),
-  "comment": zod.string().optional()
+  "comment": zod.string().optional(),
+  "tmdbId": zod.number().nullish(),
+  "posterPath": zod.string().nullish(),
+  "streamingProvider": zod.string().nullish(),
+  "streamingLogo": zod.string().nullish(),
+  "network": zod.string().nullish()
 })
 
 
@@ -83,6 +93,11 @@ export const GetEntryResponse = zod.object({
   "category": zod.string(),
   "comment": zod.string().nullish(),
   "addedBy": zod.string().describe('Display name of the user who added this entry.'),
+  "tmdbId": zod.number().nullish().describe('TMDB id of the selected show.'),
+  "posterPath": zod.string().nullish().describe('TMDB poster path (e.g. \/abc.jpg).'),
+  "streamingProvider": zod.string().nullish().describe('US streaming service name from TMDB watch\/providers.'),
+  "streamingLogo": zod.string().nullish().describe('TMDB logo path for the streaming provider.'),
+  "network": zod.string().nullish().describe('Network name (TV shows only).'),
   "createdAt": zod.coerce.date()
 })
 
@@ -105,7 +120,12 @@ export const UpdateEntryBody = zod.object({
   "mediaType": zod.enum(['movie', 'tv']).optional(),
   "rating": zod.number().min(1).max(updateEntryBodyRatingMax).optional(),
   "category": zod.string().min(1).optional(),
-  "comment": zod.string().nullish()
+  "comment": zod.string().nullish(),
+  "tmdbId": zod.number().nullish(),
+  "posterPath": zod.string().nullish(),
+  "streamingProvider": zod.string().nullish(),
+  "streamingLogo": zod.string().nullish(),
+  "network": zod.string().nullish()
 })
 
 export const updateEntryResponseRatingMax = 5;
@@ -120,6 +140,11 @@ export const UpdateEntryResponse = zod.object({
   "category": zod.string(),
   "comment": zod.string().nullish(),
   "addedBy": zod.string().describe('Display name of the user who added this entry.'),
+  "tmdbId": zod.number().nullish().describe('TMDB id of the selected show.'),
+  "posterPath": zod.string().nullish().describe('TMDB poster path (e.g. \/abc.jpg).'),
+  "streamingProvider": zod.string().nullish().describe('US streaming service name from TMDB watch\/providers.'),
+  "streamingLogo": zod.string().nullish().describe('TMDB logo path for the streaming provider.'),
+  "network": zod.string().nullish().describe('Network name (TV shows only).'),
   "createdAt": zod.coerce.date()
 })
 
@@ -159,6 +184,43 @@ export const GetStatsResponse = zod.object({
  */
 export const ListCategoriesResponseItem = zod.string()
 export const ListCategoriesResponse = zod.array(ListCategoriesResponseItem)
+
+
+/**
+ * Proxies TMDB search/multi (movies and TV only). Used to pick a show when logging an entry.
+ * @summary Search TMDB for movies and TV shows
+ */
+
+
+
+export const TmdbSearchQueryParams = zod.object({
+  "query": zod.coerce.string().min(1)
+})
+
+export const TmdbSearchResponseItem = zod.object({
+  "tmdbId": zod.number(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "title": zod.string(),
+  "year": zod.string().nullish(),
+  "posterPath": zod.string().nullish()
+})
+export const TmdbSearchResponse = zod.array(TmdbSearchResponseItem)
+
+
+/**
+ * Returns the US streaming provider (watch/providers) and, for TV, the network name.
+ * @summary Get streaming provider and network for a TMDB show
+ */
+export const TmdbDetailsQueryParams = zod.object({
+  "tmdbId": zod.coerce.number(),
+  "mediaType": zod.enum(['movie', 'tv'])
+})
+
+export const TmdbDetailsResponse = zod.object({
+  "streamingProvider": zod.string().nullish(),
+  "streamingLogo": zod.string().nullish(),
+  "network": zod.string().nullish()
+})
 
 
 /**

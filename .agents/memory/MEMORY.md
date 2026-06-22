@@ -5,5 +5,6 @@
 - [API router auth ordering](api-router-auth-ordering.md) — public routes must mount before entriesRouter, whose router.use(requireAuth) (no path) 401s any later-reached request.
 - [CSS comment glob trap](css-comment-glob-trap.md) — `*/` inside a CSS comment (e.g. `bg-*/text-*`) closes it early and silently breaks the next rule; no build error.
 - [Per-surface inverted theme](per-surface-theme-scoping.md) — to invert one surface against the global theme, re-scope the design-token CSS vars on that surface's class, not per-component overrides.
-- [API server testing setup](api-server-testing.md) — vitest tests use real DB + Clerk mocked via `x-test-user-id` header; Entry response strips userId, assert on addedBy.
+- [API server testing setup](api-server-testing.md) — vitest tests: real DB + Clerk mocked via `x-test-user-id`; Entry strips userId (assert addedBy); testApp injects no-op req.log so catch blocks don't 500.
 - [Group-scoped write authz ordering](group-scoped-write-authz-ordering.md) — check group membership BEFORE mutating in poll write endpoints; a 403 must leave no side effects.
+- [Orval coerce.string() query params](tmdb-coerce-string-query-params.md) — a required string query param won't 400 when omitted (coerces undefined→"undefined"); guard explicitly, test min(1) with `?query=`.

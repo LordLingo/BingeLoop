@@ -10,6 +10,7 @@ import topFourRouter from "./topFour";
 import listsRouter from "./lists";
 import invitesRouter from "./invites";
 import groupsRouter from "./groups";
+import tmdbRouter from "./tmdb";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(spiceRouter);
 router.use(commentsRouter);
 router.use(topFourRouter);
 router.use(listsRouter);
+router.use(tmdbRouter);
 
 export default router;
