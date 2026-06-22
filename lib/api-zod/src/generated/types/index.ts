@@ -7,6 +7,8 @@
  */
 
 export * from './acceptInviteResult';
+export * from './activityItem';
+export * from './activityType';
 export * from './approval';
 export * from './approvalInput';
 export * from './categoryCount';
@@ -31,6 +33,7 @@ export * from './groupRole';
 export * from './healthStatus';
 export * from './invite';
 export * from './invitePreview';
+export * from './listActivityFeedParams';
 export * from './listApprovalsParams';
 export * from './listCommentsParams';
 export * from './listEntriesParams';

@@ -14,6 +14,7 @@ import Home from "@/pages/home";
 import AddEntry from "@/pages/add-entry";
 import ViewEntry from "@/pages/view-entry";
 import WatchlistPage from "@/pages/watchlist";
+import ActivityPage from "@/pages/activity";
 import GroupPage from "@/pages/group";
 import MemberPage from "@/pages/member";
 import Onboarding from "@/pages/onboarding";
@@ -106,6 +107,7 @@ function Router() {
       <Route path="/" component={HomeRedirect} />
       <Route path="/library"><AuthRoute component={Home} /></Route>
       <Route path="/watchlist"><AuthRoute component={WatchlistPage} /></Route>
+      <Route path="/activity"><AuthRoute component={ActivityPage} /></Route>
       <Route path="/group"><AuthRoute component={GroupPage} /></Route>
       <Route path="/member/:userId"><AuthRoute component={MemberPage} /></Route>
       <Route path="/add"><AuthRoute component={AddEntry} /></Route>

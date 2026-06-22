@@ -10,7 +10,7 @@ import {
   ListEntriesSort
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark } from "lucide-react";
+import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark, Activity } from "lucide-react";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
@@ -81,6 +81,14 @@ export default function Home() {
         <div className="flex items-center justify-between gap-2">
           <GroupSwitcher />
           <div className="flex items-center gap-1 shrink-0">
+            <Link
+              href="/activity"
+              className="flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+              data-testid="link-activity"
+            >
+              <Activity className="w-4 h-4" />
+              <span className="hidden sm:inline">Activity</span>
+            </Link>
             <Link
               href="/watchlist"
               className="flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"

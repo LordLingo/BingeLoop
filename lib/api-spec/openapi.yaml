@@ -502,6 +502,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CheckInResult"
+  /activity/feed:
+    get:
+      operationId: listActivityFeed
+      tags: [activity]
+      summary: Combined recent activity from group members
+      description: >-
+        Returns a reverse-chronological feed of recent actions (ratings,
+        watchlist saves, comments, "Wife Approved?" and Spicy answers) by
+        members of the given group. Without a groupId, only the caller's own
+        activity is returned. Returns 403 if the caller passed a group they
+        are not a member of.
+      parameters:
+        - name: groupId
+          in: query
+          required: false
+          description: Scope the feed to members of this group.
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of items to return (default 50, max 100).
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Recent activity, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+        "403":
+          description: Caller is not a member of the group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /groups:
     get:
       operationId: listGroups
@@ -1129,3 +1170,56 @@ components:
           type: ["string", "null"]
           format: date-time
           description: The previous last-seen time, or null on first visit.
+    ActivityType:
+      type: string
+      enum: [rating, watchlist, comment, approval, spice]
+    ActivityItem:
+      type: object
+      required:
+        - id
+        - type
+        - actorName
+        - title
+        - mediaType
+        - createdAt
+        - entryId
+        - rating
+        - approval
+        - spicy
+      properties:
+        id:
+          type: string
+          description: Stable composite key for this event, e.g. "rating:123".
+        type:
+          $ref: "#/components/schemas/ActivityType"
+        actorName:
+          type: string
+          description: Display name of the member who performed the action.
+        title:
+          type: string
+          description: Display title of the show the action is about.
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        createdAt:
+          type: string
+          format: date-time
+        entryId:
+          description: An entry id for this show to open, or null if none is visible to the caller.
+          anyOf:
+            - type: integer
+            - type: "null"
+        rating:
+          description: 1-5 star rating, present only for rating activity.
+          anyOf:
+            - type: integer
+            - type: "null"
+        approval:
+          description: The answer given, present only for approval activity.
+          anyOf:
+            - $ref: "#/components/schemas/Approval"
+            - type: "null"
+        spicy:
+          description: The answer given, present only for spice activity.
+          anyOf:
+            - $ref: "#/components/schemas/Spicy"
+            - type: "null"

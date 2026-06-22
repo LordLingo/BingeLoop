@@ -21,6 +21,7 @@ import type {
 
 import type {
   AcceptInviteResult,
+  ActivityItem,
   ApprovalInput,
   CheckInParams,
   CheckInResult,
@@ -39,6 +40,7 @@ import type {
   HealthStatus,
   Invite,
   InvitePreview,
+  ListActivityFeedParams,
   ListApprovalsParams,
   ListCommentsParams,
   ListEntriesParams,
@@ -1605,6 +1607,91 @@ export const useCheckIn = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getCheckInMutationOptions(options));
     }
+
+export const getListActivityFeedUrl = (params?: ListActivityFeedParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/activity/feed?${stringifiedParams}` : `/api/activity/feed`
+}
+
+/**
+ * Returns a reverse-chronological feed of recent actions (ratings, watchlist saves, comments, "Wife Approved?" and Spicy answers) by members of the given group. Without a groupId, only the caller's own activity is returned. Returns 403 if the caller passed a group they are not a member of.
+ * @summary Combined recent activity from group members
+ */
+export const listActivityFeed = async (params?: ListActivityFeedParams, options?: RequestInit): Promise<ActivityItem[]> => {
+
+  return customFetch<ActivityItem[]>(getListActivityFeedUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListActivityFeedQueryKey = (params?: ListActivityFeedParams,) => {
+    return [
+    `/api/activity/feed`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListActivityFeedQueryOptions = <TData = Awaited<ReturnType<typeof listActivityFeed>>, TError = ErrorType<Error>>(params?: ListActivityFeedParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listActivityFeed>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListActivityFeedQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listActivityFeed>>> = ({ signal }) => listActivityFeed(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listActivityFeed>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListActivityFeedQueryResult = NonNullable<Awaited<ReturnType<typeof listActivityFeed>>>
+export type ListActivityFeedQueryError = ErrorType<Error>
+
+
+/**
+ * @summary Combined recent activity from group members
+ */
+
+export function useListActivityFeed<TData = Awaited<ReturnType<typeof listActivityFeed>>, TError = ErrorType<Error>>(
+ params?: ListActivityFeedParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listActivityFeed>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListActivityFeedQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getListGroupsUrl = () => {
 

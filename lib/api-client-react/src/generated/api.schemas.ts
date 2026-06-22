@@ -259,6 +259,37 @@ export interface CheckInResult {
   since: string | null;
 }
 
+export type ActivityType = typeof ActivityType[keyof typeof ActivityType];
+
+
+export const ActivityType = {
+  rating: 'rating',
+  watchlist: 'watchlist',
+  comment: 'comment',
+  approval: 'approval',
+  spice: 'spice',
+} as const;
+
+export interface ActivityItem {
+  /** Stable composite key for this event, e.g. "rating:123". */
+  id: string;
+  type: ActivityType;
+  /** Display name of the member who performed the action. */
+  actorName: string;
+  /** Display title of the show the action is about. */
+  title: string;
+  mediaType: MediaType;
+  createdAt: string;
+  /** An entry id for this show to open, or null if none is visible to the caller. */
+  entryId: number | null;
+  /** 1-5 star rating, present only for rating activity. */
+  rating: number | null;
+  /** The answer given, present only for approval activity. */
+  approval: Approval | null;
+  /** The answer given, present only for spice activity. */
+  spicy: Spicy | null;
+}
+
 export type ListEntriesParams = {
 /**
  * View this member's entries instead of the group's. Requires a shared group.
@@ -352,5 +383,18 @@ export type CheckInParams = {
  * Count new entries from other members of this group.
  */
 groupId?: number;
+};
+
+export type ListActivityFeedParams = {
+/**
+ * Scope the feed to members of this group.
+ */
+groupId?: number;
+/**
+ * Maximum number of items to return (default 50, max 100).
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
 };
 

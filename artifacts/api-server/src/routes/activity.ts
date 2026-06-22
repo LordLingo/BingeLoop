@@ -1,13 +1,62 @@
 import { Router, type IRouter } from "express";
-import { eq, and, gt, lte, inArray, count, sql } from "drizzle-orm";
-import { db, entriesTable, userActivityTable } from "@workspace/db";
+import { eq, and, gt, lte, inArray, count, sql, asc, desc } from "drizzle-orm";
+import {
+  db,
+  entriesTable,
+  userActivityTable,
+  watchlistItemsTable,
+  showCommentsTable,
+  showApprovalsTable,
+  showSpiceTable,
+  groupMembersTable,
+} from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import { getGroupMemberIds, getMembership } from "../lib/groups";
-import { CheckInQueryParams, CheckInResponse } from "@workspace/api-zod";
+import { resolveDisplayName } from "../lib/displayName";
+import {
+  CheckInQueryParams,
+  CheckInResponse,
+  ListActivityFeedQueryParams,
+  ListActivityFeedResponse,
+} from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
 router.use(requireAuth);
+
+function normalizeTitle(title: string): string {
+  return title.trim().toLowerCase();
+}
+
+// Member ids whose activity the caller may see: just the caller without a
+// group, all members of the group when a member, or null (→ 403) when the
+// caller passed a group they don't belong to. Mirrors the contract used by
+// /entries, /stats, /approvals, /spice, /comments.
+async function resolveMemberIds(
+  callerId: string,
+  groupId: number | undefined,
+): Promise<string[] | null> {
+  if (groupId === undefined) return [callerId];
+  const membership = await getMembership(groupId, callerId);
+  if (!membership) return null;
+  return getGroupMemberIds(groupId);
+}
+
+type FeedItem = {
+  id: string;
+  type: "rating" | "watchlist" | "comment" | "approval" | "spice";
+  actorName: string;
+  title: string;
+  mediaType: string;
+  createdAt: Date;
+  entryId: number | null;
+  rating: number | null;
+  approval: string | null;
+  spicy: string | null;
+};
+
+const showKey = (titleKey: string, mediaType: string): string =>
+  `${titleKey}::${mediaType}`;
 
 router.post(
   "/activity/check-in",
@@ -72,5 +121,213 @@ router.post(
     );
   },
 );
+
+router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
+  const parsed = ListActivityFeedQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const callerId = req.userId!;
+  const { groupId } = parsed.data;
+  const limit = parsed.data.limit ?? 50;
+
+  const memberIds = await resolveMemberIds(callerId, groupId);
+  if (memberIds === null) {
+    res.status(403).json({ error: "You are not a member of this group" });
+    return;
+  }
+  if (memberIds.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  // Display names for approval/spice actors (those rows store only userId).
+  // In group mode every actor is a current member, so the membership rows
+  // cover them; without a group the only actor is the caller.
+  const nameByUser = new Map<string, string>();
+  if (groupId !== undefined) {
+    const members = await db
+      .select({
+        userId: groupMembersTable.userId,
+        displayName: groupMembersTable.displayName,
+      })
+      .from(groupMembersTable)
+      .where(eq(groupMembersTable.groupId, groupId));
+    for (const m of members) nameByUser.set(m.userId, m.displayName);
+  }
+  const actorName = async (userId: string): Promise<string> => {
+    const known = nameByUser.get(userId);
+    if (known) return known;
+    const resolved = await resolveDisplayName(userId);
+    nameByUser.set(userId, resolved);
+    return resolved;
+  };
+
+  // Fetch source rows for the resolved members. Entries/watchlist are fetched
+  // in full because they also supply the display title and a linkable entry id
+  // for shows referenced by comments/approvals/spice (which store only the
+  // normalized titleKey). The poll/comment tables are capped at `limit`.
+  const [entryRows, watchRows, commentRows, approvalRows, spiceRows] =
+    await Promise.all([
+      db
+        .select({
+          id: entriesTable.id,
+          title: entriesTable.title,
+          mediaType: entriesTable.mediaType,
+          rating: entriesTable.rating,
+          addedBy: entriesTable.addedBy,
+          createdAt: entriesTable.createdAt,
+        })
+        .from(entriesTable)
+        .where(inArray(entriesTable.userId, memberIds))
+        .orderBy(asc(entriesTable.createdAt)),
+      db
+        .select({
+          id: watchlistItemsTable.id,
+          title: watchlistItemsTable.title,
+          mediaType: watchlistItemsTable.mediaType,
+          addedBy: watchlistItemsTable.addedBy,
+          createdAt: watchlistItemsTable.createdAt,
+        })
+        .from(watchlistItemsTable)
+        .where(inArray(watchlistItemsTable.userId, memberIds)),
+      db
+        .select({
+          id: showCommentsTable.id,
+          authorName: showCommentsTable.authorName,
+          titleKey: showCommentsTable.titleKey,
+          mediaType: showCommentsTable.mediaType,
+          createdAt: showCommentsTable.createdAt,
+        })
+        .from(showCommentsTable)
+        .where(inArray(showCommentsTable.userId, memberIds))
+        .orderBy(desc(showCommentsTable.createdAt))
+        .limit(limit),
+      db
+        .select({
+          id: showApprovalsTable.id,
+          userId: showApprovalsTable.userId,
+          titleKey: showApprovalsTable.titleKey,
+          mediaType: showApprovalsTable.mediaType,
+          approval: showApprovalsTable.approval,
+          updatedAt: showApprovalsTable.updatedAt,
+        })
+        .from(showApprovalsTable)
+        .where(inArray(showApprovalsTable.userId, memberIds))
+        .orderBy(desc(showApprovalsTable.updatedAt))
+        .limit(limit),
+      db
+        .select({
+          id: showSpiceTable.id,
+          userId: showSpiceTable.userId,
+          titleKey: showSpiceTable.titleKey,
+          mediaType: showSpiceTable.mediaType,
+          spicy: showSpiceTable.spicy,
+          updatedAt: showSpiceTable.updatedAt,
+        })
+        .from(showSpiceTable)
+        .where(inArray(showSpiceTable.userId, memberIds))
+        .orderBy(desc(showSpiceTable.updatedAt))
+        .limit(limit),
+    ]);
+
+  // Map each show to a display title and an openable entry id. Entries are in
+  // ascending createdAt order, so the last write wins (newest title casing and
+  // newest entry id); watchlist only fills titles for shows with no entry.
+  const titleByKey = new Map<string, string>();
+  const entryIdByKey = new Map<string, number>();
+  for (const e of entryRows) {
+    const key = showKey(normalizeTitle(e.title), e.mediaType);
+    titleByKey.set(key, e.title);
+    entryIdByKey.set(key, e.id);
+  }
+  for (const w of watchRows) {
+    const key = showKey(normalizeTitle(w.title), w.mediaType);
+    if (!titleByKey.has(key)) titleByKey.set(key, w.title);
+  }
+
+  const items: FeedItem[] = [];
+
+  for (const e of entryRows) {
+    items.push({
+      id: `rating:${e.id}`,
+      type: "rating",
+      actorName: e.addedBy,
+      title: e.title,
+      mediaType: e.mediaType,
+      createdAt: e.createdAt,
+      entryId: e.id,
+      rating: e.rating,
+      approval: null,
+      spicy: null,
+    });
+  }
+  for (const w of watchRows) {
+    const key = showKey(normalizeTitle(w.title), w.mediaType);
+    items.push({
+      id: `watchlist:${w.id}`,
+      type: "watchlist",
+      actorName: w.addedBy,
+      title: w.title,
+      mediaType: w.mediaType,
+      createdAt: w.createdAt,
+      entryId: entryIdByKey.get(key) ?? null,
+      rating: null,
+      approval: null,
+      spicy: null,
+    });
+  }
+  for (const c of commentRows) {
+    const key = showKey(c.titleKey, c.mediaType);
+    items.push({
+      id: `comment:${c.id}`,
+      type: "comment",
+      actorName: c.authorName,
+      title: titleByKey.get(key) ?? c.titleKey,
+      mediaType: c.mediaType,
+      createdAt: c.createdAt,
+      entryId: entryIdByKey.get(key) ?? null,
+      rating: null,
+      approval: null,
+      spicy: null,
+    });
+  }
+  for (const a of approvalRows) {
+    const key = showKey(a.titleKey, a.mediaType);
+    items.push({
+      id: `approval:${a.id}`,
+      type: "approval",
+      actorName: await actorName(a.userId),
+      title: titleByKey.get(key) ?? a.titleKey,
+      mediaType: a.mediaType,
+      createdAt: a.updatedAt,
+      entryId: entryIdByKey.get(key) ?? null,
+      rating: null,
+      approval: a.approval,
+      spicy: null,
+    });
+  }
+  for (const s of spiceRows) {
+    const key = showKey(s.titleKey, s.mediaType);
+    items.push({
+      id: `spice:${s.id}`,
+      type: "spice",
+      actorName: await actorName(s.userId),
+      title: titleByKey.get(key) ?? s.titleKey,
+      mediaType: s.mediaType,
+      createdAt: s.updatedAt,
+      entryId: entryIdByKey.get(key) ?? null,
+      rating: null,
+      approval: null,
+      spicy: s.spicy,
+    });
+  }
+
+  items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  res.json(ListActivityFeedResponse.parse(items.slice(0, limit)));
+});
 
 export default router;

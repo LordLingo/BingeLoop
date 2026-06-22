@@ -370,6 +370,34 @@ export const CheckInResponse = zod.object({
 
 
 /**
+ * Returns a reverse-chronological feed of recent actions (ratings, watchlist saves, comments, "Wife Approved?" and Spicy answers) by members of the given group. Without a groupId, only the caller's own activity is returned. Returns 403 if the caller passed a group they are not a member of.
+ * @summary Combined recent activity from group members
+ */
+export const listActivityFeedQueryLimitMax = 100;
+
+
+
+export const ListActivityFeedQueryParams = zod.object({
+  "groupId": zod.coerce.number().optional().describe('Scope the feed to members of this group.'),
+  "limit": zod.coerce.number().min(1).max(listActivityFeedQueryLimitMax).optional().describe('Maximum number of items to return (default 50, max 100).')
+})
+
+export const ListActivityFeedResponseItem = zod.object({
+  "id": zod.string().describe('Stable composite key for this event, e.g. \"rating:123\".'),
+  "type": zod.enum(['rating', 'watchlist', 'comment', 'approval', 'spice']),
+  "actorName": zod.string().describe('Display name of the member who performed the action.'),
+  "title": zod.string().describe('Display title of the show the action is about.'),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "createdAt": zod.coerce.date(),
+  "entryId": zod.union([zod.number(),zod.null()]).describe('An entry id for this show to open, or null if none is visible to the caller.'),
+  "rating": zod.union([zod.number(),zod.null()]).describe('1-5 star rating, present only for rating activity.'),
+  "approval": zod.union([zod.enum(['yes', 'no', 'solo']),zod.null()]).describe('The answer given, present only for approval activity.'),
+  "spicy": zod.union([zod.enum(['yes', 'no']),zod.null()]).describe('The answer given, present only for spice activity.')
+})
+export const ListActivityFeedResponse = zod.array(ListActivityFeedResponseItem)
+
+
+/**
  * @summary List the groups I belong to
  */
 export const ListGroupsResponseItem = zod.object({
