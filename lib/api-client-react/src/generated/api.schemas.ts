@@ -114,6 +114,8 @@ export interface Entry {
   comment?: string | null;
   /** Display name of the user who added this entry. */
   addedBy: string;
+  /** User id of the member who added this entry (for linking to their profile). */
+  addedById: string;
   /**
      * TMDB id of the selected show.
      * @nullable

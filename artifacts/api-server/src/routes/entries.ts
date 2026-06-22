@@ -21,6 +21,11 @@ import {
 
 const router: IRouter = Router();
 
+const withAddedById = <T extends { userId: string }>(row: T) => ({
+  ...row,
+  addedById: row.userId,
+});
+
 router.use(requireAuth);
 
 const CATEGORIES = [
@@ -169,7 +174,7 @@ router.get("/entries", async (req: AuthedRequest, res): Promise<void> => {
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(orderBy);
 
-  res.json(ListEntriesResponse.parse(rows));
+  res.json(ListEntriesResponse.parse(rows.map(withAddedById)));
 });
 
 router.post("/entries", async (req: AuthedRequest, res): Promise<void> => {
@@ -210,7 +215,7 @@ router.post("/entries", async (req: AuthedRequest, res): Promise<void> => {
     })
     .returning();
 
-  res.status(201).json(GetEntryResponse.parse(entry));
+  res.status(201).json(GetEntryResponse.parse(withAddedById(entry)));
 });
 
 router.get("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
@@ -239,7 +244,7 @@ router.get("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
     }
   }
 
-  res.json(GetEntryResponse.parse(entry));
+  res.json(GetEntryResponse.parse(withAddedById(entry)));
 });
 
 router.patch("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
@@ -277,7 +282,7 @@ router.patch("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
   }
 
   if (Object.keys(parsed.data).length === 0) {
-    res.json(UpdateEntryResponse.parse(existing));
+    res.json(UpdateEntryResponse.parse(withAddedById(existing)));
     return;
   }
 
@@ -287,7 +292,7 @@ router.patch("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
     .where(eq(entriesTable.id, params.data.id))
     .returning();
 
-  res.json(UpdateEntryResponse.parse(entry));
+  res.json(UpdateEntryResponse.parse(withAddedById(entry)));
 });
 
 router.delete(

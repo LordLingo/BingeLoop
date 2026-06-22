@@ -1211,6 +1211,7 @@ components:
         - rating
         - category
         - addedBy
+        - addedById
         - createdAt
       properties:
         id:
@@ -1230,6 +1231,9 @@ components:
         addedBy:
           type: string
           description: Display name of the user who added this entry.
+        addedById:
+          type: string
+          description: User id of the member who added this entry (for linking to their profile).
         tmdbId:
           type: ["integer", "null"]
           description: TMDB id of the selected show.

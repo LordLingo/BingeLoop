@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { 
   useListEntries, 
   useGetStats, 
@@ -37,6 +37,7 @@ import { GroupSwitcher } from "@/components/group-switcher";
 import { useActiveGroup } from "@/components/active-group-context";
 
 export default function Home() {
+  const [, navigate] = useLocation();
   const [filterCategory, setFilterCategory] = useState<string | undefined>(undefined);
   const [filterType, setFilterType] = useState<"movie" | "tv" | undefined>(undefined);
   const [sort, setSort] = useState<ListEntriesSort>("newest");
@@ -270,9 +271,21 @@ export default function Home() {
                   <div className="mt-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <StarRating value={entry.rating} readonly size="sm" />
-                      <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/50">
-                        by {entry.addedBy}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          navigate(`/member/${entry.addedById}`);
+                        }}
+                        className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
+                        data-testid={`link-added-by-${entry.id}`}
+                      >
+                        Added by{" "}
+                        <span className="text-primary font-semibold underline-offset-2 hover:underline">
+                          {entry.addedBy}
+                        </span>
+                      </button>
                     </div>
                     <span className="text-xs text-muted-foreground font-mono">
                       {format(new Date(entry.createdAt), "MMM d")}
