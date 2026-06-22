@@ -17,6 +17,8 @@ import WatchlistPage from "@/pages/watchlist";
 import ActivityPage from "@/pages/activity";
 import GroupPage from "@/pages/group";
 import MemberPage from "@/pages/member";
+import ListsPage from "@/pages/lists";
+import ListDetailPage from "@/pages/list-detail";
 import Onboarding from "@/pages/onboarding";
 import Landing from "@/pages/landing";
 import SignInPage from "@/pages/sign-in";
@@ -110,6 +112,8 @@ function Router() {
       <Route path="/activity"><AuthRoute component={ActivityPage} /></Route>
       <Route path="/group"><AuthRoute component={GroupPage} /></Route>
       <Route path="/member/:userId"><AuthRoute component={MemberPage} /></Route>
+      <Route path="/lists"><AuthRoute component={ListsPage} /></Route>
+      <Route path="/lists/:id"><AuthRoute component={ListDetailPage} /></Route>
       <Route path="/add"><AuthRoute component={AddEntry} /></Route>
       <Route path="/entry/:id"><AuthRoute component={ViewEntry} /></Route>
       <Route path="/invite/:token" component={InvitePage} />

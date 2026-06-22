@@ -28,6 +28,8 @@ tags:
     description: New-activity check-in
   - name: topFour
     description: Member Top Four favorites
+  - name: lists
+    description: Member-curated named lists of movies and shows
 paths:
   /healthz:
     get:
@@ -599,6 +601,219 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TopFourPick"
+  /lists:
+    get:
+      operationId: listLists
+      tags: [lists]
+      summary: Browse lists in a group
+      description: >-
+        Returns lists owned by members of the given group (you must be a
+        member). Without groupId, returns only your own lists. Each summary
+        includes the owner's name and item count.
+      parameters:
+        - name: groupId
+          in: query
+          required: false
+          description: Browse lists owned by all members of this group. Requires membership.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The lists, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ListSummary"
+        "403":
+          description: Caller is not a member of the group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      operationId: createList
+      tags: [lists]
+      summary: Create a new list
+      description: Creates a list owned by the caller, with a title and optional description.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateListInput"
+      responses:
+        "201":
+          description: The created list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListSummary"
+  /lists/{id}:
+    get:
+      operationId: getList
+      tags: [lists]
+      summary: Open a list and see its contents
+      description: >-
+        Returns the list with its items. You must share a group with the list's
+        owner (or be the owner), otherwise 403.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The list and its items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDetail"
+        "403":
+          description: Caller does not share a group with the list owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      operationId: updateList
+      tags: [lists]
+      summary: Edit a list's title or description
+      description: Owner-only. Updates the list's name and/or description.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateListInput"
+      responses:
+        "200":
+          description: The updated list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListSummary"
+        "403":
+          description: Caller does not own this list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      operationId: deleteList
+      tags: [lists]
+      summary: Delete a list
+      description: Owner-only. Deletes the list and all its items.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Caller does not own this list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /lists/{id}/items:
+    post:
+      operationId: addListItem
+      tags: [lists]
+      summary: Add a movie or show to a list
+      description: Owner-only. Appends a free-text title to the list.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddListItemInput"
+      responses:
+        "201":
+          description: The added item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListItem"
+        "403":
+          description: Caller does not own this list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /lists/{id}/items/{itemId}:
+    delete:
+      operationId: deleteListItem
+      tags: [lists]
+      summary: Remove a movie or show from a list
+      description: Owner-only. Removes one item from the list.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+        "403":
+          description: Caller does not own this list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: List or item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /groups:
     get:
       operationId: listGroups
@@ -1263,6 +1478,111 @@ components:
           description: The ordered favorites; the first item is shown first.
           items:
             $ref: "#/components/schemas/TopFourPickInput"
+    ListSummary:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - ownerId
+        - ownerName
+        - itemCount
+        - createdAt
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        ownerId:
+          type: string
+        ownerName:
+          type: string
+          description: Display-name snapshot of the member who created the list.
+        itemCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+    ListItem:
+      type: object
+      required:
+        - id
+        - title
+        - mediaType
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+    ListDetail:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - ownerId
+        - ownerName
+        - createdAt
+        - items
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        ownerId:
+          type: string
+        ownerName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListItem"
+    CreateListInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 500
+    UpdateListInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+    AddListItemInput:
+      type: object
+      required:
+        - title
+        - mediaType
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
     ActivityType:
       type: string
       enum: [rating, watchlist, comment, approval, spice]

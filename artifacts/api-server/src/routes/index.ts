@@ -7,6 +7,7 @@ import approvalsRouter from "./approvals";
 import spiceRouter from "./spice";
 import commentsRouter from "./comments";
 import topFourRouter from "./topFour";
+import listsRouter from "./lists";
 import invitesRouter from "./invites";
 import groupsRouter from "./groups";
 
@@ -22,5 +23,6 @@ router.use(approvalsRouter);
 router.use(spiceRouter);
 router.use(commentsRouter);
 router.use(topFourRouter);
+router.use(listsRouter);
 
 export default router;

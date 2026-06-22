@@ -283,6 +283,62 @@ export interface TopFourInput {
   picks: TopFourPickInput[];
 }
 
+export interface ListSummary {
+  id: number;
+  name: string;
+  description: string | null;
+  ownerId: string;
+  /** Display-name snapshot of the member who created the list. */
+  ownerName: string;
+  itemCount: number;
+  createdAt: string;
+}
+
+export interface ListItem {
+  id: number;
+  title: string;
+  mediaType: MediaType;
+}
+
+export interface ListDetail {
+  id: number;
+  name: string;
+  description: string | null;
+  ownerId: string;
+  ownerName: string;
+  createdAt: string;
+  items: ListItem[];
+}
+
+export interface CreateListInput {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+  /** @maxLength 500 */
+  description?: string;
+}
+
+export interface UpdateListInput {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name?: string;
+  /** @maxLength 500 */
+  description?: string | null;
+}
+
+export interface AddListItemInput {
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  title: string;
+  mediaType: MediaType;
+}
+
 export type ActivityType = typeof ActivityType[keyof typeof ActivityType];
 
 
@@ -427,5 +483,12 @@ export type ListTopFourParams = {
  * View this member's Top Four instead of your own. Requires a shared group.
  */
 userId?: string;
+};
+
+export type ListListsParams = {
+/**
+ * Browse lists owned by all members of this group. Requires membership.
+ */
+groupId?: number;
 };
 

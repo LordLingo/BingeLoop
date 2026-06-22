@@ -22,6 +22,7 @@ import type {
 import type {
   AcceptInviteResult,
   ActivityItem,
+  AddListItemInput,
   ApprovalInput,
   CheckInParams,
   CheckInResult,
@@ -29,6 +30,7 @@ import type {
   ClearSpicyParams,
   Comment,
   CommentInput,
+  CreateListInput,
   Entry,
   EntryInput,
   EntryUpdate,
@@ -43,8 +45,12 @@ import type {
   ListActivityFeedParams,
   ListApprovalsParams,
   ListCommentsParams,
+  ListDetail,
   ListEntriesParams,
+  ListItem,
+  ListListsParams,
   ListSpiceParams,
+  ListSummary,
   ListTopFourParams,
   ListWatchlistParams,
   ShowApproval,
@@ -53,6 +59,7 @@ import type {
   Stats,
   TopFourInput,
   TopFourPick,
+  UpdateListInput,
   WatchlistInput,
   WatchlistItem
 } from './api.schemas';
@@ -1851,6 +1858,531 @@ export const useSetTopFour = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getSetTopFourMutationOptions(options));
+    }
+
+export const getListListsUrl = (params?: ListListsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/lists?${stringifiedParams}` : `/api/lists`
+}
+
+/**
+ * Returns lists owned by members of the given group (you must be a member). Without groupId, returns only your own lists. Each summary includes the owner's name and item count.
+ * @summary Browse lists in a group
+ */
+export const listLists = async (params?: ListListsParams, options?: RequestInit): Promise<ListSummary[]> => {
+
+  return customFetch<ListSummary[]>(getListListsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListListsQueryKey = (params?: ListListsParams,) => {
+    return [
+    `/api/lists`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListListsQueryOptions = <TData = Awaited<ReturnType<typeof listLists>>, TError = ErrorType<Error>>(params?: ListListsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLists>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListListsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLists>>> = ({ signal }) => listLists(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listLists>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListListsQueryResult = NonNullable<Awaited<ReturnType<typeof listLists>>>
+export type ListListsQueryError = ErrorType<Error>
+
+
+/**
+ * @summary Browse lists in a group
+ */
+
+export function useListLists<TData = Awaited<ReturnType<typeof listLists>>, TError = ErrorType<Error>>(
+ params?: ListListsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLists>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListListsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateListUrl = () => {
+
+
+
+
+  return `/api/lists`
+}
+
+/**
+ * Creates a list owned by the caller, with a title and optional description.
+ * @summary Create a new list
+ */
+export const createList = async (createListInput: CreateListInput, options?: RequestInit): Promise<ListSummary> => {
+
+  return customFetch<ListSummary>(getCreateListUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createListInput,)
+  }
+);}
+
+
+
+
+export const getCreateListMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createList>>, TError,{data: BodyType<CreateListInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createList>>, TError,{data: BodyType<CreateListInput>}, TContext> => {
+
+const mutationKey = ['createList'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createList>>, {data: BodyType<CreateListInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createList(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateListMutationResult = NonNullable<Awaited<ReturnType<typeof createList>>>
+    export type CreateListMutationBody = BodyType<CreateListInput>
+    export type CreateListMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a new list
+ */
+export const useCreateList = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createList>>, TError,{data: BodyType<CreateListInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createList>>,
+        TError,
+        {data: BodyType<CreateListInput>},
+        TContext
+      > => {
+      return useMutation(getCreateListMutationOptions(options));
+    }
+
+export const getGetListUrl = (id: number,) => {
+
+
+
+
+  return `/api/lists/${id}`
+}
+
+/**
+ * Returns the list with its items. You must share a group with the list's owner (or be the owner), otherwise 403.
+ * @summary Open a list and see its contents
+ */
+export const getList = async (id: number, options?: RequestInit): Promise<ListDetail> => {
+
+  return customFetch<ListDetail>(getGetListUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetListQueryKey = (id: number,) => {
+    return [
+    `/api/lists/${id}`
+    ] as const;
+    }
+
+
+export const getGetListQueryOptions = <TData = Awaited<ReturnType<typeof getList>>, TError = ErrorType<Error>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getList>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetListQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getList>>> = ({ signal }) => getList(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getList>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetListQueryResult = NonNullable<Awaited<ReturnType<typeof getList>>>
+export type GetListQueryError = ErrorType<Error>
+
+
+/**
+ * @summary Open a list and see its contents
+ */
+
+export function useGetList<TData = Awaited<ReturnType<typeof getList>>, TError = ErrorType<Error>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getList>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetListQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateListUrl = (id: number,) => {
+
+
+
+
+  return `/api/lists/${id}`
+}
+
+/**
+ * Owner-only. Updates the list's name and/or description.
+ * @summary Edit a list's title or description
+ */
+export const updateList = async (id: number,
+    updateListInput: UpdateListInput, options?: RequestInit): Promise<ListSummary> => {
+
+  return customFetch<ListSummary>(getUpdateListUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateListInput,)
+  }
+);}
+
+
+
+
+export const getUpdateListMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateList>>, TError,{id: number;data: BodyType<UpdateListInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateList>>, TError,{id: number;data: BodyType<UpdateListInput>}, TContext> => {
+
+const mutationKey = ['updateList'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateList>>, {id: number;data: BodyType<UpdateListInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateList(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateListMutationResult = NonNullable<Awaited<ReturnType<typeof updateList>>>
+    export type UpdateListMutationBody = BodyType<UpdateListInput>
+    export type UpdateListMutationError = ErrorType<Error>
+
+    /**
+ * @summary Edit a list's title or description
+ */
+export const useUpdateList = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateList>>, TError,{id: number;data: BodyType<UpdateListInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateList>>,
+        TError,
+        {id: number;data: BodyType<UpdateListInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateListMutationOptions(options));
+    }
+
+export const getDeleteListUrl = (id: number,) => {
+
+
+
+
+  return `/api/lists/${id}`
+}
+
+/**
+ * Owner-only. Deletes the list and all its items.
+ * @summary Delete a list
+ */
+export const deleteList = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteListUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteListMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteList>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteList>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteList'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteList>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteList(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteListMutationResult = NonNullable<Awaited<ReturnType<typeof deleteList>>>
+
+    export type DeleteListMutationError = ErrorType<Error>
+
+    /**
+ * @summary Delete a list
+ */
+export const useDeleteList = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteList>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteList>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteListMutationOptions(options));
+    }
+
+export const getAddListItemUrl = (id: number,) => {
+
+
+
+
+  return `/api/lists/${id}/items`
+}
+
+/**
+ * Owner-only. Appends a free-text title to the list.
+ * @summary Add a movie or show to a list
+ */
+export const addListItem = async (id: number,
+    addListItemInput: AddListItemInput, options?: RequestInit): Promise<ListItem> => {
+
+  return customFetch<ListItem>(getAddListItemUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      addListItemInput,)
+  }
+);}
+
+
+
+
+export const getAddListItemMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addListItem>>, TError,{id: number;data: BodyType<AddListItemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addListItem>>, TError,{id: number;data: BodyType<AddListItemInput>}, TContext> => {
+
+const mutationKey = ['addListItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addListItem>>, {id: number;data: BodyType<AddListItemInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  addListItem(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddListItemMutationResult = NonNullable<Awaited<ReturnType<typeof addListItem>>>
+    export type AddListItemMutationBody = BodyType<AddListItemInput>
+    export type AddListItemMutationError = ErrorType<Error>
+
+    /**
+ * @summary Add a movie or show to a list
+ */
+export const useAddListItem = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addListItem>>, TError,{id: number;data: BodyType<AddListItemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addListItem>>,
+        TError,
+        {id: number;data: BodyType<AddListItemInput>},
+        TContext
+      > => {
+      return useMutation(getAddListItemMutationOptions(options));
+    }
+
+export const getDeleteListItemUrl = (id: number,
+    itemId: number,) => {
+
+
+
+
+  return `/api/lists/${id}/items/${itemId}`
+}
+
+/**
+ * Owner-only. Removes one item from the list.
+ * @summary Remove a movie or show from a list
+ */
+export const deleteListItem = async (id: number,
+    itemId: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteListItemUrl(id,itemId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteListItemMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteListItem>>, TError,{id: number;itemId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteListItem>>, TError,{id: number;itemId: number}, TContext> => {
+
+const mutationKey = ['deleteListItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteListItem>>, {id: number;itemId: number}> = (props) => {
+          const {id,itemId} = props ?? {};
+
+          return  deleteListItem(id,itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteListItemMutationResult = NonNullable<Awaited<ReturnType<typeof deleteListItem>>>
+
+    export type DeleteListItemMutationError = ErrorType<Error>
+
+    /**
+ * @summary Remove a movie or show from a list
+ */
+export const useDeleteListItem = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteListItem>>, TError,{id: number;itemId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteListItem>>,
+        TError,
+        {id: number;itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteListItemMutationOptions(options));
     }
 
 export const getListGroupsUrl = () => {

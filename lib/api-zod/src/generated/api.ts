@@ -439,6 +439,132 @@ export const SetTopFourResponse = zod.array(SetTopFourResponseItem)
 
 
 /**
+ * Returns lists owned by members of the given group (you must be a member). Without groupId, returns only your own lists. Each summary includes the owner's name and item count.
+ * @summary Browse lists in a group
+ */
+export const ListListsQueryParams = zod.object({
+  "groupId": zod.coerce.number().optional().describe('Browse lists owned by all members of this group. Requires membership.')
+})
+
+export const ListListsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullable(),
+  "ownerId": zod.string(),
+  "ownerName": zod.string().describe('Display-name snapshot of the member who created the list.'),
+  "itemCount": zod.number(),
+  "createdAt": zod.coerce.date()
+})
+export const ListListsResponse = zod.array(ListListsResponseItem)
+
+
+/**
+ * Creates a list owned by the caller, with a title and optional description.
+ * @summary Create a new list
+ */
+export const createListBodyNameMax = 120;
+
+export const createListBodyDescriptionMax = 500;
+
+
+
+export const CreateListBody = zod.object({
+  "name": zod.string().min(1).max(createListBodyNameMax),
+  "description": zod.string().max(createListBodyDescriptionMax).optional()
+})
+
+
+/**
+ * Returns the list with its items. You must share a group with the list's owner (or be the owner), otherwise 403.
+ * @summary Open a list and see its contents
+ */
+export const GetListParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetListResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullable(),
+  "ownerId": zod.string(),
+  "ownerName": zod.string(),
+  "createdAt": zod.coerce.date(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv'])
+}))
+})
+
+
+/**
+ * Owner-only. Updates the list's name and/or description.
+ * @summary Edit a list's title or description
+ */
+export const UpdateListParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateListBodyNameMax = 120;
+
+export const updateListBodyDescriptionMax = 500;
+
+
+
+export const UpdateListBody = zod.object({
+  "name": zod.string().min(1).max(updateListBodyNameMax).optional(),
+  "description": zod.string().max(updateListBodyDescriptionMax).nullish()
+})
+
+export const UpdateListResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullable(),
+  "ownerId": zod.string(),
+  "ownerName": zod.string().describe('Display-name snapshot of the member who created the list.'),
+  "itemCount": zod.number(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * Owner-only. Deletes the list and all its items.
+ * @summary Delete a list
+ */
+export const DeleteListParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * Owner-only. Appends a free-text title to the list.
+ * @summary Add a movie or show to a list
+ */
+export const AddListItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const addListItemBodyTitleMax = 200;
+
+
+
+export const AddListItemBody = zod.object({
+  "title": zod.string().min(1).max(addListItemBodyTitleMax),
+  "mediaType": zod.enum(['movie', 'tv'])
+})
+
+
+/**
+ * Owner-only. Removes one item from the list.
+ * @summary Remove a movie or show from a list
+ */
+export const DeleteListItemParams = zod.object({
+  "id": zod.coerce.number(),
+  "itemId": zod.coerce.number()
+})
+
+
+/**
  * @summary List the groups I belong to
  */
 export const ListGroupsResponseItem = zod.object({

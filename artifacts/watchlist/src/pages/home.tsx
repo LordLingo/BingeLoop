@@ -10,7 +10,7 @@ import {
   ListEntriesSort
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark, Activity } from "lucide-react";
+import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark, Activity, ListVideo } from "lucide-react";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
@@ -88,6 +88,14 @@ export default function Home() {
             >
               <Activity className="w-4 h-4" />
               <span className="hidden sm:inline">Activity</span>
+            </Link>
+            <Link
+              href="/lists"
+              className="flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+              data-testid="link-lists"
+            >
+              <ListVideo className="w-4 h-4" />
+              <span className="hidden sm:inline">Lists</span>
             </Link>
             <Link
               href="/watchlist"
