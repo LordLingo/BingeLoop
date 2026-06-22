@@ -46,6 +46,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useActiveGroup } from "@/components/active-group-context";
+import { WatchTrailerButton } from "@/components/watch-trailer-button";
 
 type MediaType = "movie" | "tv";
 
@@ -325,32 +326,37 @@ export default function ListDetailPage() {
             {list.items.map((item) => (
               <div
                 key={item.id}
-                className="poster-card flex items-center justify-between gap-3 bg-card border border-border rounded-2xl p-5"
+                className="poster-card flex flex-col gap-3 bg-card border border-border rounded-2xl p-5"
                 data-testid={`card-item-${item.id}`}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="text-muted-foreground shrink-0">
-                    {item.mediaType === "movie" ? (
-                      <Film className="w-5 h-5" />
-                    ) : (
-                      <Tv className="w-5 h-5" />
-                    )}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="text-muted-foreground shrink-0">
+                      {item.mediaType === "movie" ? (
+                        <Film className="w-5 h-5" />
+                      ) : (
+                        <Tv className="w-5 h-5" />
+                      )}
+                    </div>
+                    <h3 className="text-xl font-serif tracking-wide line-clamp-2">
+                      {item.title}
+                    </h3>
                   </div>
-                  <h3 className="text-xl font-serif tracking-wide line-clamp-2">
-                    {item.title}
-                  </h3>
+                  {isOwner && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.id)}
+                      className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      aria-label="Remove"
+                      data-testid={`button-remove-item-${item.id}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-                {isOwner && (
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                    className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                    aria-label="Remove"
-                    data-testid={`button-remove-item-${item.id}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
+                <div className="mt-auto">
+                  <WatchTrailerButton title={item.title} />
+                </div>
               </div>
             ))}
           </div>

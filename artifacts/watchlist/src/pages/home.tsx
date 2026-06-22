@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark, Activity, ListVideo } from "lucide-react";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
+import { WatchTrailerButton } from "@/components/watch-trailer-button";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
 import { SpicySummary } from "@/components/spicy-summary";
@@ -265,6 +266,7 @@ export default function Home() {
                         `${entry.title.trim().toLowerCase()}::${entry.mediaType}`,
                       )}
                     />
+                    <WatchTrailerButton title={entry.title} />
                     {(() => {
                       const a = approvalMap.get(approvalKey(entry.title, entry.mediaType));
                       return a ? (

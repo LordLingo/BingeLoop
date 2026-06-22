@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Film, Tv, Bookmark, Users } from "lucide-react";
 import { format } from "date-fns";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
+import { WatchTrailerButton } from "@/components/watch-trailer-button";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
 import { SpicySummary } from "@/components/spicy-summary";
@@ -121,6 +122,7 @@ export default function WatchlistPage() {
                       mediaType={item.mediaType}
                       savedItemId={item.id}
                     />
+                    <WatchTrailerButton title={item.title} />
                     {(() => {
                       const a = approvalMap.get(
                         approvalKey(item.title, item.mediaType),

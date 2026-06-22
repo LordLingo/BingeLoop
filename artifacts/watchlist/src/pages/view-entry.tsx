@@ -35,6 +35,7 @@ import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
 import { SpicyControl } from "@/components/spicy-control";
 import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 import { CommentThread } from "@/components/comment-thread";
+import { WatchTrailerButton } from "@/components/watch-trailer-button";
 
 export default function ViewEntry() {
   const params = useParams();
@@ -217,6 +218,8 @@ export default function ViewEntry() {
                   Logged by {entry.addedBy}
                 </span>
               </div>
+
+              <WatchTrailerButton title={entry.title} />
             </div>
 
             {entry.comment && (
