@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserPlus, Copy, Check } from "lucide-react";
+import { UserPlus, Copy, Check, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useActiveGroup } from "@/components/active-group-context";
 
@@ -23,6 +23,13 @@ export function InviteDialog() {
   const [copied, setCopied] = useState(false);
   const create = useCreateOrGetGroupInvite();
   const [link, setLink] = useState<string | null>(null);
+  const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    setCanShare(
+      typeof navigator !== "undefined" && typeof navigator.share === "function",
+    );
+  }, []);
 
   useEffect(() => {
     setLink(null);
@@ -49,6 +56,25 @@ export function InviteDialog() {
           },
         },
       );
+    }
+  };
+
+  const handleShare = async () => {
+    if (!link) return;
+    const groupLabel = activeGroup ? `"${activeGroup.name}"` : "my group";
+    try {
+      await navigator.share({
+        title: "Join me on BingeLoop",
+        text: `Join ${groupLabel} on BingeLoop to track what we're watching:`,
+        url: link,
+      });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      toast({
+        title: "Couldn't open share sheet",
+        description: "Copy the link instead.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -89,30 +115,45 @@ export function InviteDialog() {
             {activeGroup ? ` "${activeGroup.name}"` : " your group"}.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex items-center gap-2 pt-2">
-          <Input
-            readOnly
-            value={create.isPending ? "Generating link…" : (link ?? "")}
-            onFocus={(e) => e.currentTarget.select()}
-            className="font-mono text-xs"
-            data-testid="input-invite-link"
-          />
-          <Button
-            type="button"
-            onClick={handleCopy}
-            disabled={!link}
-            className="shrink-0"
-            data-testid="button-copy-invite"
-          >
-            {copied ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
-            <span className="ml-1.5 hidden sm:inline">
-              {copied ? "Copied" : "Copy"}
-            </span>
-          </Button>
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center gap-2">
+            <Input
+              readOnly
+              value={create.isPending ? "Generating link…" : (link ?? "")}
+              onFocus={(e) => e.currentTarget.select()}
+              className="font-mono text-xs"
+              data-testid="input-invite-link"
+            />
+            <Button
+              type="button"
+              variant={canShare ? "outline" : "default"}
+              onClick={handleCopy}
+              disabled={!link}
+              className="shrink-0"
+              data-testid="button-copy-invite"
+            >
+              {copied ? (
+                <Check className="w-4 h-4" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+              <span className="ml-1.5 hidden sm:inline">
+                {copied ? "Copied" : "Copy"}
+              </span>
+            </Button>
+          </div>
+          {canShare && (
+            <Button
+              type="button"
+              onClick={handleShare}
+              disabled={!link}
+              className="w-full"
+              data-testid="button-share-invite"
+            >
+              <Share2 className="w-4 h-4" />
+              <span className="ml-1.5">Share invite</span>
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
