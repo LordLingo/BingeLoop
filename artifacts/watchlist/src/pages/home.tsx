@@ -21,7 +21,6 @@ import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { format } from "date-fns";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -287,9 +286,6 @@ export default function Home() {
                         </span>
                       </button>
                     </div>
-                    <span className="text-xs text-muted-foreground font-mono">
-                      {format(new Date(entry.createdAt), "MMM d")}
-                    </span>
                   </div>
 
                   {(entry.streamingProvider || entry.network) && (
