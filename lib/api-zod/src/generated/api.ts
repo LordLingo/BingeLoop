@@ -714,6 +714,16 @@ export const LeaveGroupParams = zod.object({
 
 
 /**
+ * Revokes the target member's access to the group: they can no longer view or switch to it. The member's contributed content (entries, ratings, comments, watchlist, Top Four, lists, approval/spice flags) is kept and stays visible to the rest of the group, with their name as the original contributor. Only the group owner may call this, and the owner cannot remove themselves.
+ * @summary Remove a member from a group (owner only)
+ */
+export const RemoveGroupMemberParams = zod.object({
+  "id": zod.coerce.number(),
+  "userId": zod.coerce.string()
+})
+
+
+/**
  * Returns the group's reusable invite link, creating one on first call. Only members may generate it.
  * @summary Create or fetch the group's shareable invite link
  */

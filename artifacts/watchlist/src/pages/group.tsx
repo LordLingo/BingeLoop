@@ -7,6 +7,7 @@ import {
   getGetGroupQueryKey,
   useRenameGroup,
   useLeaveGroup,
+  useRemoveGroupMember,
   useCreateOrGetGroupInvite,
   getListGroupsQueryKey,
 } from "@workspace/api-client-react";
@@ -21,6 +22,7 @@ import {
   Pencil,
   Crown,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -55,6 +57,7 @@ export default function GroupPage() {
 
   const rename = useRenameGroup();
   const leave = useLeaveGroup();
+  const removeMember = useRemoveGroupMember();
   const invite = useCreateOrGetGroupInvite();
 
   const isOwner = group?.role === "owner";
@@ -151,6 +154,26 @@ export default function GroupPage() {
           toast({
             variant: "destructive",
             title: "Couldn't leave group",
+            description: "Please try again.",
+          }),
+      },
+    );
+  };
+
+  const handleRemove = (memberUserId: string, memberName: string) => {
+    if (!activeGroupId || removeMember.isPending) return;
+    removeMember.mutate(
+      { id: activeGroupId, userId: memberUserId },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getGetGroupQueryKey(activeGroupId) });
+          qc.invalidateQueries({ queryKey: getListGroupsQueryKey() });
+          toast({ title: `Removed ${memberName}` });
+        },
+        onError: () =>
+          toast({
+            variant: "destructive",
+            title: "Couldn't remove member",
             description: "Please try again.",
           }),
       },
@@ -276,29 +299,72 @@ export default function GroupPage() {
           <div className="space-y-2">
             {(group?.members ?? []).map((m) => {
               const isSelf = m.userId === user?.id;
+              const canRemove = isOwner && !isSelf;
               return (
-                <Link
+                <div
                   key={m.userId}
-                  href={`/member/${m.userId}`}
-                  data-testid={`member-${m.userId}`}
+                  className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-card px-4 py-3"
                 >
-                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 hover:bg-muted/40 transition-colors">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-semibold truncate">
-                        {m.displayName}
+                  <Link
+                    href={`/member/${m.userId}`}
+                    className="flex items-center gap-2 min-w-0 flex-1 hover:text-primary transition-colors"
+                    data-testid={`member-${m.userId}`}
+                  >
+                    <span className="font-semibold truncate">
+                      {m.displayName}
+                    </span>
+                    {isSelf && (
+                      <span className="text-xs text-muted-foreground">
+                        (you)
                       </span>
-                      {isSelf && (
-                        <span className="text-xs text-muted-foreground">
-                          (you)
-                        </span>
-                      )}
-                      {m.role === "owner" && (
-                        <Crown className="w-4 h-4 text-primary shrink-0" />
-                      )}
-                    </div>
+                    )}
+                    {m.role === "owner" && (
+                      <Crown className="w-4 h-4 text-primary shrink-0" />
+                    )}
+                  </Link>
+                  {canRemove ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          data-testid={`button-remove-${m.userId}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Remove {m.displayName}?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {m.displayName} will lose access to "{group?.name}"
+                            and can no longer see its shows. Everything they
+                            added — shows, ratings, comments, watchlist, and more
+                            — stays in the group under their name. They can rejoin
+                            later with an invite link.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() =>
+                              handleRemove(m.userId, m.displayName)
+                            }
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            data-testid={`button-confirm-remove-${m.userId}`}
+                          >
+                            Remove member
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
                     <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                  </div>
-                </Link>
+                  )}
+                </div>
               );
             })}
           </div>

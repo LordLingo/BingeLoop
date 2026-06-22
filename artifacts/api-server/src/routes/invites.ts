@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import {
   db,
@@ -140,13 +140,33 @@ router.post(
     const existing = await getMembership(group.id, userId);
     let joined = false;
     if (!existing) {
-      const displayName = await resolveDisplayName(userId);
-      const inserted = await db
-        .insert(groupMembersTable)
-        .values({ groupId: group.id, userId, displayName, role: "member" })
-        .onConflictDoNothing()
-        .returning();
-      joined = inserted.length > 0;
+      // A previously-removed member keeps their row (status="removed"); rejoining
+      // via an invite reactivates that row instead of inserting a duplicate
+      // (which would conflict on the unique (groupId, userId) index).
+      const [priorRow] = await db
+        .select()
+        .from(groupMembersTable)
+        .where(
+          and(
+            eq(groupMembersTable.groupId, group.id),
+            eq(groupMembersTable.userId, userId),
+          ),
+        );
+      if (priorRow) {
+        await db
+          .update(groupMembersTable)
+          .set({ status: "active" })
+          .where(eq(groupMembersTable.id, priorRow.id));
+        joined = true;
+      } else {
+        const displayName = await resolveDisplayName(userId);
+        const inserted = await db
+          .insert(groupMembersTable)
+          .values({ groupId: group.id, userId, displayName, role: "member" })
+          .onConflictDoNothing()
+          .returning();
+        joined = inserted.length > 0;
+      }
     }
 
     res.json(

@@ -981,6 +981,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /groups/{id}/members/{userId}:
+    delete:
+      operationId: removeGroupMember
+      tags: [groups]
+      summary: Remove a member from a group (owner only)
+      description: >-
+        Revokes the target member's access to the group: they can no longer view
+        or switch to it. The member's contributed content (entries, ratings,
+        comments, watchlist, Top Four, lists, approval/spice flags) is kept and
+        stays visible to the rest of the group, with their name as the original
+        contributor. Only the group owner may call this, and the owner cannot
+        remove themselves.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Removed
+        "400":
+          description: Cannot remove yourself
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Not the owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Group or member not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /groups/{id}/invite:
     post:
       operationId: createOrGetGroupInvite

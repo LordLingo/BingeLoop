@@ -17,6 +17,7 @@ export const groupMembersTable = pgTable(
     userId: text("user_id").notNull(),
     displayName: text("display_name").notNull(),
     role: text("role").notNull(),
+    status: text("status").notNull().default("active"),
     joinedAt: timestamp("joined_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

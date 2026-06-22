@@ -2928,6 +2928,79 @@ export const useLeaveGroup = <TError = ErrorType<Error>,
       return useMutation(getLeaveGroupMutationOptions(options));
     }
 
+export const getRemoveGroupMemberUrl = (id: number,
+    userId: string,) => {
+
+
+
+
+  return `/api/groups/${id}/members/${userId}`
+}
+
+/**
+ * Revokes the target member's access to the group: they can no longer view or switch to it. The member's contributed content (entries, ratings, comments, watchlist, Top Four, lists, approval/spice flags) is kept and stays visible to the rest of the group, with their name as the original contributor. Only the group owner may call this, and the owner cannot remove themselves.
+ * @summary Remove a member from a group (owner only)
+ */
+export const removeGroupMember = async (id: number,
+    userId: string, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getRemoveGroupMemberUrl(id,userId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getRemoveGroupMemberMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeGroupMember>>, TError,{id: number;userId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeGroupMember>>, TError,{id: number;userId: string}, TContext> => {
+
+const mutationKey = ['removeGroupMember'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeGroupMember>>, {id: number;userId: string}> = (props) => {
+          const {id,userId} = props ?? {};
+
+          return  removeGroupMember(id,userId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveGroupMemberMutationResult = NonNullable<Awaited<ReturnType<typeof removeGroupMember>>>
+
+    export type RemoveGroupMemberMutationError = ErrorType<Error>
+
+    /**
+ * @summary Remove a member from a group (owner only)
+ */
+export const useRemoveGroupMember = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeGroupMember>>, TError,{id: number;userId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeGroupMember>>,
+        TError,
+        {id: number;userId: string},
+        TContext
+      > => {
+      return useMutation(getRemoveGroupMemberMutationOptions(options));
+    }
+
 export const getCreateOrGetGroupInviteUrl = (id: number,) => {
 
 

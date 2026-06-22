@@ -19,17 +19,25 @@ import {
   RenameGroupBody,
   RenameGroupResponse,
   LeaveGroupParams,
+  RemoveGroupMemberParams,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
 router.use(requireAuth);
 
+// Active members only. Removed members keep their row (status="removed") so their
+// content stays visible, but they are not counted/listed as members.
 async function memberCount(groupId: number): Promise<number> {
   const [row] = await db
     .select({ value: count() })
     .from(groupMembersTable)
-    .where(eq(groupMembersTable.groupId, groupId));
+    .where(
+      and(
+        eq(groupMembersTable.groupId, groupId),
+        eq(groupMembersTable.status, "active"),
+      ),
+    );
   return row?.value ?? 0;
 }
 
@@ -42,7 +50,12 @@ router.get("/groups", async (req: AuthedRequest, res): Promise<void> => {
       role: groupMembersTable.role,
     })
     .from(groupMembersTable)
-    .where(eq(groupMembersTable.userId, userId));
+    .where(
+      and(
+        eq(groupMembersTable.userId, userId),
+        eq(groupMembersTable.status, "active"),
+      ),
+    );
 
   if (memberships.length === 0) {
     res.json(ListGroupsResponse.parse([]));
@@ -61,7 +74,12 @@ router.get("/groups", async (req: AuthedRequest, res): Promise<void> => {
   const counts = await db
     .select({ groupId: groupMembersTable.groupId, value: count() })
     .from(groupMembersTable)
-    .where(inArray(groupMembersTable.groupId, ids))
+    .where(
+      and(
+        inArray(groupMembersTable.groupId, ids),
+        eq(groupMembersTable.status, "active"),
+      ),
+    )
     .groupBy(groupMembersTable.groupId);
   const countById = new Map(counts.map((c) => [c.groupId, c.value]));
 
@@ -140,7 +158,12 @@ router.get("/groups/:id", async (req: AuthedRequest, res): Promise<void> => {
   const members = await db
     .select()
     .from(groupMembersTable)
-    .where(eq(groupMembersTable.groupId, groupId))
+    .where(
+      and(
+        eq(groupMembersTable.groupId, groupId),
+        eq(groupMembersTable.status, "active"),
+      ),
+    )
     .orderBy(asc(groupMembersTable.joinedAt));
 
   res.json(
@@ -238,10 +261,20 @@ router.post(
     const remaining = await db
       .select()
       .from(groupMembersTable)
-      .where(eq(groupMembersTable.groupId, groupId))
+      .where(
+        and(
+          eq(groupMembersTable.groupId, groupId),
+          eq(groupMembersTable.status, "active"),
+        ),
+      )
       .orderBy(asc(groupMembersTable.joinedAt));
 
     if (remaining.length === 0) {
+      // No active members left: tear the group down, including any removed-member
+      // rows still attached to it.
+      await db
+        .delete(groupMembersTable)
+        .where(eq(groupMembersTable.groupId, groupId));
       await db.delete(invitesTable).where(eq(invitesTable.groupId, groupId));
       await db.delete(groupsTable).where(eq(groupsTable.id, groupId));
     } else if (membership.role === "owner") {
@@ -255,6 +288,65 @@ router.post(
         .set({ role: "owner" })
         .where(eq(groupMembersTable.id, next.id));
     }
+
+    res.sendStatus(204);
+  },
+);
+
+router.delete(
+  "/groups/:id/members/:userId",
+  async (req: AuthedRequest, res): Promise<void> => {
+    const params = RemoveGroupMemberParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+
+    const callerId = req.userId!;
+    const groupId = params.data.id;
+    const targetUserId = params.data.userId;
+
+    const [group] = await db
+      .select()
+      .from(groupsTable)
+      .where(eq(groupsTable.id, groupId));
+    if (!group) {
+      res.status(404).json({ error: "Group not found" });
+      return;
+    }
+    if (group.ownerId !== callerId) {
+      res
+        .status(403)
+        .json({ error: "Only the owner can remove members" });
+      return;
+    }
+    if (targetUserId === callerId) {
+      res.status(400).json({ error: "You cannot remove yourself" });
+      return;
+    }
+
+    // Must be an ACTIVE member to remove.
+    const [target] = await db
+      .select()
+      .from(groupMembersTable)
+      .where(
+        and(
+          eq(groupMembersTable.groupId, groupId),
+          eq(groupMembersTable.userId, targetUserId),
+          eq(groupMembersTable.status, "active"),
+        ),
+      );
+    if (!target) {
+      res.status(404).json({ error: "Member not found" });
+      return;
+    }
+
+    // Soft-remove: keep the row (and its displayName snapshot) so the member's
+    // contributed content stays visible to the group, but revoke their access.
+    await db
+      .update(groupMembersTable)
+      .set({ status: "removed" })
+      .where(eq(groupMembersTable.id, target.id));
 
     res.sendStatus(204);
   },
