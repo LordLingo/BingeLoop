@@ -267,25 +267,23 @@ export default function Home() {
                     {entry.title}
                   </h3>
                   
-                  <div className="mt-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <StarRating value={entry.rating} readonly size="sm" />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          navigate(`/member/${entry.addedById}`);
-                        }}
-                        className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
-                        data-testid={`link-added-by-${entry.id}`}
-                      >
-                        Added by{" "}
-                        <span className="text-primary font-semibold underline-offset-2 hover:underline">
-                          {entry.addedBy}
-                        </span>
-                      </button>
-                    </div>
+                  <div className="mt-auto">
+                    <StarRating value={entry.rating} readonly size="sm" />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(`/member/${entry.addedById}`);
+                      }}
+                      className="mt-2 block w-full truncate text-left text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
+                      data-testid={`link-added-by-${entry.id}`}
+                    >
+                      by{" "}
+                      <span className="text-primary font-semibold underline-offset-2 hover:underline">
+                        {entry.addedBy}
+                      </span>
+                    </button>
                   </div>
 
                   {(entry.streamingProvider || entry.network) && (
