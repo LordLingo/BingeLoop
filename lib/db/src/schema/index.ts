@@ -26,3 +26,4 @@ export * from "./invites";
 export * from "./groups";
 export * from "./groupMembers";
 export * from "./comments";
+export * from "./topFour";

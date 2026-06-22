@@ -36,7 +36,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useActiveGroup } from "@/components/active-group-context";
-import { cn } from "@/lib/utils";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -277,40 +276,28 @@ export default function GroupPage() {
           <div className="space-y-2">
             {(group?.members ?? []).map((m) => {
               const isSelf = m.userId === user?.id;
-              const content = (
-                <div
-                  className={cn(
-                    "flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3",
-                    !isSelf && "hover:bg-muted/40 transition-colors",
-                  )}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-semibold truncate">
-                      {m.displayName}
-                    </span>
-                    {isSelf && (
-                      <span className="text-xs text-muted-foreground">(you)</span>
-                    )}
-                    {m.role === "owner" && (
-                      <Crown className="w-4 h-4 text-primary shrink-0" />
-                    )}
-                  </div>
-                  {!isSelf && (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                  )}
-                </div>
-              );
-              return isSelf ? (
-                <div key={m.userId} data-testid={`member-${m.userId}`}>
-                  {content}
-                </div>
-              ) : (
+              return (
                 <Link
                   key={m.userId}
                   href={`/member/${m.userId}`}
                   data-testid={`member-${m.userId}`}
                 >
-                  {content}
+                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 hover:bg-muted/40 transition-colors">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-semibold truncate">
+                        {m.displayName}
+                      </span>
+                      {isSelf && (
+                        <span className="text-xs text-muted-foreground">
+                          (you)
+                        </span>
+                      )}
+                      {m.role === "owner" && (
+                        <Crown className="w-4 h-4 text-primary shrink-0" />
+                      )}
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </div>
                 </Link>
               );
             })}

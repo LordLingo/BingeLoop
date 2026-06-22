@@ -10,15 +10,18 @@ import {
   getListWatchlistQueryKey,
 } from "@workspace/api-client-react";
 import { ChevronLeft, Film, Tv, Star, User, Bookmark } from "lucide-react";
+import { useUser } from "@clerk/react";
 import { StarRating } from "@/components/star-rating";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { useActiveGroup } from "@/components/active-group-context";
+import { TopFourSection } from "@/components/top-four-section";
 
 export default function MemberPage() {
   const params = useParams();
   const userId = params.userId ?? "";
+  const { user } = useUser();
+  const isSelf = !!user && user.id === userId;
   const { activeGroupId } = useActiveGroup();
 
   const { data: group } = useGetGroup(activeGroupId ?? 0, {
@@ -109,7 +112,13 @@ export default function MemberPage() {
         </div>
       </section>
 
-      <main className="max-w-3xl mx-auto px-4">
+      <main className="max-w-3xl mx-auto px-4 space-y-10">
+        <TopFourSection
+          userId={userId}
+          isSelf={isSelf}
+          displayName={displayName}
+        />
+
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">Loading...</div>
         ) : !entries || entries.length === 0 ? (

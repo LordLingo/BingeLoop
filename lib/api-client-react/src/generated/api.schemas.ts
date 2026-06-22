@@ -259,6 +259,30 @@ export interface CheckInResult {
   since: string | null;
 }
 
+export interface TopFourPick {
+  /** Zero-based slot (0-3) determining display order. */
+  position: number;
+  title: string;
+  mediaType: MediaType;
+}
+
+export interface TopFourPickInput {
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  title: string;
+  mediaType: MediaType;
+}
+
+export interface TopFourInput {
+  /**
+     * The ordered favorites; the first item is shown first.
+     * @maxItems 4
+     */
+  picks: TopFourPickInput[];
+}
+
 export type ActivityType = typeof ActivityType[keyof typeof ActivityType];
 
 
@@ -396,5 +420,12 @@ groupId?: number;
  * @maximum 100
  */
 limit?: number;
+};
+
+export type ListTopFourParams = {
+/**
+ * View this member's Top Four instead of your own. Requires a shared group.
+ */
+userId?: string;
 };
 

@@ -26,6 +26,8 @@ tags:
     description: User-created named groups
   - name: activity
     description: New-activity check-in
+  - name: topFour
+    description: Member Top Four favorites
 paths:
   /healthz:
     get:
@@ -543,6 +545,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /top-four:
+    get:
+      operationId: listTopFour
+      tags: [topFour]
+      summary: Get a member's Top Four favorites
+      description: >-
+        Returns the caller's own Top Four picks by default, ordered by position.
+        Pass userId to view another member's picks (requires a shared group).
+        The list has 0-4 items.
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          description: View this member's Top Four instead of your own. Requires a shared group.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The member's Top Four picks, ordered by position
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopFourPick"
+        "403":
+          description: Caller does not share a group with the target user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      operationId: setTopFour
+      tags: [topFour]
+      summary: Replace my Top Four favorites
+      description: >-
+        Replaces the caller's entire Top Four with the given ordered list (0-4
+        picks). Titles are free-text and need not be logged in the app. Returns
+        the saved list.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TopFourInput"
+      responses:
+        "200":
+          description: The saved Top Four picks, ordered by position
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopFourPick"
   /groups:
     get:
       operationId: listGroups
@@ -1170,6 +1226,43 @@ components:
           type: ["string", "null"]
           format: date-time
           description: The previous last-seen time, or null on first visit.
+    TopFourPick:
+      type: object
+      required:
+        - position
+        - title
+        - mediaType
+      properties:
+        position:
+          type: integer
+          description: Zero-based slot (0-3) determining display order.
+        title:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+    TopFourPickInput:
+      type: object
+      required:
+        - title
+        - mediaType
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+    TopFourInput:
+      type: object
+      required:
+        - picks
+      properties:
+        picks:
+          type: array
+          maxItems: 4
+          description: The ordered favorites; the first item is shown first.
+          items:
+            $ref: "#/components/schemas/TopFourPickInput"
     ActivityType:
       type: string
       enum: [rating, watchlist, comment, approval, spice]

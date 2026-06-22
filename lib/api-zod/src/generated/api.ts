@@ -398,6 +398,47 @@ export const ListActivityFeedResponse = zod.array(ListActivityFeedResponseItem)
 
 
 /**
+ * Returns the caller's own Top Four picks by default, ordered by position. Pass userId to view another member's picks (requires a shared group). The list has 0-4 items.
+ * @summary Get a member's Top Four favorites
+ */
+export const ListTopFourQueryParams = zod.object({
+  "userId": zod.coerce.string().optional().describe('View this member\'s Top Four instead of your own. Requires a shared group.')
+})
+
+export const ListTopFourResponseItem = zod.object({
+  "position": zod.number().describe('Zero-based slot (0-3) determining display order.'),
+  "title": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv'])
+})
+export const ListTopFourResponse = zod.array(ListTopFourResponseItem)
+
+
+/**
+ * Replaces the caller's entire Top Four with the given ordered list (0-4 picks). Titles are free-text and need not be logged in the app. Returns the saved list.
+ * @summary Replace my Top Four favorites
+ */
+export const setTopFourBodyPicksItemTitleMax = 200;
+
+export const setTopFourBodyPicksMax = 4;
+
+
+
+export const SetTopFourBody = zod.object({
+  "picks": zod.array(zod.object({
+  "title": zod.string().min(1).max(setTopFourBodyPicksItemTitleMax),
+  "mediaType": zod.enum(['movie', 'tv'])
+})).max(setTopFourBodyPicksMax).describe('The ordered favorites; the first item is shown first.')
+})
+
+export const SetTopFourResponseItem = zod.object({
+  "position": zod.number().describe('Zero-based slot (0-3) determining display order.'),
+  "title": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv'])
+})
+export const SetTopFourResponse = zod.array(SetTopFourResponseItem)
+
+
+/**
  * @summary List the groups I belong to
  */
 export const ListGroupsResponseItem = zod.object({

@@ -45,11 +45,14 @@ import type {
   ListCommentsParams,
   ListEntriesParams,
   ListSpiceParams,
+  ListTopFourParams,
   ListWatchlistParams,
   ShowApproval,
   ShowSpicy,
   SpicyInput,
   Stats,
+  TopFourInput,
+  TopFourPick,
   WatchlistInput,
   WatchlistItem
 } from './api.schemas';
@@ -1692,6 +1695,163 @@ export function useListActivityFeed<TData = Awaited<ReturnType<typeof listActivi
 
 
 
+
+export const getListTopFourUrl = (params?: ListTopFourParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/top-four?${stringifiedParams}` : `/api/top-four`
+}
+
+/**
+ * Returns the caller's own Top Four picks by default, ordered by position. Pass userId to view another member's picks (requires a shared group). The list has 0-4 items.
+ * @summary Get a member's Top Four favorites
+ */
+export const listTopFour = async (params?: ListTopFourParams, options?: RequestInit): Promise<TopFourPick[]> => {
+
+  return customFetch<TopFourPick[]>(getListTopFourUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTopFourQueryKey = (params?: ListTopFourParams,) => {
+    return [
+    `/api/top-four`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListTopFourQueryOptions = <TData = Awaited<ReturnType<typeof listTopFour>>, TError = ErrorType<Error>>(params?: ListTopFourParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTopFour>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTopFourQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTopFour>>> = ({ signal }) => listTopFour(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTopFour>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListTopFourQueryResult = NonNullable<Awaited<ReturnType<typeof listTopFour>>>
+export type ListTopFourQueryError = ErrorType<Error>
+
+
+/**
+ * @summary Get a member's Top Four favorites
+ */
+
+export function useListTopFour<TData = Awaited<ReturnType<typeof listTopFour>>, TError = ErrorType<Error>>(
+ params?: ListTopFourParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTopFour>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListTopFourQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getSetTopFourUrl = () => {
+
+
+
+
+  return `/api/top-four`
+}
+
+/**
+ * Replaces the caller's entire Top Four with the given ordered list (0-4 picks). Titles are free-text and need not be logged in the app. Returns the saved list.
+ * @summary Replace my Top Four favorites
+ */
+export const setTopFour = async (topFourInput: TopFourInput, options?: RequestInit): Promise<TopFourPick[]> => {
+
+  return customFetch<TopFourPick[]>(getSetTopFourUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      topFourInput,)
+  }
+);}
+
+
+
+
+export const getSetTopFourMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setTopFour>>, TError,{data: BodyType<TopFourInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setTopFour>>, TError,{data: BodyType<TopFourInput>}, TContext> => {
+
+const mutationKey = ['setTopFour'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setTopFour>>, {data: BodyType<TopFourInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setTopFour(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetTopFourMutationResult = NonNullable<Awaited<ReturnType<typeof setTopFour>>>
+    export type SetTopFourMutationBody = BodyType<TopFourInput>
+    export type SetTopFourMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Replace my Top Four favorites
+ */
+export const useSetTopFour = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setTopFour>>, TError,{data: BodyType<TopFourInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setTopFour>>,
+        TError,
+        {data: BodyType<TopFourInput>},
+        TContext
+      > => {
+      return useMutation(getSetTopFourMutationOptions(options));
+    }
 
 export const getListGroupsUrl = () => {
 
