@@ -87,7 +87,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
       <div className="flex flex-col gap-3 px-4 sm:px-6 pt-6 pb-2 text-foreground">
-        <BrandLogo className="h-8 sm:h-9" />
+        <BrandLogo className="h-8 sm:h-9 self-start" />
         <div className="flex items-center justify-between gap-2">
           <GroupSwitcher />
           <div className="flex items-center gap-1 shrink-0">
