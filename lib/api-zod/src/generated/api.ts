@@ -30,7 +30,7 @@ export const ListEntriesQueryParams = zod.object({
   "sort": zod.enum(['newest', 'oldest', 'rating_high', 'rating_low', 'title']).optional()
 })
 
-export const listEntriesResponseRatingMax = 5;
+export const listEntriesResponseMyRatingMax = 5;
 
 
 
@@ -38,7 +38,9 @@ export const ListEntriesResponseItem = zod.object({
   "id": zod.number(),
   "title": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
-  "rating": zod.number().min(1).max(listEntriesResponseRatingMax),
+  "averageRating": zod.number().nullable().describe('Average of all members\' ratings for this show, or null if no one has rated it yet.'),
+  "ratingCount": zod.number().describe('Number of members who have rated this show.'),
+  "myRating": zod.number().min(1).max(listEntriesResponseMyRatingMax).nullable().describe('The calling user\'s own rating for this show, or null if they have not rated it.'),
   "category": zod.string(),
   "comment": zod.string().nullish(),
   "addedBy": zod.string().describe('Display name of the user who added this entry.'),
@@ -66,7 +68,7 @@ export const createEntryBodyRatingMax = 5;
 export const CreateEntryBody = zod.object({
   "title": zod.string().min(1),
   "mediaType": zod.enum(['movie', 'tv']),
-  "rating": zod.number().min(1).max(createEntryBodyRatingMax),
+  "rating": zod.number().min(1).max(createEntryBodyRatingMax).optional().describe('Optional initial personal rating for the member adding this show. Omit if they have not rated it yet.'),
   "category": zod.string().min(1),
   "comment": zod.string().optional(),
   "tmdbId": zod.number().nullish(),
@@ -85,7 +87,7 @@ export const GetEntryParams = zod.object({
   "id": zod.coerce.number()
 })
 
-export const getEntryResponseRatingMax = 5;
+export const getEntryResponseMyRatingMax = 5;
 
 
 
@@ -93,7 +95,9 @@ export const GetEntryResponse = zod.object({
   "id": zod.number(),
   "title": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
-  "rating": zod.number().min(1).max(getEntryResponseRatingMax),
+  "averageRating": zod.number().nullable().describe('Average of all members\' ratings for this show, or null if no one has rated it yet.'),
+  "ratingCount": zod.number().describe('Number of members who have rated this show.'),
+  "myRating": zod.number().min(1).max(getEntryResponseMyRatingMax).nullable().describe('The calling user\'s own rating for this show, or null if they have not rated it.'),
   "category": zod.string(),
   "comment": zod.string().nullish(),
   "addedBy": zod.string().describe('Display name of the user who added this entry.'),
@@ -116,15 +120,12 @@ export const UpdateEntryParams = zod.object({
 })
 
 
-export const updateEntryBodyRatingMax = 5;
-
 
 
 
 export const UpdateEntryBody = zod.object({
   "title": zod.string().min(1).optional(),
   "mediaType": zod.enum(['movie', 'tv']).optional(),
-  "rating": zod.number().min(1).max(updateEntryBodyRatingMax).optional(),
   "category": zod.string().min(1).optional(),
   "comment": zod.string().nullish(),
   "tmdbId": zod.number().nullish(),
@@ -135,7 +136,7 @@ export const UpdateEntryBody = zod.object({
   "groupId": zod.number().nullish().describe('Reassign this entry to a group. Used to assign previously unassigned entries.')
 })
 
-export const updateEntryResponseRatingMax = 5;
+export const updateEntryResponseMyRatingMax = 5;
 
 
 
@@ -143,7 +144,9 @@ export const UpdateEntryResponse = zod.object({
   "id": zod.number(),
   "title": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
-  "rating": zod.number().min(1).max(updateEntryResponseRatingMax),
+  "averageRating": zod.number().nullable().describe('Average of all members\' ratings for this show, or null if no one has rated it yet.'),
+  "ratingCount": zod.number().describe('Number of members who have rated this show.'),
+  "myRating": zod.number().min(1).max(updateEntryResponseMyRatingMax).nullable().describe('The calling user\'s own rating for this show, or null if they have not rated it.'),
   "category": zod.string(),
   "comment": zod.string().nullish(),
   "addedBy": zod.string().describe('Display name of the user who added this entry.'),
@@ -163,6 +166,80 @@ export const UpdateEntryResponse = zod.object({
  */
 export const DeleteEntryParams = zod.object({
   "id": zod.coerce.number()
+})
+
+
+/**
+ * Any member who can see this show may set or change their own 1-5 rating. Upserts the caller's rating and returns the updated entry with refreshed average.
+ * @summary Set or change your personal rating for a show
+ */
+export const SetEntryRatingParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const setEntryRatingBodyRatingMax = 5;
+
+
+
+export const SetEntryRatingBody = zod.object({
+  "rating": zod.number().min(1).max(setEntryRatingBodyRatingMax).describe('The calling member\'s personal 1-5 rating for this show.')
+})
+
+export const setEntryRatingResponseMyRatingMax = 5;
+
+
+
+export const SetEntryRatingResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "averageRating": zod.number().nullable().describe('Average of all members\' ratings for this show, or null if no one has rated it yet.'),
+  "ratingCount": zod.number().describe('Number of members who have rated this show.'),
+  "myRating": zod.number().min(1).max(setEntryRatingResponseMyRatingMax).nullable().describe('The calling user\'s own rating for this show, or null if they have not rated it.'),
+  "category": zod.string(),
+  "comment": zod.string().nullish(),
+  "addedBy": zod.string().describe('Display name of the user who added this entry.'),
+  "addedById": zod.string().describe('User id of the member who added this entry (for linking to their profile).'),
+  "tmdbId": zod.number().nullish().describe('TMDB id of the selected show.'),
+  "posterPath": zod.string().nullish().describe('TMDB poster path (e.g. \/abc.jpg).'),
+  "streamingProvider": zod.string().nullish().describe('US streaming service name from TMDB watch\/providers.'),
+  "streamingLogo": zod.string().nullish().describe('TMDB logo path for the streaming provider.'),
+  "network": zod.string().nullish().describe('Network name (TV shows only).'),
+  "groupId": zod.number().nullish().describe('The group this entry was added to. Null means it has not been assigned to a group yet.'),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * Removes the caller's own rating for this show and returns the updated entry with refreshed average.
+ * @summary Clear your personal rating for a show
+ */
+export const ClearEntryRatingParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const clearEntryRatingResponseMyRatingMax = 5;
+
+
+
+export const ClearEntryRatingResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "mediaType": zod.enum(['movie', 'tv']),
+  "averageRating": zod.number().nullable().describe('Average of all members\' ratings for this show, or null if no one has rated it yet.'),
+  "ratingCount": zod.number().describe('Number of members who have rated this show.'),
+  "myRating": zod.number().min(1).max(clearEntryRatingResponseMyRatingMax).nullable().describe('The calling user\'s own rating for this show, or null if they have not rated it.'),
+  "category": zod.string(),
+  "comment": zod.string().nullish(),
+  "addedBy": zod.string().describe('Display name of the user who added this entry.'),
+  "addedById": zod.string().describe('User id of the member who added this entry (for linking to their profile).'),
+  "tmdbId": zod.number().nullish().describe('TMDB id of the selected show.'),
+  "posterPath": zod.string().nullish().describe('TMDB poster path (e.g. \/abc.jpg).'),
+  "streamingProvider": zod.string().nullish().describe('US streaming service name from TMDB watch\/providers.'),
+  "streamingLogo": zod.string().nullish().describe('TMDB logo path for the streaming provider.'),
+  "network": zod.string().nullish().describe('Network name (TV shows only).'),
+  "groupId": zod.number().nullish().describe('The group this entry was added to. Null means it has not been assigned to a group yet.'),
+  "createdAt": zod.coerce.date()
 })
 
 
@@ -491,7 +568,7 @@ export const GetWeeklyDigestResponse = zod.object({
   "topShow": zod.union([zod.object({
   "title": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
-  "rating": zod.number(),
+  "rating": zod.number().describe('Average rating across all members who have rated this show.'),
   "addedBy": zod.string(),
   "entryId": zod.number()
 }),zod.null()]).describe('The week\'s highest-rated new entry, or null if there were none.'),

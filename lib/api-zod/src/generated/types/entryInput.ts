@@ -12,10 +12,11 @@ export interface EntryInput {
   title: string;
   mediaType: MediaType;
   /**
+     * Optional initial personal rating for the member adding this show. Omit if they have not rated it yet.
      * @minimum 1
      * @maximum 5
      */
-  rating: number;
+  rating?: number;
   /** @minLength 1 */
   category: string;
   comment?: string;

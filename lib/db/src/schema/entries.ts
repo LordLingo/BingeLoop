@@ -6,7 +6,9 @@ export const entriesTable = pgTable("entries", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   mediaType: text("media_type").notNull(),
-  rating: integer("rating").notNull(),
+  // Legacy/deprecated: ratings now live per-member in entryRatingsTable. Kept
+  // nullable as the backfill source; not written for new entries.
+  rating: integer("rating"),
   category: text("category").notNull(),
   comment: text("comment"),
   userId: text("user_id").notNull(),

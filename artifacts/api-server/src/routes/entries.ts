@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, asc, and, or, isNull, inArray } from "drizzle-orm";
-import { db, entriesTable } from "@workspace/db";
+import { eq, desc, asc, and, or, isNull, inArray, sql } from "drizzle-orm";
+import { db, entriesTable, entryRatingsTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import {
   sharedActiveGroupIds,
@@ -19,6 +19,11 @@ import {
   UpdateEntryBody,
   UpdateEntryResponse,
   DeleteEntryParams,
+  SetEntryRatingParams,
+  SetEntryRatingBody,
+  SetEntryRatingResponse,
+  ClearEntryRatingParams,
+  ClearEntryRatingResponse,
   GetStatsQueryParams,
   GetStatsResponse,
   ListCategoriesResponse,
@@ -26,10 +31,68 @@ import {
 
 const router: IRouter = Router();
 
-const withAddedById = <T extends { userId: string }>(row: T) => ({
-  ...row,
-  addedById: row.userId,
-});
+type EntryRow = typeof entriesTable.$inferSelect;
+
+// Decorate raw entry rows with the per-member rating aggregate the API exposes:
+// averageRating (mean across all raters, null if none), ratingCount, and the
+// caller's own myRating. Ratings live in entryRatingsTable, one row per
+// (entry, member); the legacy entries.rating column is no longer read.
+async function enrichEntries(rows: EntryRow[], callerId: string) {
+  const ids = rows.map((r) => r.id);
+  const agg = new Map<number, { avg: number; count: number }>();
+  const mine = new Map<number, number>();
+
+  if (ids.length > 0) {
+    const aggRows = await db
+      .select({
+        entryId: entryRatingsTable.entryId,
+        avg: sql<string>`avg(${entryRatingsTable.rating})`,
+        cnt: sql<string>`count(*)`,
+      })
+      .from(entryRatingsTable)
+      .where(inArray(entryRatingsTable.entryId, ids))
+      .groupBy(entryRatingsTable.entryId);
+    for (const a of aggRows) {
+      agg.set(a.entryId, { avg: Number(a.avg), count: Number(a.cnt) });
+    }
+
+    const mineRows = await db
+      .select({
+        entryId: entryRatingsTable.entryId,
+        rating: entryRatingsTable.rating,
+      })
+      .from(entryRatingsTable)
+      .where(
+        and(
+          inArray(entryRatingsTable.entryId, ids),
+          eq(entryRatingsTable.userId, callerId),
+        ),
+      );
+    for (const m of mineRows) mine.set(m.entryId, m.rating);
+  }
+
+  return rows.map((row) => {
+    const a = agg.get(row.id);
+    return {
+      ...row,
+      addedById: row.userId,
+      averageRating:
+        a && a.count > 0 ? Math.round(a.avg * 10) / 10 : null,
+      ratingCount: a ? a.count : 0,
+      myRating: mine.get(row.id) ?? null,
+    };
+  });
+}
+
+// Whether the caller may see (and therefore rate) this entry: their own, a
+// group entry they're an active member of, or a legacy un-grouped entry whose
+// author currently shares an active group with them.
+async function canSeeEntry(entry: EntryRow, callerId: string): Promise<boolean> {
+  if (entry.userId === callerId) return true;
+  return entry.groupId != null
+    ? await isMember(entry.groupId, callerId)
+    : await usersShareGroup(callerId, entry.userId);
+}
 
 // Entries visible inside a group's shared library: anything explicitly assigned
 // to the group, PLUS legacy un-grouped (group_id IS NULL) entries logged by the
@@ -110,10 +173,28 @@ router.get("/stats", async (req: AuthedRequest, res): Promise<void> => {
   const total = rows.length;
   const movieCount = rows.filter((r) => r.mediaType === "movie").length;
   const tvCount = rows.filter((r) => r.mediaType === "tv").length;
-  const averageRating =
-    total === 0
-      ? 0
-      : Math.round((rows.reduce((s, r) => s + r.rating, 0) / total) * 10) / 10;
+
+  // Average across actual ratings only (unrated shows are ignored). For a member
+  // scope (own or another member) average that member's personal ratings; for a
+  // group scope average every member's ratings on the in-scope shows.
+  const ratingUserId = queryUserId ?? (groupId != null ? null : callerId);
+  const entryIds = rows.map((r) => r.id);
+  let averageRating = 0;
+  if (entryIds.length > 0) {
+    const conds = [inArray(entryRatingsTable.entryId, entryIds)];
+    if (ratingUserId != null) {
+      conds.push(eq(entryRatingsTable.userId, ratingUserId));
+    }
+    const [a] = await db
+      .select({
+        avg: sql<string>`avg(${entryRatingsTable.rating})`,
+        cnt: sql<string>`count(*)`,
+      })
+      .from(entryRatingsTable)
+      .where(and(...conds));
+    averageRating =
+      a && Number(a.cnt) > 0 ? Math.round(Number(a.avg) * 10) / 10 : 0;
+  }
 
   const counts = new Map<string, number>();
   for (const r of rows) {
@@ -189,16 +270,14 @@ router.get("/entries", async (req: AuthedRequest, res): Promise<void> => {
   if (category) conditions.push(eq(entriesTable.category, category));
   if (mediaType) conditions.push(eq(entriesTable.mediaType, mediaType));
 
+  // Rating sorts can't be done in SQL anymore (the value is an aggregate of
+  // entryRatingsTable), so fetch newest-first as a stable base order and re-sort
+  // in memory after enrichment, keeping unrated shows last for both directions.
+  const isRatingSort = sort === "rating_high" || sort === "rating_low";
   let orderBy;
   switch (sort) {
     case "oldest":
       orderBy = asc(entriesTable.createdAt);
-      break;
-    case "rating_high":
-      orderBy = desc(entriesTable.rating);
-      break;
-    case "rating_low":
-      orderBy = asc(entriesTable.rating);
       break;
     case "title":
       orderBy = asc(entriesTable.title);
@@ -215,7 +294,21 @@ router.get("/entries", async (req: AuthedRequest, res): Promise<void> => {
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(orderBy);
 
-  res.json(ListEntriesResponse.parse(rows.map(withAddedById)));
+  let enriched = await enrichEntries(rows, callerId);
+
+  if (isRatingSort) {
+    const dir = sort === "rating_high" ? -1 : 1;
+    enriched = [...enriched].sort((a, b) => {
+      const aHas = a.averageRating != null;
+      const bHas = b.averageRating != null;
+      if (aHas && bHas) return (a.averageRating! - b.averageRating!) * dir;
+      if (aHas) return -1;
+      if (bHas) return 1;
+      return 0;
+    });
+  }
+
+  res.json(ListEntriesResponse.parse(enriched));
 });
 
 router.post("/entries", async (req: AuthedRequest, res): Promise<void> => {
@@ -248,7 +341,6 @@ router.post("/entries", async (req: AuthedRequest, res): Promise<void> => {
     .values({
       title: parsed.data.title,
       mediaType: parsed.data.mediaType,
-      rating: parsed.data.rating,
       category: parsed.data.category,
       comment: parsed.data.comment ?? null,
       userId,
@@ -262,7 +354,17 @@ router.post("/entries", async (req: AuthedRequest, res): Promise<void> => {
     })
     .returning();
 
-  res.status(201).json(GetEntryResponse.parse(withAddedById(entry)));
+  // Optional initial personal rating for the member adding the show.
+  if (parsed.data.rating != null) {
+    await db.insert(entryRatingsTable).values({
+      entryId: entry.id,
+      userId,
+      rating: parsed.data.rating,
+    });
+  }
+
+  const [enriched] = await enrichEntries([entry], userId);
+  res.status(201).json(GetEntryResponse.parse(enriched));
 });
 
 router.get("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
@@ -283,21 +385,13 @@ router.get("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
   }
 
   const callerId = req.userId!;
-  if (entry.userId !== callerId) {
-    // Visible if the entry belongs to a group you're an active member of, OR it
-    // is a legacy un-grouped entry whose author currently shares an active group
-    // with you (consistent with the group library surfacing such entries).
-    const visible =
-      entry.groupId != null
-        ? await isMember(entry.groupId, callerId)
-        : await usersShareGroup(callerId, entry.userId);
-    if (!visible) {
-      res.status(404).json({ error: "Entry not found" });
-      return;
-    }
+  if (!(await canSeeEntry(entry, callerId))) {
+    res.status(404).json({ error: "Entry not found" });
+    return;
   }
 
-  res.json(GetEntryResponse.parse(withAddedById(entry)));
+  const [enriched] = await enrichEntries([entry], callerId);
+  res.json(GetEntryResponse.parse(enriched));
 });
 
 router.patch("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
@@ -343,7 +437,8 @@ router.patch("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
   }
 
   if (Object.keys(parsed.data).length === 0) {
-    res.json(UpdateEntryResponse.parse(withAddedById(existing)));
+    const [enriched] = await enrichEntries([existing], req.userId!);
+    res.json(UpdateEntryResponse.parse(enriched));
     return;
   }
 
@@ -353,7 +448,8 @@ router.patch("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
     .where(eq(entriesTable.id, params.data.id))
     .returning();
 
-  res.json(UpdateEntryResponse.parse(withAddedById(entry)));
+  const [enriched] = await enrichEntries([entry], req.userId!);
+  res.json(UpdateEntryResponse.parse(enriched));
 });
 
 router.delete(
@@ -381,6 +477,90 @@ router.delete(
     }
 
     res.sendStatus(204);
+  },
+);
+
+// Set or change the caller's own rating for a show. Any member who can see the
+// show may rate it. The membership/visibility check runs BEFORE any write so a
+// 403 leaves no side effects.
+router.put(
+  "/entries/:id/rating",
+  async (req: AuthedRequest, res): Promise<void> => {
+    const params = SetEntryRatingParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+    const parsed = SetEntryRatingBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+
+    const [entry] = await db
+      .select()
+      .from(entriesTable)
+      .where(eq(entriesTable.id, params.data.id));
+    if (!entry) {
+      res.status(404).json({ error: "Entry not found" });
+      return;
+    }
+
+    const callerId = req.userId!;
+    if (!(await canSeeEntry(entry, callerId))) {
+      res.status(403).json({ error: "You can't rate this show" });
+      return;
+    }
+
+    await db
+      .insert(entryRatingsTable)
+      .values({ entryId: entry.id, userId: callerId, rating: parsed.data.rating })
+      .onConflictDoUpdate({
+        target: [entryRatingsTable.entryId, entryRatingsTable.userId],
+        set: { rating: parsed.data.rating, updatedAt: new Date() },
+      });
+
+    const [enriched] = await enrichEntries([entry], callerId);
+    res.json(SetEntryRatingResponse.parse(enriched));
+  },
+);
+
+// Clear the caller's own rating for a show.
+router.delete(
+  "/entries/:id/rating",
+  async (req: AuthedRequest, res): Promise<void> => {
+    const params = ClearEntryRatingParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+
+    const [entry] = await db
+      .select()
+      .from(entriesTable)
+      .where(eq(entriesTable.id, params.data.id));
+    if (!entry) {
+      res.status(404).json({ error: "Entry not found" });
+      return;
+    }
+
+    const callerId = req.userId!;
+    if (!(await canSeeEntry(entry, callerId))) {
+      res.status(403).json({ error: "You can't rate this show" });
+      return;
+    }
+
+    await db
+      .delete(entryRatingsTable)
+      .where(
+        and(
+          eq(entryRatingsTable.entryId, entry.id),
+          eq(entryRatingsTable.userId, callerId),
+        ),
+      );
+
+    const [enriched] = await enrichEntries([entry], callerId);
+    res.json(ClearEntryRatingResponse.parse(enriched));
   },
 );
 

@@ -11,7 +11,7 @@ import {
 } from "@workspace/api-client-react";
 import { ChevronLeft, Film, Tv, Star, User, Bookmark } from "lucide-react";
 import { useUser } from "@clerk/react";
-import { StarRating } from "@/components/star-rating";
+import { RatingSummary } from "@/components/rating-summary";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useActiveGroup } from "@/components/active-group-context";
@@ -160,9 +160,12 @@ export default function MemberPage() {
                   {entry.title}
                 </h3>
 
-                <div className="mt-auto flex items-center justify-between">
-                  <StarRating value={entry.rating} readonly size="sm" />
-                  <span className="text-xs text-muted-foreground font-mono">
+                <div className="mt-auto flex items-center justify-between gap-2">
+                  <RatingSummary
+                    averageRating={entry.averageRating}
+                    ratingCount={entry.ratingCount}
+                  />
+                  <span className="text-xs text-muted-foreground font-mono shrink-0">
                     {format(new Date(entry.createdAt), "MMM d")}
                   </span>
                 </div>

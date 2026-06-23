@@ -3,6 +3,7 @@ import { eq, and, gt, lte, inArray, count, sql, asc, desc } from "drizzle-orm";
 import {
   db,
   entriesTable,
+  entryRatingsTable,
   userActivityTable,
   watchlistItemsTable,
   showCommentsTable,
@@ -176,15 +177,13 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
   // in full because they also supply the display title and a linkable entry id
   // for shows referenced by comments/audiences/spice (which store only the
   // normalized titleKey). The poll/comment tables are capped at `limit`.
-  const [entryRows, watchRows, commentRows, audienceRows, spiceRows] =
+  const [entryRows, watchRows, commentRows, audienceRows, spiceRows, ratingRows] =
     await Promise.all([
       db
         .select({
           id: entriesTable.id,
           title: entriesTable.title,
           mediaType: entriesTable.mediaType,
-          rating: entriesTable.rating,
-          addedBy: entriesTable.addedBy,
           createdAt: entriesTable.createdAt,
         })
         .from(entriesTable)
@@ -238,6 +237,21 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
         .where(inArray(showSpiceTable.userId, memberIds))
         .orderBy(desc(showSpiceTable.updatedAt))
         .limit(limit),
+      db
+        .select({
+          id: entryRatingsTable.id,
+          userId: entryRatingsTable.userId,
+          rating: entryRatingsTable.rating,
+          updatedAt: entryRatingsTable.updatedAt,
+          title: entriesTable.title,
+          mediaType: entriesTable.mediaType,
+          entryId: entriesTable.id,
+        })
+        .from(entryRatingsTable)
+        .innerJoin(entriesTable, eq(entryRatingsTable.entryId, entriesTable.id))
+        .where(inArray(entryRatingsTable.userId, memberIds))
+        .orderBy(desc(entryRatingsTable.updatedAt))
+        .limit(limit),
     ]);
 
   // Map each show to a display title and an openable entry id. Entries are in
@@ -257,16 +271,16 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
 
   const items: FeedItem[] = [];
 
-  for (const e of entryRows) {
+  for (const r of ratingRows) {
     items.push({
-      id: `rating:${e.id}`,
+      id: `rating:${r.id}`,
       type: "rating",
-      actorName: e.addedBy,
-      title: e.title,
-      mediaType: e.mediaType,
-      createdAt: e.createdAt,
-      entryId: e.id,
-      rating: e.rating,
+      actorName: await actorName(r.userId),
+      title: r.title,
+      mediaType: r.mediaType,
+      createdAt: r.updatedAt,
+      entryId: r.entryId,
+      rating: r.rating,
       audiences: null,
       spicy: null,
     });
@@ -373,17 +387,20 @@ router.get(
       return;
     }
 
-    // Pull the week's source rows for the resolved members. Names are the
-    // snapshots stored on each row (addedBy / authorName), so no display-name
-    // resolution is needed for the "most active" tally.
-    const [entryRows, commentRows, watchRows, topRows] = await Promise.all([
+    // Pull the week's source rows for the resolved members. Ratings now come
+    // from entryRatingsTable (a rating is any member setting/changing their own
+    // score this week); comments and saves keep their snapshot names.
+    const [ratingRows, commentRows, watchRows] = await Promise.all([
       db
-        .select({ addedBy: entriesTable.addedBy })
-        .from(entriesTable)
+        .select({
+          userId: entryRatingsTable.userId,
+          entryId: entryRatingsTable.entryId,
+        })
+        .from(entryRatingsTable)
         .where(
           and(
-            inArray(entriesTable.userId, memberIds),
-            gt(entriesTable.createdAt, since),
+            inArray(entryRatingsTable.userId, memberIds),
+            gt(entryRatingsTable.updatedAt, since),
           ),
         ),
       db
@@ -404,30 +421,80 @@ router.get(
             gt(watchlistItemsTable.createdAt, since),
           ),
         ),
-      db
-        .select({
-          id: entriesTable.id,
-          title: entriesTable.title,
-          mediaType: entriesTable.mediaType,
-          rating: entriesTable.rating,
-          addedBy: entriesTable.addedBy,
-        })
-        .from(entriesTable)
-        .where(
-          and(
-            inArray(entriesTable.userId, memberIds),
-            gt(entriesTable.createdAt, since),
-          ),
-        )
-        .orderBy(desc(entriesTable.rating), desc(entriesTable.createdAt))
-        .limit(1),
     ]);
+
+    // topShow = the highest AVERAGE rating among shows rated this week (average
+    // taken over all members' ratings, never an unrated/null show).
+    const ratedEntryIds = [...new Set(ratingRows.map((r) => r.entryId))];
+    let topShow: {
+      title: string;
+      mediaType: string;
+      rating: number;
+      addedBy: string;
+      entryId: number;
+    } | null = null;
+    if (ratedEntryIds.length > 0) {
+      const avgRows = await db
+        .select({
+          entryId: entryRatingsTable.entryId,
+          avg: sql<string>`avg(${entryRatingsTable.rating})`,
+        })
+        .from(entryRatingsTable)
+        .where(inArray(entryRatingsTable.entryId, ratedEntryIds))
+        .groupBy(entryRatingsTable.entryId);
+      let best: { entryId: number; avg: number } | null = null;
+      for (const a of avgRows) {
+        const avg = Number(a.avg);
+        if (!best || avg > best.avg) best = { entryId: a.entryId, avg };
+      }
+      if (best) {
+        const [entry] = await db
+          .select({
+            id: entriesTable.id,
+            title: entriesTable.title,
+            mediaType: entriesTable.mediaType,
+            addedBy: entriesTable.addedBy,
+          })
+          .from(entriesTable)
+          .where(eq(entriesTable.id, best.entryId));
+        if (entry) {
+          topShow = {
+            title: entry.title,
+            mediaType: entry.mediaType,
+            rating: Math.round(best.avg * 10) / 10,
+            addedBy: entry.addedBy,
+            entryId: entry.id,
+          };
+        }
+      }
+    }
+
+    // Display names for raters (entry_ratings stores only userId). In group mode
+    // every rater is a current member; without a group the only actor is caller.
+    const nameByUser = new Map<string, string>();
+    if (groupId !== undefined) {
+      const members = await db
+        .select({
+          userId: groupMembersTable.userId,
+          displayName: groupMembersTable.displayName,
+        })
+        .from(groupMembersTable)
+        .where(eq(groupMembersTable.groupId, groupId));
+      for (const m of members) nameByUser.set(m.userId, m.displayName);
+    }
+    const nameOf = async (userId: string): Promise<string> => {
+      const known = nameByUser.get(userId);
+      if (known) return known;
+      const resolved = await resolveDisplayName(userId);
+      nameByUser.set(userId, resolved);
+      return resolved;
+    };
 
     // Most active member by total actions (ratings + comments + saves).
     const actionsByName = new Map<string, number>();
     const bump = (name: string) =>
       actionsByName.set(name, (actionsByName.get(name) ?? 0) + 1);
-    for (const r of entryRows) bump(r.addedBy);
+    for (const r of ratingRows) bump(await nameOf(r.userId));
     for (const c of commentRows) bump(c.authorName);
     for (const w of watchRows) bump(w.addedBy);
 
@@ -436,23 +503,13 @@ router.get(
       if (!mostActive || c > mostActive.count) mostActive = { name, count: c };
     }
 
-    const top = topRows[0];
-
     res.json(
       GetWeeklyDigestResponse.parse({
         since: since.toISOString(),
-        newRatings: entryRows.length,
+        newRatings: ratingRows.length,
         newComments: commentRows.length,
         newSaves: watchRows.length,
-        topShow: top
-          ? {
-              title: top.title,
-              mediaType: top.mediaType,
-              rating: top.rating,
-              addedBy: top.addedBy,
-              entryId: top.id,
-            }
-          : null,
+        topShow,
         mostActive,
       }),
     );

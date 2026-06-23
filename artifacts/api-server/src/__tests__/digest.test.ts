@@ -6,6 +6,7 @@ import {
   groupsTable,
   groupMembersTable,
   entriesTable,
+  entryRatingsTable,
   watchlistItemsTable,
   showCommentsTable,
 } from "@workspace/db";
@@ -47,31 +48,41 @@ beforeAll(async () => {
   ]);
 
   // Alice logs two entries (the 5★ is the week's top pick); Bob logs one.
-  await db.insert(entriesTable).values([
-    {
-      userId: ALICE,
-      title: "Interstellar",
-      mediaType: "movie",
-      rating: 5,
-      category: "Drama",
-      addedBy: ALICE,
-    },
-    {
-      userId: ALICE,
-      title: "Tenet",
-      mediaType: "movie",
-      rating: 3,
-      category: "Thriller",
-      addedBy: ALICE,
-    },
-    {
-      userId: BOB,
-      title: "The Bear",
-      mediaType: "tv",
-      rating: 4,
-      category: "Drama",
-      addedBy: BOB,
-    },
+  const ratedEntries = await db
+    .insert(entriesTable)
+    .values([
+      {
+        userId: ALICE,
+        title: "Interstellar",
+        mediaType: "movie",
+        category: "Drama",
+        addedBy: ALICE,
+      },
+      {
+        userId: ALICE,
+        title: "Tenet",
+        mediaType: "movie",
+        category: "Thriller",
+        addedBy: ALICE,
+      },
+      {
+        userId: BOB,
+        title: "The Bear",
+        mediaType: "tv",
+        category: "Drama",
+        addedBy: BOB,
+      },
+    ])
+    .returning();
+  const idOf = (title: string) =>
+    ratedEntries.find((e) => e.title === title)!.id;
+
+  // Per-member ratings now live in entry_ratings; the digest counts a rating as
+  // any member setting their own score this week.
+  await db.insert(entryRatingsTable).values([
+    { entryId: idOf("Interstellar"), userId: ALICE, rating: 5 },
+    { entryId: idOf("Tenet"), userId: ALICE, rating: 3 },
+    { entryId: idOf("The Bear"), userId: BOB, rating: 4 },
   ]);
 
   // Alice saves a show and comments → most-active should be Alice (4 actions).
@@ -98,6 +109,9 @@ afterAll(async () => {
   await db
     .delete(watchlistItemsTable)
     .where(inArray(watchlistItemsTable.userId, ALL_USERS));
+  await db
+    .delete(entryRatingsTable)
+    .where(inArray(entryRatingsTable.userId, ALL_USERS));
   await db.delete(entriesTable).where(inArray(entriesTable.userId, ALL_USERS));
   await db
     .delete(groupMembersTable)

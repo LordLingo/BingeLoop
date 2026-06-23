@@ -10,6 +10,7 @@ import type { MediaType } from './mediaType';
 export interface DigestTopShow {
   title: string;
   mediaType: MediaType;
+  /** Average rating across all members who have rated this show. */
   rating: number;
   addedBy: string;
   entryId: number;

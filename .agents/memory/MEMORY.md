@@ -11,4 +11,6 @@
 - [Display name snapshot fan-out](display-name-fanout.md) — names are denormalized; new snapshots must use resolveDisplayName (never email) AND join setDisplayNameAndPropagate's txn.
 - [Group membership soft-removal](group-membership-soft-removal.md) — `group_members.status`: access helpers filter active; getGroupMemberIds keeps removed so kicked members' content stays visible.
 - [Orval coerce.string() query params](tmdb-coerce-string-query-params.md) — a required string query param won't 400 when omitted (coerces undefined→"undefined"); guard explicitly.
-- [Entry group-scoping contract](entry-group-scoping.md) — group library/stats filter by entries.groupId (NOT member-set); userId view stays cross-group; NULL groupId = unassigned, triaged in-app.
+- [Entry group-scoping contract](entry-group-scoping.md) — group library/stats filter by entries.groupId (NOT member-set); userId view cross-group; activity feed/digest scope by ACTOR membership (by-design, not a leak).
+- [Per-member ratings model](per-member-ratings.md) — ratings are per-member optional rows in entry_ratings; entries.rating is legacy & NO LONGER READ; prod needs a separate idempotent backfill.
+- [Test/build CPU throttle](test-runner-cpu-throttle.md) — vitest/tsc stall on an idle box = exhausted cgroup CPU burst credits; stop hammering, let credits refill, run once. pkill -f vitest self-kills.

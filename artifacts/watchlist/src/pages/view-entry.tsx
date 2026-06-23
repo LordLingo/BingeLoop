@@ -6,12 +6,16 @@ import {
   getGetEntryQueryKey,
   useDeleteEntry,
   useUpdateEntry,
+  useSetEntryRating,
+  useClearEntryRating,
   getListEntriesQueryKey,
   getGetStatsQueryKey,
 } from "@workspace/api-client-react";
+import type { Entry } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Edit, Film, Trash2, Tv } from "lucide-react";
 import { StarRating } from "@/components/star-rating";
+import { RatingSummary } from "@/components/rating-summary";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -57,9 +61,49 @@ export default function ViewEntry() {
 
   const deleteMutation = useDeleteEntry();
   const updateMutation = useUpdateEntry();
+  const setRatingMutation = useSetEntryRating();
+  const clearRatingMutation = useClearEntryRating();
   const audienceMap = useAudienceMap();
   const spiceMap = useSpiceMap();
   const reactionMap = useReactionMap();
+
+  const applyRatingResult = (updated: Entry) => {
+    queryClient.setQueryData(getGetEntryQueryKey(id), updated);
+    queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetStatsQueryKey() });
+  };
+
+  const handleSetRating = (value: number) => {
+    setRatingMutation.mutate(
+      { id, data: { rating: value } },
+      {
+        onSuccess: applyRatingResult,
+        onError: () => {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to save your rating. Please try again.",
+          });
+        },
+      },
+    );
+  };
+
+  const handleClearRating = () => {
+    clearRatingMutation.mutate(
+      { id },
+      {
+        onSuccess: applyRatingResult,
+        onError: () => {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to clear your rating. Please try again.",
+          });
+        },
+      },
+    );
+  };
 
   if (isError) {
     return (
@@ -213,14 +257,43 @@ export default function ViewEntry() {
                 {entry.title}
               </h1>
 
-              <div className="flex items-center gap-4 mt-2">
-                <StarRating value={entry.rating} readonly size="lg" />
+              <div className="flex items-center gap-4 mt-2 flex-wrap">
+                <RatingSummary
+                  averageRating={entry.averageRating}
+                  ratingCount={entry.ratingCount}
+                  className="text-base"
+                />
                 <span className="text-base text-muted-foreground font-mono opacity-80 border-l border-border/50 pl-4">
                   {format(new Date(entry.createdAt), "MMM d, yyyy")}
                 </span>
                 <span className="text-base text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-full border border-border/40 font-medium">
                   Logged by {entry.addedBy}
                 </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border/60 bg-muted/20 p-4">
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold tracking-widest uppercase text-muted-foreground">
+                    Your rating
+                  </span>
+                  <StarRating
+                    value={entry.myRating ?? 0}
+                    onChange={handleSetRating}
+                    size="lg"
+                  />
+                </div>
+                {entry.myRating != null && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={handleClearRating}
+                    disabled={clearRatingMutation.isPending}
+                    data-testid="button-clear-rating"
+                  >
+                    Clear
+                  </Button>
+                )}
               </div>
 
               {(entry.streamingProvider || entry.network) && (

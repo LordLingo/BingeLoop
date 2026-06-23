@@ -6,6 +6,7 @@ import {
   groupsTable,
   groupMembersTable,
   entriesTable,
+  entryRatingsTable,
   watchlistItemsTable,
   showCommentsTable,
   showAudiencesTable,
@@ -51,14 +52,23 @@ beforeAll(async () => {
     { groupId: group2Id, userId: CAROL, displayName: "Carol", role: "owner" },
   ]);
 
-  // Alice rates the movie (this also supplies the linkable entry id + title).
-  await db.insert(entriesTable).values({
-    title: MOVIE,
-    mediaType: "movie",
-    rating: 5,
-    category: "Thriller",
+  // Alice logs the movie (this also supplies the linkable entry id + title).
+  const [aliceEntry] = await db
+    .insert(entriesTable)
+    .values({
+      title: MOVIE,
+      mediaType: "movie",
+      category: "Thriller",
+      userId: ALICE,
+      addedBy: "Alice",
+    })
+    .returning();
+  // Alice's personal rating lives in entry_ratings now; this is what produces
+  // the "rating" feed item (actor = the rater).
+  await db.insert(entryRatingsTable).values({
+    entryId: aliceEntry.id,
     userId: ALICE,
-    addedBy: "Alice",
+    rating: 5,
   });
   // Bob saves it to his watchlist.
   await db.insert(watchlistItemsTable).values({
@@ -101,6 +111,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await db
+    .delete(entryRatingsTable)
+    .where(inArray(entryRatingsTable.userId, ALL_USERS));
   await db.delete(entriesTable).where(inArray(entriesTable.userId, ALL_USERS));
   await db
     .delete(watchlistItemsTable)

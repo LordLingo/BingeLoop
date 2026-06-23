@@ -26,7 +26,7 @@ import { ShowSearchField, type SelectedShow } from "@/components/show-search-fie
 const entrySchema = z.object({
   title: z.string().min(1, "Title is required"),
   mediaType: z.enum(["movie", "tv"]),
-  rating: z.number().min(1).max(5),
+  rating: z.number().min(0).max(5),
   category: z.string().min(1, "Category is required"),
   comment: z.string().optional(),
   tmdbId: z.number().optional(),
@@ -47,12 +47,13 @@ interface EntryFormProps {
 
 export function EntryForm({ initialData, onSubmit, isLoading, submitLabel = "Save" }: EntryFormProps) {
   const { data: categories } = useListCategories();
+  const isEdit = !!initialData;
   const form = useForm<FormValues>({
     resolver: zodResolver(entrySchema),
     defaultValues: {
       title: initialData?.title || "",
       mediaType: initialData?.mediaType || "movie",
-      rating: initialData?.rating || 0,
+      rating: 0,
       category: initialData?.category || "",
       comment: initialData?.comment || "",
       tmdbId: initialData?.tmdbId ?? undefined,
@@ -85,9 +86,20 @@ export function EntryForm({ initialData, onSubmit, isLoading, submitLabel = "Sav
     form.setValue("network", show?.network ?? null);
   };
 
+  const handleSubmit = (values: FormValues) => {
+    const { rating, ...rest } = values;
+    const payload: EntryInput = { ...rest };
+    // Rating is the member's optional personal rating, only sent when adding a
+    // new show and they actually picked a star. Editing never touches ratings.
+    if (!isEdit && typeof rating === "number" && rating >= 1) {
+      payload.rating = rating;
+    }
+    onSubmit(payload);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="title"
@@ -102,25 +114,27 @@ export function EntryForm({ initialData, onSubmit, isLoading, submitLabel = "Sav
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="rating"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Rating</FormLabel>
-              <FormControl>
-                <div className="py-2">
-                  <StarRating 
-                    value={field.value} 
-                    onChange={field.onChange} 
-                    size="lg"
-                  />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!isEdit && (
+          <FormField
+            control={form.control}
+            name="rating"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Your rating (optional)</FormLabel>
+                <FormControl>
+                  <div className="py-2">
+                    <StarRating
+                      value={field.value}
+                      onChange={field.onChange}
+                      size="lg"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}

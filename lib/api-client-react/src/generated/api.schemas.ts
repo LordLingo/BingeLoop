@@ -143,10 +143,19 @@ export interface Entry {
   title: string;
   mediaType: MediaType;
   /**
+     * Average of all members' ratings for this show, or null if no one has rated it yet.
+     * @nullable
+     */
+  averageRating: number | null;
+  /** Number of members who have rated this show. */
+  ratingCount: number;
+  /**
+     * The calling user's own rating for this show, or null if they have not rated it.
      * @minimum 1
      * @maximum 5
+     * @nullable
      */
-  rating: number;
+  myRating: number | null;
   category: string;
   /** @nullable */
   comment?: string | null;
@@ -192,10 +201,11 @@ export interface EntryInput {
   title: string;
   mediaType: MediaType;
   /**
+     * Optional initial personal rating for the member adding this show. Omit if they have not rated it yet.
      * @minimum 1
      * @maximum 5
      */
-  rating: number;
+  rating?: number;
   /** @minLength 1 */
   category: string;
   comment?: string;
@@ -220,11 +230,6 @@ export interface EntryUpdate {
   /** @minLength 1 */
   title?: string;
   mediaType?: MediaType;
-  /**
-     * @minimum 1
-     * @maximum 5
-     */
-  rating?: number;
   /** @minLength 1 */
   category?: string;
   /** @nullable */
@@ -244,6 +249,15 @@ export interface EntryUpdate {
      * @nullable
      */
   groupId?: number | null;
+}
+
+export interface RatingInput {
+  /**
+     * The calling member's personal 1-5 rating for this show.
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
 }
 
 export interface TmdbSearchResult {
@@ -403,6 +417,7 @@ export interface ReactionInput {
 export interface DigestTopShow {
   title: string;
   mediaType: MediaType;
+  /** Average rating across all members who have rated this show. */
   rating: number;
   addedBy: string;
   entryId: number;

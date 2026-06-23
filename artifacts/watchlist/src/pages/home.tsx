@@ -21,7 +21,7 @@ import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 import { ReactionBar } from "@/components/reaction-bar";
 import { useReactionMap, reactionKey } from "@/hooks/use-reactions";
 import { WeeklyDigestCard } from "@/components/weekly-digest-card";
-import { StarRating } from "@/components/star-rating";
+import { RatingSummary } from "@/components/rating-summary";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
@@ -307,7 +307,10 @@ export default function Home() {
                   </h3>
                   
                   <div className="mt-auto">
-                    <StarRating value={entry.rating} readonly size="sm" />
+                    <RatingSummary
+                      averageRating={entry.averageRating}
+                      ratingCount={entry.ratingCount}
+                    />
                     <button
                       type="button"
                       onClick={(e) => {

@@ -185,6 +185,73 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /entries/{id}/rating:
+    put:
+      operationId: setEntryRating
+      tags: [entries]
+      summary: Set or change your personal rating for a show
+      description: Any member who can see this show may set or change their own 1-5 rating. Upserts the caller's rating and returns the updated entry with refreshed average.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RatingInput"
+      responses:
+        "200":
+          description: The updated entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entry"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      operationId: clearEntryRating
+      tags: [entries]
+      summary: Clear your personal rating for a show
+      description: Removes the caller's own rating for this show and returns the updated entry with refreshed average.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The updated entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entry"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /stats:
     get:
       operationId: getStats
@@ -1494,7 +1561,9 @@ components:
         - id
         - title
         - mediaType
-        - rating
+        - averageRating
+        - ratingCount
+        - myRating
         - category
         - addedBy
         - addedById
@@ -1506,10 +1575,17 @@ components:
           type: string
         mediaType:
           $ref: "#/components/schemas/MediaType"
-        rating:
+        averageRating:
+          type: ["number", "null"]
+          description: Average of all members' ratings for this show, or null if no one has rated it yet.
+        ratingCount:
           type: integer
+          description: Number of members who have rated this show.
+        myRating:
+          type: ["integer", "null"]
           minimum: 1
           maximum: 5
+          description: The calling user's own rating for this show, or null if they have not rated it.
         category:
           type: string
         comment:
@@ -1546,7 +1622,6 @@ components:
       required:
         - title
         - mediaType
-        - rating
         - category
       properties:
         title:
@@ -1558,6 +1633,7 @@ components:
           type: integer
           minimum: 1
           maximum: 5
+          description: Optional initial personal rating for the member adding this show. Omit if they have not rated it yet.
         category:
           type: string
           minLength: 1
@@ -1584,10 +1660,6 @@ components:
           minLength: 1
         mediaType:
           $ref: "#/components/schemas/MediaType"
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
         category:
           type: string
           minLength: 1
@@ -1606,6 +1678,16 @@ components:
         groupId:
           type: ["integer", "null"]
           description: Reassign this entry to a group. Used to assign previously unassigned entries.
+    RatingInput:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: The calling member's personal 1-5 rating for this show.
     TmdbSearchResult:
       type: object
       required:
@@ -1905,7 +1987,8 @@ components:
         mediaType:
           $ref: "#/components/schemas/MediaType"
         rating:
-          type: integer
+          type: number
+          description: Average rating across all members who have rated this show.
         addedBy:
           type: string
         entryId:

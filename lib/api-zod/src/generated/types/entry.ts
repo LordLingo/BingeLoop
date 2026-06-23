@@ -12,10 +12,19 @@ export interface Entry {
   title: string;
   mediaType: MediaType;
   /**
+     * Average of all members' ratings for this show, or null if no one has rated it yet.
+     * @nullable
+     */
+  averageRating: number | null;
+  /** Number of members who have rated this show. */
+  ratingCount: number;
+  /**
+     * The calling user's own rating for this show, or null if they have not rated it.
      * @minimum 1
      * @maximum 5
+     * @nullable
      */
-  rating: number;
+  myRating: number | null;
   category: string;
   /** @nullable */
   comment?: string | null;

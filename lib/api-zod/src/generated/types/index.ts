@@ -55,6 +55,7 @@ export * from './listWatchlistParams';
 export * from './mediaType';
 export * from './profile';
 export * from './profileUpdate';
+export * from './ratingInput';
 export * from './reactionCount';
 export * from './reactionEmoji';
 export * from './reactionInput';

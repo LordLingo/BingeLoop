@@ -58,6 +58,7 @@ import type {
   ListWatchlistParams,
   Profile,
   ProfileUpdate,
+  RatingInput,
   ReactionInput,
   ReactionSummary,
   ShowAudience,
@@ -539,6 +540,150 @@ export const useDeleteEntry = <TError = ErrorType<Error>,
         TContext
       > => {
       return useMutation(getDeleteEntryMutationOptions(options));
+    }
+
+export const getSetEntryRatingUrl = (id: number,) => {
+
+
+
+
+  return `/api/entries/${id}/rating`
+}
+
+/**
+ * Any member who can see this show may set or change their own 1-5 rating. Upserts the caller's rating and returns the updated entry with refreshed average.
+ * @summary Set or change your personal rating for a show
+ */
+export const setEntryRating = async (id: number,
+    ratingInput: RatingInput, options?: RequestInit): Promise<Entry> => {
+
+  return customFetch<Entry>(getSetEntryRatingUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      ratingInput,)
+  }
+);}
+
+
+
+
+export const getSetEntryRatingMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setEntryRating>>, TError,{id: number;data: BodyType<RatingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setEntryRating>>, TError,{id: number;data: BodyType<RatingInput>}, TContext> => {
+
+const mutationKey = ['setEntryRating'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setEntryRating>>, {id: number;data: BodyType<RatingInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  setEntryRating(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetEntryRatingMutationResult = NonNullable<Awaited<ReturnType<typeof setEntryRating>>>
+    export type SetEntryRatingMutationBody = BodyType<RatingInput>
+    export type SetEntryRatingMutationError = ErrorType<Error>
+
+    /**
+ * @summary Set or change your personal rating for a show
+ */
+export const useSetEntryRating = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setEntryRating>>, TError,{id: number;data: BodyType<RatingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setEntryRating>>,
+        TError,
+        {id: number;data: BodyType<RatingInput>},
+        TContext
+      > => {
+      return useMutation(getSetEntryRatingMutationOptions(options));
+    }
+
+export const getClearEntryRatingUrl = (id: number,) => {
+
+
+
+
+  return `/api/entries/${id}/rating`
+}
+
+/**
+ * Removes the caller's own rating for this show and returns the updated entry with refreshed average.
+ * @summary Clear your personal rating for a show
+ */
+export const clearEntryRating = async (id: number, options?: RequestInit): Promise<Entry> => {
+
+  return customFetch<Entry>(getClearEntryRatingUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getClearEntryRatingMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearEntryRating>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof clearEntryRating>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['clearEntryRating'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearEntryRating>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  clearEntryRating(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClearEntryRatingMutationResult = NonNullable<Awaited<ReturnType<typeof clearEntryRating>>>
+
+    export type ClearEntryRatingMutationError = ErrorType<Error>
+
+    /**
+ * @summary Clear your personal rating for a show
+ */
+export const useClearEntryRating = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearEntryRating>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof clearEntryRating>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getClearEntryRatingMutationOptions(options));
     }
 
 export const getGetStatsUrl = (params?: GetStatsParams,) => {

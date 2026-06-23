@@ -11,11 +11,6 @@ export interface EntryUpdate {
   /** @minLength 1 */
   title?: string;
   mediaType?: MediaType;
-  /**
-     * @minimum 1
-     * @maximum 5
-     */
-  rating?: number;
   /** @minLength 1 */
   category?: string;
   /** @nullable */
