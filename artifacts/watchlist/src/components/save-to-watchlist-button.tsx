@@ -59,7 +59,6 @@ export function SaveToWatchlistButton({
         {
           onSuccess: () => {
             invalidate();
-            toast({ title: "Saved to your watchlist" });
           },
           onError: () =>
             toast({
