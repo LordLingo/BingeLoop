@@ -9,4 +9,6 @@
 export interface Profile {
   /** The caller's chosen display name, or null if not set yet. */
   displayName: string | null;
+  /** True only for the app owner/admin (matched by email). Gates the admin dashboard link and access. */
+  isAdmin: boolean;
 }

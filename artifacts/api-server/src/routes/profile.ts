@@ -7,6 +7,7 @@ import {
   setDisplayNameAndPropagate,
 } from "../lib/displayName";
 import { getMemberGroupIds } from "../lib/groups";
+import { isAdminUser } from "../lib/admin";
 import {
   GetProfileResponse,
   UpdateProfileBody,
@@ -46,8 +47,11 @@ async function conflictingGroupName(
 }
 
 router.get("/profile", async (req: AuthedRequest, res): Promise<void> => {
-  const displayName = await getProfileDisplayName(req.userId!);
-  res.json(GetProfileResponse.parse({ displayName }));
+  const [displayName, isAdmin] = await Promise.all([
+    getProfileDisplayName(req.userId!),
+    isAdminUser(req.userId!),
+  ]);
+  res.json(GetProfileResponse.parse({ displayName, isAdmin }));
 });
 
 router.put("/profile", async (req: AuthedRequest, res): Promise<void> => {
@@ -75,7 +79,8 @@ router.put("/profile", async (req: AuthedRequest, res): Promise<void> => {
 
   await setDisplayNameAndPropagate(userId, displayName);
 
-  res.json(UpdateProfileResponse.parse({ displayName }));
+  const isAdmin = await isAdminUser(userId);
+  res.json(UpdateProfileResponse.parse({ displayName, isAdmin }));
 });
 
 export default router;

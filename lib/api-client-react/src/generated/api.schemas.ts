@@ -16,6 +16,30 @@ export interface Error {
 export interface Profile {
   /** The caller's chosen display name, or null if not set yet. */
   displayName: string | null;
+  /** True only for the app owner/admin (matched by email). Gates the admin dashboard link and access. */
+  isAdmin: boolean;
+}
+
+export interface SignupPoint {
+  /** Calendar day in YYYY-MM-DD form. */
+  date: string;
+  /** Number of signups on that day. */
+  count: number;
+}
+
+export interface AdminStats {
+  /** Total users who have signed up (have a profile). */
+  totalUsers: number;
+  /** Users who signed up in the last 7 days. */
+  newUsersLast7Days: number;
+  /** Users seen taking an action in the last 7 days. */
+  activeUsersLast7Days: number;
+  /** Total number of groups across the app. */
+  totalGroups: number;
+  /** Total movies/shows logged across the whole app. */
+  totalEntries: number;
+  /** Daily signup counts for the last 30 days (oldest first). */
+  signupsByDay: SignupPoint[];
 }
 
 export interface ProfileUpdate {

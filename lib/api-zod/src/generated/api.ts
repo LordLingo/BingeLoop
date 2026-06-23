@@ -857,7 +857,8 @@ export const AcceptInviteResponse = zod.object({
  * @summary Get the caller's display-name profile
  */
 export const GetProfileResponse = zod.object({
-  "displayName": zod.string().nullable().describe('The caller\'s chosen display name, or null if not set yet.')
+  "displayName": zod.string().nullable().describe('The caller\'s chosen display name, or null if not set yet.'),
+  "isAdmin": zod.boolean().describe('True only for the app owner\/admin (matched by email). Gates the admin dashboard link and access.')
 })
 
 
@@ -874,7 +875,25 @@ export const UpdateProfileBody = zod.object({
 })
 
 export const UpdateProfileResponse = zod.object({
-  "displayName": zod.string().nullable().describe('The caller\'s chosen display name, or null if not set yet.')
+  "displayName": zod.string().nullable().describe('The caller\'s chosen display name, or null if not set yet.'),
+  "isAdmin": zod.boolean().describe('True only for the app owner\/admin (matched by email). Gates the admin dashboard link and access.')
+})
+
+
+/**
+ * Returns aggregate, app-wide counts for the admin dashboard. Restricted to the app owner (matched by email); all other callers get 403. Contains only counts and totals — never any individual user's private content.
+ * @summary App-wide aggregate stats (admin only)
+ */
+export const GetAdminStatsResponse = zod.object({
+  "totalUsers": zod.number().describe('Total users who have signed up (have a profile).'),
+  "newUsersLast7Days": zod.number().describe('Users who signed up in the last 7 days.'),
+  "activeUsersLast7Days": zod.number().describe('Users seen taking an action in the last 7 days.'),
+  "totalGroups": zod.number().describe('Total number of groups across the app.'),
+  "totalEntries": zod.number().describe('Total movies\/shows logged across the whole app.'),
+  "signupsByDay": zod.array(zod.object({
+  "date": zod.string().describe('Calendar day in YYYY-MM-DD form.'),
+  "count": zod.number().describe('Number of signups on that day.')
+})).describe('Daily signup counts for the last 30 days (oldest first).')
 })
 
 

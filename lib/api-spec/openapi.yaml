@@ -1254,6 +1254,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: App-wide aggregate stats (admin only)
+      description: >-
+        Returns aggregate, app-wide counts for the admin dashboard. Restricted
+        to the app owner (matched by email); all other callers get 403. Contains
+        only counts and totals — never any individual user's private content.
+      responses:
+        "200":
+          description: Aggregate stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+        "403":
+          description: Caller is not the admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     HealthStatus:
@@ -1274,11 +1296,59 @@ components:
       type: object
       required:
         - displayName
+        - isAdmin
       properties:
         displayName:
           type: string
           nullable: true
           description: The caller's chosen display name, or null if not set yet.
+        isAdmin:
+          type: boolean
+          description: >-
+            True only for the app owner/admin (matched by email). Gates the
+            admin dashboard link and access.
+    AdminStats:
+      type: object
+      required:
+        - totalUsers
+        - newUsersLast7Days
+        - activeUsersLast7Days
+        - totalGroups
+        - totalEntries
+        - signupsByDay
+      properties:
+        totalUsers:
+          type: integer
+          description: Total users who have signed up (have a profile).
+        newUsersLast7Days:
+          type: integer
+          description: Users who signed up in the last 7 days.
+        activeUsersLast7Days:
+          type: integer
+          description: Users seen taking an action in the last 7 days.
+        totalGroups:
+          type: integer
+          description: Total number of groups across the app.
+        totalEntries:
+          type: integer
+          description: Total movies/shows logged across the whole app.
+        signupsByDay:
+          type: array
+          description: Daily signup counts for the last 30 days (oldest first).
+          items:
+            $ref: "#/components/schemas/SignupPoint"
+    SignupPoint:
+      type: object
+      required:
+        - date
+        - count
+      properties:
+        date:
+          type: string
+          description: Calendar day in YYYY-MM-DD form.
+        count:
+          type: integer
+          description: Number of signups on that day.
     ProfileUpdate:
       type: object
       required:

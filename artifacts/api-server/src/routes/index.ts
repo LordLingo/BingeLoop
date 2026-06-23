@@ -12,6 +12,7 @@ import reactionsRouter from "./reactions";
 import invitesRouter from "./invites";
 import groupsRouter from "./groups";
 import profileRouter from "./profile";
+import adminRouter from "./admin";
 import tmdbRouter from "./tmdb";
 
 const router: IRouter = Router();
@@ -20,6 +21,7 @@ router.use(healthRouter);
 router.use(invitesRouter);
 router.use(groupsRouter);
 router.use(profileRouter);
+router.use(adminRouter);
 router.use(entriesRouter);
 router.use(activityRouter);
 router.use(watchlistRouter);
