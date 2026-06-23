@@ -15,8 +15,10 @@ const router: IRouter = Router();
 router.use(requireAuth);
 
 // Canonical display order for the supported emoji set. Summaries list only the
-// emojis that have at least one reaction, but always in this order.
-const EMOJI_ORDER = ["👍", "❤️", "😂", "😮", "🔥"] as const;
+// emojis that have at least one reaction, but always in this order. Reactions
+// are limited to thumbs up / thumbs down; any legacy emoji rows from the old
+// set are not in this list and so are silently dropped from summaries.
+const EMOJI_ORDER = ["👍", "👎"] as const;
 
 type ReactionRow = { userId: string; emoji: string };
 

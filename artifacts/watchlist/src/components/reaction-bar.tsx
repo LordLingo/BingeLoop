@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useActiveGroup } from "@/components/active-group-context";
 
-const EMOJIS: ReactionEmoji[] = ["👍", "❤️", "😂", "😮", "🔥"];
+const EMOJIS: ReactionEmoji[] = ["👍", "👎"];
 
 export function ReactionBar({
   targetType,

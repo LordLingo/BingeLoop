@@ -514,10 +514,10 @@ export const ListReactionsResponseItem = zod.object({
   "targetType": zod.enum(['entry', 'comment']),
   "targetId": zod.number(),
   "emojis": zod.array(zod.object({
-  "emoji": zod.enum(['👍', '❤️', '😂', '😮', '🔥']),
+  "emoji": zod.enum(['👍', '👎']),
   "count": zod.number()
 })).describe('Per-emoji counts across the group, only for emojis with at least one reaction.'),
-  "mine": zod.array(zod.enum(['👍', '❤️', '😂', '😮', '🔥'])).describe('The emojis the current user has reacted with on this target.')
+  "mine": zod.array(zod.enum(['👍', '👎'])).describe('The emojis the current user has reacted with on this target.')
 })
 export const ListReactionsResponse = zod.array(ListReactionsResponseItem)
 
@@ -529,7 +529,7 @@ export const ListReactionsResponse = zod.array(ListReactionsResponseItem)
 export const ToggleReactionBody = zod.object({
   "targetType": zod.enum(['entry', 'comment']),
   "targetId": zod.number(),
-  "emoji": zod.enum(['👍', '❤️', '😂', '😮', '🔥']),
+  "emoji": zod.enum(['👍', '👎']),
   "groupId": zod.number().optional().describe('Scope the returned summary to members of this group. Without it, only the caller\'s own reactions are counted.')
 })
 
@@ -537,10 +537,10 @@ export const ToggleReactionResponse = zod.object({
   "targetType": zod.enum(['entry', 'comment']),
   "targetId": zod.number(),
   "emojis": zod.array(zod.object({
-  "emoji": zod.enum(['👍', '❤️', '😂', '😮', '🔥']),
+  "emoji": zod.enum(['👍', '👎']),
   "count": zod.number()
 })).describe('Per-emoji counts across the group, only for emojis with at least one reaction.'),
-  "mine": zod.array(zod.enum(['👍', '❤️', '😂', '😮', '🔥'])).describe('The emojis the current user has reacted with on this target.')
+  "mine": zod.array(zod.enum(['👍', '👎'])).describe('The emojis the current user has reacted with on this target.')
 })
 
 

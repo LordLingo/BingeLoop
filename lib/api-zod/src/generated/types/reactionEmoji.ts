@@ -11,8 +11,5 @@ export type ReactionEmoji = typeof ReactionEmoji[keyof typeof ReactionEmoji];
 
 export const ReactionEmoji = {
   '👍': '👍',
-  '❤️': '❤️',
-  '😂': '😂',
-  '😮': '😮',
-  '🔥': '🔥',
+  '👎': '👎',
 } as const;

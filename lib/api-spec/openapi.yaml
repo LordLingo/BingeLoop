@@ -1737,7 +1737,7 @@ components:
             only the caller's own answer is counted.
     ReactionEmoji:
       type: string
-      enum: ["👍", "❤️", "😂", "😮", "🔥"]
+      enum: ["👍", "👎"]
     ReactionTargetType:
       type: string
       enum: [entry, comment]

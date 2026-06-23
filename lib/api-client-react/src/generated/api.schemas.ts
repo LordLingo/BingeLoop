@@ -343,10 +343,7 @@ export type ReactionEmoji = typeof ReactionEmoji[keyof typeof ReactionEmoji];
 
 export const ReactionEmoji = {
   '👍': '👍',
-  '❤️': '❤️',
-  '😂': '😂',
-  '😮': '😮',
-  '🔥': '🔥',
+  '👎': '👎',
 } as const;
 
 export type ReactionTargetType = typeof ReactionTargetType[keyof typeof ReactionTargetType];

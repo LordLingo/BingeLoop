@@ -139,7 +139,7 @@ describe("POST /reactions", () => {
       .send({
         targetType: "entry",
         targetId: aliceEntryId,
-        emoji: "🔥",
+        emoji: "👎",
         groupId: group1Id,
       });
     expect(res.status).toBe(403);
@@ -158,7 +158,7 @@ describe("POST /reactions", () => {
       .send({
         targetType: "entry",
         targetId: aliceEntryId,
-        emoji: "🔥",
+        emoji: "👎",
         groupId: group2Id,
       });
     expect(res.status).toBe(400);
@@ -217,7 +217,7 @@ describe("GET /reactions", () => {
       .send({
         targetType: "entry",
         targetId: carolEntry.id,
-        emoji: "❤️",
+        emoji: "👎",
         groupId: group2Id,
       });
     expect(react.status).toBe(200);
@@ -245,6 +245,6 @@ describe("GET /reactions", () => {
         s.targetType === "entry" && s.targetId === carolEntry.id,
     );
     expect(visible).toBeDefined();
-    expect(visible.emojis).toEqual([{ emoji: "❤️", count: 1 }]);
+    expect(visible.emojis).toEqual([{ emoji: "👎", count: 1 }]);
   });
 });
