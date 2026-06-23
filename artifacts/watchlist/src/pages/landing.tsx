@@ -1,12 +1,63 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Film, Tv, Star } from "lucide-react";
+import { Film, Tv, Star, Popcorn, Clapperboard, Disc3 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+
+// Faint perforated film-strip pattern: two columns of sprocket holes hugging
+// each edge of the strip, over a barely-there band. Alpha is baked into the
+// colors so the pattern stays crisp without an opacity wrapper.
+const filmStripStyle = {
+  backgroundColor: "hsl(var(--foreground) / 0.035)",
+  backgroundImage:
+    "repeating-linear-gradient(to bottom, hsl(var(--foreground) / 0.16) 0 9px, transparent 9px 21px)," +
+    "repeating-linear-gradient(to bottom, hsl(var(--foreground) / 0.16) 0 9px, transparent 9px 21px)",
+  backgroundRepeat: "repeat-y, repeat-y",
+  backgroundSize: "6px 21px, 6px 21px",
+  backgroundPosition: "left 5px top, right 5px top",
+};
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans">
-      <header className="px-6 py-6 flex items-center justify-between z-10">
+    <div className="relative min-h-screen bg-background flex flex-col font-sans overflow-x-hidden">
+      {/* Decorative cinema accents — purely behind the content, never interactive */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+      >
+        {/* Film-strip frames down both edges (narrowed + faded on mobile) */}
+        <div
+          className="absolute inset-y-0 left-0 w-5 sm:w-10 md:w-12 opacity-50 sm:opacity-100"
+          style={filmStripStyle}
+        />
+        <div
+          className="absolute inset-y-0 right-0 w-5 sm:w-10 md:w-12 opacity-50 sm:opacity-100"
+          style={filmStripStyle}
+        />
+
+        {/* Warm gold spotlight glow behind the heading */}
+        <div
+          className="absolute left-1/2 top-[30%] sm:top-[34%] -translate-x-1/2 -translate-y-1/2 w-[44rem] h-[26rem] max-w-[92vw] rounded-full"
+          style={{
+            background:
+              "radial-gradient(closest-side, hsl(var(--primary) / 0.20), hsl(var(--primary) / 0.06) 58%, transparent 76%)",
+          }}
+        />
+
+        {/* Scattered reels + stars: very low opacity texture, trimmed on small screens */}
+        <Disc3 className="hidden md:block absolute top-24 right-[12%] w-28 h-28 text-foreground/[0.05] rotate-12" />
+        <Disc3 className="hidden md:block absolute bottom-28 left-[14%] w-24 h-24 text-foreground/[0.04] -rotate-6" />
+        <Film className="hidden sm:block absolute top-[58%] right-[8%] w-16 h-16 text-foreground/[0.045] -rotate-12" />
+        <Star className="absolute top-[14%] left-[22%] w-7 h-7 text-primary/[0.14]" />
+        <Star className="absolute top-[42%] right-[24%] w-5 h-5 text-primary/[0.16]" />
+        <Star className="hidden sm:block absolute bottom-[32%] left-[30%] w-6 h-6 text-foreground/[0.07]" />
+
+        {/* Cinema icons tucked into the margins/corners (small, muted gold / soft gray) */}
+        <Disc3 className="hidden sm:block absolute top-28 left-4 md:left-16 w-9 h-9 text-foreground/[0.12] rotate-6" />
+        <Clapperboard className="absolute bottom-8 left-7 sm:left-16 w-8 h-8 sm:w-10 sm:h-10 text-primary/25 -rotate-6" />
+        <Popcorn className="absolute bottom-8 right-7 sm:right-16 w-8 h-8 sm:w-10 sm:h-10 text-primary/25" />
+      </div>
+
+      <header className="relative z-10 px-6 py-6 flex items-center justify-between">
         <BrandLogo className="h-9" />
         <div className="flex items-center gap-4">
           <Link href="/sign-in">
@@ -18,7 +69,7 @@ export default function Landing() {
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center relative overflow-hidden">
+      <main className="relative z-10 flex-1 flex items-center justify-center overflow-hidden">
         {/* Abstract background elements */}
         <div className="absolute top-1/4 left-0 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-accent/10 rounded-full blur-[100px] pointer-events-none" />
