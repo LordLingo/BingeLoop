@@ -21,6 +21,7 @@ import MemberPage from "@/pages/member";
 import ListsPage from "@/pages/lists";
 import ListDetailPage from "@/pages/list-detail";
 import Onboarding from "@/pages/onboarding";
+import AdminPage from "@/pages/admin";
 import Landing from "@/pages/landing";
 import { useGetProfile } from "@workspace/api-client-react";
 import { useUser } from "@clerk/react";
@@ -140,6 +141,7 @@ function Router() {
       <Route path="/member/:userId"><AuthRoute component={MemberPage} /></Route>
       <Route path="/lists"><AuthRoute component={ListsPage} /></Route>
       <Route path="/lists/:id"><AuthRoute component={ListDetailPage} /></Route>
+      <Route path="/admin"><AuthRoute component={AdminPage} requireGroup={false} /></Route>
       <Route path="/add"><AuthRoute component={AddEntry} /></Route>
       <Route path="/unassigned"><AuthRoute component={AssignEntries} /></Route>
       <Route path="/entry/:id"><AuthRoute component={ViewEntry} /></Route>

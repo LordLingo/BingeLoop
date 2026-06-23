@@ -1,6 +1,13 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useUser, useClerk } from "@clerk/react";
-import { LogOut, Pencil, ChevronDown, Smartphone } from "lucide-react";
+import {
+  LogOut,
+  Pencil,
+  ChevronDown,
+  Smartphone,
+  ShieldCheck,
+} from "lucide-react";
 import { useGetProfile } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +26,7 @@ export function UserMenu() {
   const { data: profile } = useGetProfile();
   const { open: openInstallHelp, isIphone } = useInstallHelp();
   const [editing, setEditing] = useState(false);
+  const [, setLocation] = useLocation();
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, "") || "/";
 
   if (!user) return null;
@@ -48,6 +56,15 @@ export function UserMenu() {
             <Pencil className="w-4 h-4 mr-2" />
             Edit display name
           </DropdownMenuItem>
+          {profile?.isAdmin && (
+            <DropdownMenuItem
+              onSelect={() => setLocation("/admin")}
+              data-testid="menu-admin-dashboard"
+            >
+              <ShieldCheck className="w-4 h-4 mr-2" />
+              Admin dashboard
+            </DropdownMenuItem>
+          )}
           {isIphone && (
             <DropdownMenuItem
               onSelect={() => openInstallHelp()}
