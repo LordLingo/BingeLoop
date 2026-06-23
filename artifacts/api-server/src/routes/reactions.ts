@@ -133,7 +133,10 @@ router.get("/reactions", async (req: AuthedRequest, res): Promise<void> => {
     .filter(([key]) => visible.has(key))
     .map(([key, m]) =>
       summarize(m.targetType, m.targetId, byTarget.get(key) ?? [], callerId),
-    );
+    )
+    // A target whose only reactions use retired (legacy) emojis summarizes to
+    // empty counts; drop it entirely rather than returning an empty summary.
+    .filter((s) => s.emojis.length > 0);
 
   res.json(ListReactionsResponse.parse(summaries));
 });

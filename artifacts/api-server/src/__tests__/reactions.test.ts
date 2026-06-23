@@ -189,6 +189,39 @@ describe("GET /reactions", () => {
     expect(res.status).toBe(403);
   });
 
+  it("drops targets whose only reactions use retired legacy emojis", async () => {
+    // Bob authors an entry and the only reaction on it is a legacy emoji from
+    // the old set. The feed must not 500 and must omit that target entirely.
+    const [legacyEntry] = await db
+      .insert(entriesTable)
+      .values({
+        userId: BOB,
+        title: "Dune",
+        mediaType: "movie",
+        rating: 4,
+        category: "Drama",
+        addedBy: BOB,
+      })
+      .returning();
+    await db.insert(reactionsTable).values({
+      userId: ALICE,
+      targetType: "entry",
+      targetId: legacyEntry.id,
+      emoji: "🔥",
+    });
+
+    const res = await request(app)
+      .get("/api/reactions")
+      .query({ groupId: group1Id })
+      .set(as(ALICE));
+    expect(res.status).toBe(200);
+    const legacy = res.body.find(
+      (s: { targetType: string; targetId: number }) =>
+        s.targetType === "entry" && s.targetId === legacyEntry.id,
+    );
+    expect(legacy).toBeUndefined();
+  });
+
   it("does not leak a target across groups via a multi-group member", async () => {
     // Bob joins Carol's group (group2) too. Bob reacts to Carol's OWN entry
     // (visible only to group2). That reaction must NOT surface in group1's
