@@ -33,11 +33,6 @@ export function SpicyControl({
 
   const pending = set.isPending || clear.isPending;
   const my = summary?.mySpicy ?? null;
-  const counts = {
-    mild: summary?.mild ?? 0,
-    mature: summary?.mature ?? 0,
-    adult: summary?.adult ?? 0,
-  };
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["/api/spice"] });
@@ -77,8 +72,6 @@ export function SpicyControl({
     }
   };
 
-  const total = counts.mild + counts.mature + counts.adult;
-
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center gap-2 mb-3">
@@ -111,29 +104,6 @@ export function SpicyControl({
           );
         })}
       </div>
-
-      <p
-        className="mt-3 text-base text-muted-foreground"
-        data-testid="text-spicy-tally"
-      >
-        {total === 0 ? (
-          "No answers yet — be the first."
-        ) : (
-          <>
-            <span className="font-semibold text-foreground">
-              {counts.mild} 🌶️
-            </span>
-            {" · "}
-            <span className="font-semibold text-foreground">
-              {counts.mature} 🌶️🌶️
-            </span>
-            {" · "}
-            <span className="font-semibold text-foreground">
-              {counts.adult} 🌶️🌶️🌶️
-            </span>
-          </>
-        )}
-      </p>
     </div>
   );
 }
