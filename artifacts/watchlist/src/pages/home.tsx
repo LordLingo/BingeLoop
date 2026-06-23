@@ -44,7 +44,7 @@ export default function Home() {
   const [filterType, setFilterType] = useState<"movie" | "tv" | undefined>(undefined);
   const [sort, setSort] = useState<ListEntriesSort>("newest");
 
-  const { activeGroupId } = useActiveGroup();
+  const { activeGroupId, activeGroup } = useActiveGroup();
 
   const { data: stats } = useGetStats(
     activeGroupId != null ? { groupId: activeGroupId } : undefined,
@@ -125,7 +125,13 @@ export default function Home() {
       {/* Hero Stats */}
       <section className="cinematic-panel text-foreground pt-6 pb-8 px-6 rounded-b-[2.5rem] border-b border-border/60 mb-6">
         <div className="max-w-3xl mx-auto space-y-6">
-          <h1 className="text-5xl font-serif tracking-wide text-foreground">Your Library</h1>
+          <h1
+            className="text-5xl font-serif tracking-wide text-foreground uppercase truncate"
+            title={activeGroup?.name ?? "Your Library"}
+            data-testid="text-library-heading"
+          >
+            {activeGroup?.name ?? "Your Library"}
+          </h1>
           
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-black/[0.03] rounded-2xl p-4 border border-black/10">
