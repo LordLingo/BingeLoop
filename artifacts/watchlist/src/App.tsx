@@ -28,6 +28,7 @@ import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
 import InvitePage from "@/pages/invite";
 import { InviteAccepter } from "@/components/invite-accepter";
+import { InstallHelpProvider } from "@/components/install-prompt";
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -213,9 +214,11 @@ function App() {
           <InviteAccepter />
           <NewActivityProvider>
             <TooltipProvider>
-              <WouterRouter base={basePath}>
-                <Router />
-              </WouterRouter>
+              <InstallHelpProvider>
+                <WouterRouter base={basePath}>
+                  <Router />
+                </WouterRouter>
+              </InstallHelpProvider>
               <Toaster />
             </TooltipProvider>
           </NewActivityProvider>

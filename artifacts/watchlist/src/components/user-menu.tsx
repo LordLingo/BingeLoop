@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useUser, useClerk } from "@clerk/react";
-import { LogOut, Pencil, ChevronDown } from "lucide-react";
+import { LogOut, Pencil, ChevronDown, Smartphone } from "lucide-react";
 import { useGetProfile } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,11 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DisplayNameDialog } from "@/components/display-name-dialog";
+import { useInstallHelp } from "@/components/install-prompt";
 
 export function UserMenu() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const { data: profile } = useGetProfile();
+  const { open: openInstallHelp, isIphone } = useInstallHelp();
   const [editing, setEditing] = useState(false);
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, "") || "/";
 
@@ -46,6 +48,15 @@ export function UserMenu() {
             <Pencil className="w-4 h-4 mr-2" />
             Edit display name
           </DropdownMenuItem>
+          {isIphone && (
+            <DropdownMenuItem
+              onSelect={() => openInstallHelp()}
+              data-testid="menu-install-help"
+            >
+              <Smartphone className="w-4 h-4 mr-2" />
+              Add to Home Screen
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => signOut({ redirectUrl: basePath })}
