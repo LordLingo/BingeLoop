@@ -29,3 +29,4 @@ export * from "./comments";
 export * from "./topFour";
 export * from "./lists";
 export * from "./reactions";
+export * from "./userProfiles";

@@ -1,6 +1,5 @@
 import { Router, type IRouter } from "express";
 import { eq, and, inArray, desc, sql } from "drizzle-orm";
-import { clerkClient } from "@clerk/express";
 import { db, entriesTable, watchlistItemsTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import {
@@ -8,6 +7,7 @@ import {
   isMember,
   usersShareGroup,
 } from "../lib/groups";
+import { resolveDisplayName } from "../lib/displayName";
 import {
   ListWatchlistQueryParams,
   ListWatchlistResponse,
@@ -154,12 +154,7 @@ router.post("/watchlist", async (req: AuthedRequest, res): Promise<void> => {
   }
 
   const userId = req.userId!;
-  const user = await clerkClient.users.getUser(userId);
-  const addedBy =
-    [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
-    user.username ||
-    user.primaryEmailAddress?.emailAddress ||
-    "Unknown";
+  const addedBy = await resolveDisplayName(userId);
 
   const title = parsed.data.title.trim();
   const titleKey = normalizeTitle(title);

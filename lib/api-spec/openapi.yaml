@@ -1201,6 +1201,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get the caller's display-name profile
+      description: >-
+        Returns the authenticated caller's chosen display name, or null if they
+        have not set one yet (in which case the client must prompt for one).
+      responses:
+        "200":
+          description: The caller's profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Set or change the caller's display name
+      description: >-
+        Sets the caller's global display name and propagates it everywhere they
+        appear. Rejects blank names (400) and names already taken by another
+        member in one of the caller's groups (409, code "name_taken").
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: The updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Blank or invalid display name
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Name already taken in a group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     HealthStatus:
@@ -1217,6 +1265,25 @@ components:
           type: string
       required:
         - error
+    Profile:
+      type: object
+      required:
+        - displayName
+      properties:
+        displayName:
+          type: string
+          nullable: true
+          description: The caller's chosen display name, or null if not set yet.
+    ProfileUpdate:
+      type: object
+      required:
+        - displayName
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: The desired display name (trimmed; must be non-blank).
     Invite:
       type: object
       required:

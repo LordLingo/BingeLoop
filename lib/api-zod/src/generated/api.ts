@@ -839,3 +839,29 @@ export const AcceptInviteResponse = zod.object({
 })
 
 
+/**
+ * Returns the authenticated caller's chosen display name, or null if they have not set one yet (in which case the client must prompt for one).
+ * @summary Get the caller's display-name profile
+ */
+export const GetProfileResponse = zod.object({
+  "displayName": zod.string().nullable().describe('The caller\'s chosen display name, or null if not set yet.')
+})
+
+
+/**
+ * Sets the caller's global display name and propagates it everywhere they appear. Rejects blank names (400) and names already taken by another member in one of the caller's groups (409, code "name_taken").
+ * @summary Set or change the caller's display name
+ */
+export const updateProfileBodyDisplayNameMax = 40;
+
+
+
+export const UpdateProfileBody = zod.object({
+  "displayName": zod.string().min(1).max(updateProfileBodyDisplayNameMax).describe('The desired display name (trimmed; must be non-blank).')
+})
+
+export const UpdateProfileResponse = zod.object({
+  "displayName": zod.string().nullable().describe('The caller\'s chosen display name, or null if not set yet.')
+})
+
+

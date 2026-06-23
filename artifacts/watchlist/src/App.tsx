@@ -21,6 +21,9 @@ import ListsPage from "@/pages/lists";
 import ListDetailPage from "@/pages/list-detail";
 import Onboarding from "@/pages/onboarding";
 import Landing from "@/pages/landing";
+import { useGetProfile } from "@workspace/api-client-react";
+import { useUser } from "@clerk/react";
+import { SetDisplayNameScreen } from "@/components/display-name-dialog";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
 import InvitePage from "@/pages/invite";
@@ -80,6 +83,25 @@ function GroupGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Forces a signed-in user to set a display name before anything else renders, so
+// a card/comment never shows their email — not even briefly. Runs BEFORE the
+// group gate (name first, then create/join a group).
+function DisplayNameGate({ children }: { children: React.ReactNode }) {
+  const { user } = useUser();
+  const { data, isLoading } = useGetProfile();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
+  if (!data?.displayName) {
+    return <SetDisplayNameScreen initialName={user?.firstName ?? ""} />;
+  }
+  return <>{children}</>;
+}
+
 function AuthRoute({
   component: Component,
   requireGroup = true,
@@ -90,13 +112,15 @@ function AuthRoute({
   return (
     <>
       <Show when="signed-in">
-        {requireGroup ? (
-          <GroupGate>
+        <DisplayNameGate>
+          {requireGroup ? (
+            <GroupGate>
+              <Component />
+            </GroupGate>
+          ) : (
             <Component />
-          </GroupGate>
-        ) : (
-          <Component />
-        )}
+          )}
+        </DisplayNameGate>
       </Show>
       <Show when="signed-out"><Redirect to="/" /></Show>
     </>

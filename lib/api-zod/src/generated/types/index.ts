@@ -52,6 +52,8 @@ export * from './listSummary';
 export * from './listTopFourParams';
 export * from './listWatchlistParams';
 export * from './mediaType';
+export * from './profile';
+export * from './profileUpdate';
 export * from './reactionCount';
 export * from './reactionEmoji';
 export * from './reactionInput';

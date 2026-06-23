@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import {
   db,
@@ -140,9 +140,36 @@ router.post(
     const existing = await getMembership(group.id, userId);
     let joined = false;
     if (!existing) {
+      const displayName = await resolveDisplayName(userId);
+
+      // Display names must be unique within a group. If the joining member's name
+      // collides with an existing ACTIVE member of this group, block the join and
+      // ask them to pick a different name (the client surfaces a rename prompt).
+      const [clash] = await db
+        .select({ id: groupMembersTable.id })
+        .from(groupMembersTable)
+        .where(
+          and(
+            eq(groupMembersTable.groupId, group.id),
+            eq(groupMembersTable.status, "active"),
+            ne(groupMembersTable.userId, userId),
+            sql`lower(${groupMembersTable.displayName}) = lower(${displayName})`,
+          ),
+        )
+        .limit(1);
+      if (clash) {
+        res.status(409).json({
+          error: `The name "${displayName}" is already taken in "${group.name}". Please pick another.`,
+          code: "name_taken",
+          groupName: group.name,
+        });
+        return;
+      }
+
       // A previously-removed member keeps their row (status="removed"); rejoining
       // via an invite reactivates that row instead of inserting a duplicate
-      // (which would conflict on the unique (groupId, userId) index).
+      // (which would conflict on the unique (groupId, userId) index). Refresh the
+      // snapshot to the member's current display name on (re)join.
       const [priorRow] = await db
         .select()
         .from(groupMembersTable)
@@ -155,11 +182,10 @@ router.post(
       if (priorRow) {
         await db
           .update(groupMembersTable)
-          .set({ status: "active" })
+          .set({ status: "active", displayName })
           .where(eq(groupMembersTable.id, priorRow.id));
         joined = true;
       } else {
-        const displayName = await resolveDisplayName(userId);
         const inserted = await db
           .insert(groupMembersTable)
           .values({ groupId: group.id, userId, displayName, role: "member" })

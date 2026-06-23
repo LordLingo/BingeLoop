@@ -13,6 +13,20 @@ export interface Error {
   error: string;
 }
 
+export interface Profile {
+  /** The caller's chosen display name, or null if not set yet. */
+  displayName: string | null;
+}
+
+export interface ProfileUpdate {
+  /**
+     * The desired display name (trimmed; must be non-blank).
+     * @minLength 1
+     * @maxLength 40
+     */
+  displayName: string;
+}
+
 export interface Invite {
   token: string;
   groupId: number;
