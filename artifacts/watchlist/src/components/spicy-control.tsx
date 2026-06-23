@@ -6,7 +6,6 @@ import {
   type MediaType,
   type Spicy,
 } from "@workspace/api-client-react";
-import { Flame } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useActiveGroup } from "@/components/active-group-context";
@@ -83,9 +82,8 @@ export function SpicyControl({
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Flame className="h-4 w-4 text-primary" />
         <span className="text-base font-semibold uppercase tracking-wide text-muted-foreground">
-          Spicy? 🌶️
+          Spicy?
         </span>
       </div>
 
