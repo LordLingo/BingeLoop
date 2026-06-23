@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ActivityType } from './activityType';
-import type { Approval } from './approval';
+import type { Audience } from './audience';
 import type { MediaType } from './mediaType';
 import type { Spicy } from './spicy';
 
@@ -24,8 +24,8 @@ export interface ActivityItem {
   entryId: number | null;
   /** 1-5 star rating, present only for rating activity. */
   rating: number | null;
-  /** The answer given, present only for approval activity. */
-  approval: Approval | null;
+  /** The audience picks given, present only for audience activity. */
+  audiences: Audience[] | null;
   /** The answer given, present only for spice activity. */
   spicy: Spicy | null;
 }

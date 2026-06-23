@@ -6,7 +6,7 @@ import {
   userActivityTable,
   watchlistItemsTable,
   showCommentsTable,
-  showApprovalsTable,
+  showAudiencesTable,
   showSpiceTable,
   groupMembersTable,
 } from "@workspace/db";
@@ -33,7 +33,7 @@ function normalizeTitle(title: string): string {
 // Member ids whose activity the caller may see: just the caller without a
 // group, all members of the group when a member, or null (→ 403) when the
 // caller passed a group they don't belong to. Mirrors the contract used by
-// /entries, /stats, /approvals, /spice, /comments.
+// /entries, /stats, /audiences, /spice, /comments.
 async function resolveMemberIds(
   callerId: string,
   groupId: number | undefined,
@@ -46,14 +46,14 @@ async function resolveMemberIds(
 
 type FeedItem = {
   id: string;
-  type: "rating" | "watchlist" | "comment" | "approval" | "spice";
+  type: "rating" | "watchlist" | "comment" | "audience" | "spice";
   actorName: string;
   title: string;
   mediaType: string;
   createdAt: Date;
   entryId: number | null;
   rating: number | null;
-  approval: string | null;
+  audiences: string[] | null;
   spicy: string | null;
 };
 
@@ -145,7 +145,7 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
     return;
   }
 
-  // Display names for approval/spice actors (those rows store only userId).
+  // Display names for audience/spice actors (those rows store only userId).
   // In group mode every actor is a current member, so the membership rows
   // cover them; without a group the only actor is the caller.
   const nameByUser = new Map<string, string>();
@@ -169,9 +169,9 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
 
   // Fetch source rows for the resolved members. Entries/watchlist are fetched
   // in full because they also supply the display title and a linkable entry id
-  // for shows referenced by comments/approvals/spice (which store only the
+  // for shows referenced by comments/audiences/spice (which store only the
   // normalized titleKey). The poll/comment tables are capped at `limit`.
-  const [entryRows, watchRows, commentRows, approvalRows, spiceRows] =
+  const [entryRows, watchRows, commentRows, audienceRows, spiceRows] =
     await Promise.all([
       db
         .select({
@@ -209,16 +209,16 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
         .limit(limit),
       db
         .select({
-          id: showApprovalsTable.id,
-          userId: showApprovalsTable.userId,
-          titleKey: showApprovalsTable.titleKey,
-          mediaType: showApprovalsTable.mediaType,
-          approval: showApprovalsTable.approval,
-          updatedAt: showApprovalsTable.updatedAt,
+          id: showAudiencesTable.id,
+          userId: showAudiencesTable.userId,
+          titleKey: showAudiencesTable.titleKey,
+          mediaType: showAudiencesTable.mediaType,
+          audiences: showAudiencesTable.audiences,
+          updatedAt: showAudiencesTable.updatedAt,
         })
-        .from(showApprovalsTable)
-        .where(inArray(showApprovalsTable.userId, memberIds))
-        .orderBy(desc(showApprovalsTable.updatedAt))
+        .from(showAudiencesTable)
+        .where(inArray(showAudiencesTable.userId, memberIds))
+        .orderBy(desc(showAudiencesTable.updatedAt))
         .limit(limit),
       db
         .select({
@@ -262,7 +262,7 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
       createdAt: e.createdAt,
       entryId: e.id,
       rating: e.rating,
-      approval: null,
+      audiences: null,
       spicy: null,
     });
   }
@@ -277,7 +277,7 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
       createdAt: w.createdAt,
       entryId: entryIdByKey.get(key) ?? null,
       rating: null,
-      approval: null,
+      audiences: null,
       spicy: null,
     });
   }
@@ -292,22 +292,22 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
       createdAt: c.createdAt,
       entryId: entryIdByKey.get(key) ?? null,
       rating: null,
-      approval: null,
+      audiences: null,
       spicy: null,
     });
   }
-  for (const a of approvalRows) {
+  for (const a of audienceRows) {
     const key = showKey(a.titleKey, a.mediaType);
     items.push({
-      id: `approval:${a.id}`,
-      type: "approval",
+      id: `audience:${a.id}`,
+      type: "audience",
       actorName: await actorName(a.userId),
       title: titleByKey.get(key) ?? a.titleKey,
       mediaType: a.mediaType,
       createdAt: a.updatedAt,
       entryId: entryIdByKey.get(key) ?? null,
       rating: null,
-      approval: a.approval,
+      audiences: a.audiences,
       spicy: null,
     });
   }
@@ -322,7 +322,7 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
       createdAt: s.updatedAt,
       entryId: entryIdByKey.get(key) ?? null,
       rating: null,
-      approval: null,
+      audiences: null,
       spicy: s.spicy,
     });
   }

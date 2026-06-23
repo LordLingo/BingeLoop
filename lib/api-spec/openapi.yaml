@@ -14,8 +14,8 @@ tags:
     description: Watchlist entry operations
   - name: watchlist
     description: Personal watchlist (saved shows) operations
-  - name: approvals
-    description: Per-member "Wife Approved?" answers per show
+  - name: audiences
+    description: Per-member "Who Should Watch?" audience picks per show
   - name: spice
     description: Per-member "Spicy?" (adult content) flags per show
   - name: comments
@@ -335,16 +335,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /approvals:
+  /audiences:
     get:
-      operationId: listApprovals
-      tags: [approvals]
-      summary: List "Wife Approved?" summaries
+      operationId: listAudiences
+      tags: [audiences]
+      summary: List "Who Should Watch?" summaries
       description: >-
-        Returns, for every show that has at least one answer within the given
-        group, the count of each answer across that group's members plus the
-        caller's own answer. Without a groupId, only the caller's own answers
-        are counted.
+        Returns, for every show that has at least one pick within the given
+        group, the count of members who chose each audience plus the caller's
+        own picks. Without a groupId, only the caller's own picks are counted.
       parameters:
         - name: groupId
           in: query
@@ -354,34 +353,34 @@ paths:
             type: integer
       responses:
         "200":
-          description: Approval summaries by show
+          description: Audience summaries by show
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ShowApproval"
+                  $ref: "#/components/schemas/ShowAudience"
     put:
-      operationId: setApproval
-      tags: [approvals]
-      summary: Set my "Wife Approved?" answer for a show
+      operationId: setAudiences
+      tags: [audiences]
+      summary: Set my "Who Should Watch?" picks for a show
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ApprovalInput"
+              $ref: "#/components/schemas/AudienceInput"
       responses:
         "200":
-          description: Updated approval summary for the show
+          description: Updated audience summary for the show
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ShowApproval"
+                $ref: "#/components/schemas/ShowAudience"
     delete:
-      operationId: clearApproval
-      tags: [approvals]
-      summary: Clear my answer for a show
+      operationId: clearAudiences
+      tags: [audiences]
+      summary: Clear my audience picks for a show
       parameters:
         - name: title
           in: query
@@ -401,11 +400,11 @@ paths:
             type: integer
       responses:
         "200":
-          description: Updated approval summary for the show
+          description: Updated audience summary for the show
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ShowApproval"
+                $ref: "#/components/schemas/ShowAudience"
   /spice:
     get:
       operationId: listSpice
@@ -561,7 +560,7 @@ paths:
       summary: Combined recent activity from group members
       description: >-
         Returns a reverse-chronological feed of recent actions (ratings,
-        watchlist saves, comments, "Wife Approved?" and Spicy answers) by
+        watchlist saves, comments, "Who Should Watch?" and Spicy answers) by
         members of the given group. Without a groupId, only the caller's own
         activity is returned. Returns 403 if the caller passed a group they
         are not a member of.
@@ -1089,7 +1088,7 @@ paths:
       description: >-
         Revokes the target member's access to the group: they can no longer view
         or switch to it. The member's contributed content (entries, ratings,
-        comments, watchlist, Top Four, lists, approval/spice flags) is kept and
+        comments, watchlist, Top Four, lists, audience/spice picks) is kept and
         stays visible to the rest of the group, with their name as the original
         contributor. Only the group owner may call this, and the owner cannot
         remove themselves.
@@ -1613,53 +1612,64 @@ components:
           minLength: 1
         mediaType:
           $ref: "#/components/schemas/MediaType"
-    Approval:
+    Audience:
       type: string
-      enum: [yes, no, solo]
-    ShowApproval:
+      description: Which audience a show suits.
+      enum: [girls, guys, couples, solo]
+    ShowAudience:
       type: object
       required:
         - titleKey
         - mediaType
-        - "yes"
-        - "no"
+        - girls
+        - guys
+        - couples
         - solo
-        - myApproval
+        - myAudiences
       properties:
         titleKey:
           type: string
         mediaType:
           $ref: "#/components/schemas/MediaType"
-        "yes":
+        girls:
           type: integer
-        "no":
+          description: Number of members who picked "The Girls".
+        guys:
           type: integer
+          description: Number of members who picked "The Guys".
+        couples:
+          type: integer
+          description: Number of members who picked "Couples".
         solo:
           type: integer
-        myApproval:
-          description: The current user's own answer, or null if they haven't answered.
-          anyOf:
-            - $ref: "#/components/schemas/Approval"
-            - type: "null"
-    ApprovalInput:
+          description: Number of members who picked "Solo".
+        myAudiences:
+          description: The current user's own picks (may be empty).
+          type: array
+          items:
+            $ref: "#/components/schemas/Audience"
+    AudienceInput:
       type: object
       required:
         - title
         - mediaType
-        - approval
+        - audiences
       properties:
         title:
           type: string
           minLength: 1
         mediaType:
           $ref: "#/components/schemas/MediaType"
-        approval:
-          $ref: "#/components/schemas/Approval"
+        audiences:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/Audience"
         groupId:
           type: integer
           description: >-
             Scope the returned tallies to members of this group. Without it,
-            only the caller's own answer is counted.
+            only the caller's own picks are counted.
     Spicy:
       type: string
       enum: [yes, no]
@@ -2022,7 +2032,7 @@ components:
           $ref: "#/components/schemas/MediaType"
     ActivityType:
       type: string
-      enum: [rating, watchlist, comment, approval, spice]
+      enum: [rating, watchlist, comment, audience, spice]
     ActivityItem:
       type: object
       required:
@@ -2034,7 +2044,7 @@ components:
         - createdAt
         - entryId
         - rating
-        - approval
+        - audiences
         - spicy
       properties:
         id:
@@ -2063,10 +2073,12 @@ components:
           anyOf:
             - type: integer
             - type: "null"
-        approval:
-          description: The answer given, present only for approval activity.
+        audiences:
+          description: The audience picks given, present only for audience activity.
           anyOf:
-            - $ref: "#/components/schemas/Approval"
+            - type: array
+              items:
+                $ref: "#/components/schemas/Audience"
             - type: "null"
         spicy:
           description: The answer given, present only for spice activity.

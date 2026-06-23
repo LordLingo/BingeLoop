@@ -8,7 +8,7 @@ import {
   groupsTable,
   groupMembersTable,
   watchlistItemsTable,
-  showApprovalsTable,
+  showAudiencesTable,
 } from "@workspace/db";
 import { makeTestApp } from "./testApp";
 
@@ -127,11 +127,12 @@ beforeAll(async () => {
     },
   ]);
 
-  // Approvals on "Dune" movie: Alice=yes, Bob=no (same group), Carol=yes (other group).
-  await db.insert(showApprovalsTable).values([
-    { userId: ALICE, titleKey: "dune", mediaType: "movie", approval: "yes" },
-    { userId: BOB, titleKey: "dune", mediaType: "movie", approval: "no" },
-    { userId: CAROL, titleKey: "dune", mediaType: "movie", approval: "yes" },
+  // Audiences on "Dune" movie: Alice=[couples], Bob=[guys] (same group),
+  // Carol=[couples] (other group).
+  await db.insert(showAudiencesTable).values([
+    { userId: ALICE, titleKey: "dune", mediaType: "movie", audiences: ["couples"] },
+    { userId: BOB, titleKey: "dune", mediaType: "movie", audiences: ["guys"] },
+    { userId: CAROL, titleKey: "dune", mediaType: "movie", audiences: ["couples"] },
   ]);
 });
 
@@ -141,8 +142,8 @@ afterAll(async () => {
     .delete(watchlistItemsTable)
     .where(inArray(watchlistItemsTable.userId, ALL_USERS));
   await db
-    .delete(showApprovalsTable)
-    .where(inArray(showApprovalsTable.userId, ALL_USERS));
+    .delete(showAudiencesTable)
+    .where(inArray(showAudiencesTable.userId, ALL_USERS));
   await db
     .delete(groupMembersTable)
     .where(inArray(groupMembersTable.userId, ALL_USERS));
@@ -328,40 +329,41 @@ describe("watchlist stays personal", () => {
   });
 });
 
-describe("approvals tallies stay scoped", () => {
-  interface ApprovalSummary {
+describe("audience tallies stay scoped", () => {
+  interface AudienceSummary {
     titleKey: string;
     mediaType: string;
-    yes: number;
-    no: number;
+    girls: number;
+    guys: number;
+    couples: number;
     solo: number;
-    myApproval: string | null;
+    myAudiences: string[];
   }
 
-  function findDune(body: ApprovalSummary[]) {
+  function findDune(body: AudienceSummary[]) {
     return body.find((s) => s.titleKey === "dune" && s.mediaType === "movie");
   }
 
-  it("default (no group) counts only the caller's own answer", async () => {
-    const res = await request(app).get("/api/approvals").set(as(ALICE));
+  it("default (no group) counts only the caller's own picks", async () => {
+    const res = await request(app).get("/api/audiences").set(as(ALICE));
     expect(res.status).toBe(200);
     const dune = findDune(res.body);
     expect(dune).toBeDefined();
-    expect(dune!.yes).toBe(1);
-    expect(dune!.no).toBe(0);
-    expect(dune!.myApproval).toBe("yes");
+    expect(dune!.couples).toBe(1);
+    expect(dune!.guys).toBe(0);
+    expect(dune!.myAudiences).toEqual(["couples"]);
   });
 
   it("with a group you belong to, counts every member but not outsiders", async () => {
     const res = await request(app)
-      .get("/api/approvals")
+      .get("/api/audiences")
       .query({ groupId: group1Id })
       .set(as(ALICE));
     expect(res.status).toBe(200);
     const dune = findDune(res.body);
     expect(dune).toBeDefined();
-    // Alice = yes, Bob = no. Carol's "yes" is in another group -> excluded.
-    expect(dune!.yes).toBe(1);
-    expect(dune!.no).toBe(1);
+    // Alice = couples, Bob = guys. Carol's "couples" is in another group -> excluded.
+    expect(dune!.couples).toBe(1);
+    expect(dune!.guys).toBe(1);
   });
 });

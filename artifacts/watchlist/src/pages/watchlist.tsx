@@ -8,8 +8,8 @@ import { ChevronLeft, Film, Tv, Bookmark, Users } from "lucide-react";
 import { format } from "date-fns";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
 import { WatchTrailerButton } from "@/components/watch-trailer-button";
-import { ApprovalSummary } from "@/components/approval-summary";
-import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
+import { AudienceSummary } from "@/components/audience-summary";
+import { useAudienceMap, audienceKey } from "@/hooks/use-audiences";
 import { SpicySummary } from "@/components/spicy-summary";
 import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 import { useActiveGroup } from "@/components/active-group-context";
@@ -21,7 +21,7 @@ export default function WatchlistPage() {
   const { data: items, isLoading } = useListWatchlist(watchlistParams, {
     query: { queryKey: getListWatchlistQueryKey(watchlistParams) },
   });
-  const approvalMap = useApprovalMap();
+  const audienceMap = useAudienceMap();
   const spiceMap = useSpiceMap();
 
   return (
@@ -124,12 +124,10 @@ export default function WatchlistPage() {
                     />
                     <WatchTrailerButton title={item.title} />
                     {(() => {
-                      const a = approvalMap.get(
-                        approvalKey(item.title, item.mediaType),
+                      const a = audienceMap.get(
+                        audienceKey(item.title, item.mediaType),
                       );
-                      return a ? (
-                        <ApprovalSummary yes={a.yes} no={a.no} solo={a.solo} />
-                      ) : null;
+                      return a ? <AudienceSummary summary={a} /> : null;
                     })()}
                     {(() => {
                       const s = spiceMap.get(

@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListApprovalsParams = {
+export type ListAudiencesParams = {
 /**
  * Scope the tallies to members of this group.
  */

@@ -30,8 +30,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { EntryForm } from "@/components/entry-form";
-import { ApprovalControl } from "@/components/approval-control";
-import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
+import { AudienceControl } from "@/components/audience-control";
+import { useAudienceMap, audienceKey } from "@/hooks/use-audiences";
 import { SpicyControl } from "@/components/spicy-control";
 import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 import { CommentThread } from "@/components/comment-thread";
@@ -57,7 +57,7 @@ export default function ViewEntry() {
 
   const deleteMutation = useDeleteEntry();
   const updateMutation = useUpdateEntry();
-  const approvalMap = useApprovalMap();
+  const audienceMap = useAudienceMap();
   const spiceMap = useSpiceMap();
   const reactionMap = useReactionMap();
 
@@ -256,10 +256,10 @@ export default function ViewEntry() {
             <CommentThread title={entry.title} mediaType={entry.mediaType} />
 
             <Separator className="bg-border/60" />
-            <ApprovalControl
+            <AudienceControl
               title={entry.title}
               mediaType={entry.mediaType}
-              summary={approvalMap.get(approvalKey(entry.title, entry.mediaType))}
+              summary={audienceMap.get(audienceKey(entry.title, entry.mediaType))}
             />
             <SpicyControl
               title={entry.title}

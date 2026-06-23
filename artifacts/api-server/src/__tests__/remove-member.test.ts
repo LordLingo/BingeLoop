@@ -8,7 +8,7 @@ import {
   groupsTable,
   groupMembersTable,
   watchlistItemsTable,
-  showApprovalsTable,
+  showAudiencesTable,
   invitesTable,
 } from "@workspace/db";
 import { makeTestApp } from "./testApp";
@@ -67,11 +67,11 @@ beforeAll(async () => {
     titleKey: "andor",
     mediaType: "tv",
   });
-  await db.insert(showApprovalsTable).values({
+  await db.insert(showAudiencesTable).values({
     userId: MEMBER,
     titleKey: "the bear",
     mediaType: "tv",
-    approval: "yes",
+    audiences: ["couples"],
   });
 });
 
@@ -81,8 +81,8 @@ afterAll(async () => {
     .delete(watchlistItemsTable)
     .where(inArray(watchlistItemsTable.userId, ALL_USERS));
   await db
-    .delete(showApprovalsTable)
-    .where(inArray(showApprovalsTable.userId, ALL_USERS));
+    .delete(showAudiencesTable)
+    .where(inArray(showAudiencesTable.userId, ALL_USERS));
   await db.delete(invitesTable).where(inArray(invitesTable.createdBy, ALL_USERS));
   await db
     .delete(groupMembersTable)
@@ -165,9 +165,9 @@ describe("removal revokes access but preserves content", () => {
     expect(addedBy).toContain(MEMBER);
   });
 
-  it("non-entry content (approval tally) still counts the removed member", async () => {
+  it("non-entry content (audience tally) still counts the removed member", async () => {
     const res = await request(app)
-      .get("/api/approvals")
+      .get("/api/audiences")
       .query({ groupId })
       .set(as(OWNER));
     expect(res.status).toBe(200);
@@ -176,7 +176,7 @@ describe("removal revokes access but preserves content", () => {
         s.titleKey === "the bear" && s.mediaType === "tv",
     );
     expect(bear).toBeDefined();
-    expect(bear.yes).toBeGreaterThanOrEqual(1);
+    expect(bear.couples).toBeGreaterThanOrEqual(1);
   });
 
   it("an active member can still view a removed member's watchlist via userId", async () => {

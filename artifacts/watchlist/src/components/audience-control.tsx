@@ -1,59 +1,64 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  useSetApproval,
-  useClearApproval,
-  getListApprovalsQueryKey,
-  type ShowApproval,
+  useSetAudiences,
+  useClearAudiences,
+  type ShowAudience,
   type MediaType,
-  type Approval,
+  type Audience,
 } from "@workspace/api-client-react";
-import { Heart } from "lucide-react";
+import { Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useActiveGroup } from "@/components/active-group-context";
 
-const OPTIONS: { value: Approval; label: string }[] = [
-  { value: "yes", label: "Yes" },
-  { value: "no", label: "No" },
-  { value: "solo", label: "Solo Watch" },
+const OPTIONS: { value: Audience; label: string }[] = [
+  { value: "girls", label: "The Girls" },
+  { value: "guys", label: "The Guys" },
+  { value: "couples", label: "Couples" },
+  { value: "solo", label: "Solo" },
 ];
 
-export function ApprovalControl({
+export function AudienceControl({
   title,
   mediaType,
   summary,
 }: {
   title: string;
   mediaType: MediaType;
-  summary?: ShowApproval;
+  summary?: ShowAudience;
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { activeGroupId } = useActiveGroup();
-  const set = useSetApproval();
-  const clear = useClearApproval();
+  const set = useSetAudiences();
+  const clear = useClearAudiences();
 
   const pending = set.isPending || clear.isPending;
-  const my = summary?.myApproval ?? null;
-  const counts = {
-    yes: summary?.yes ?? 0,
-    no: summary?.no ?? 0,
+  const mine = summary?.myAudiences ?? [];
+  const counts: Record<Audience, number> = {
+    girls: summary?.girls ?? 0,
+    guys: summary?.guys ?? 0,
+    couples: summary?.couples ?? 0,
     solo: summary?.solo ?? 0,
   };
 
   const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["/api/approvals"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/audiences"] });
 
   const onError = () =>
     toast({
       variant: "destructive",
       title: "Error",
-      description: "Could not save your answer. Please try again.",
+      description: "Could not save your picks. Please try again.",
     });
 
-  const choose = (value: Approval) => {
+  const toggle = (value: Audience) => {
     if (pending) return;
-    if (my === value) {
+    const next = mine.includes(value)
+      ? mine.filter((v) => v !== value)
+      : [...mine, value];
+
+    if (next.length === 0) {
       clear.mutate(
         {
           params: {
@@ -70,7 +75,7 @@ export function ApprovalControl({
           data: {
             title,
             mediaType,
-            approval: value,
+            audiences: next,
             ...(activeGroupId != null ? { groupId: activeGroupId } : {}),
           },
         },
@@ -79,28 +84,30 @@ export function ApprovalControl({
     }
   };
 
-  const total = counts.yes + counts.no + counts.solo;
+  const tally = OPTIONS.map((opt) => ({ ...opt, count: counts[opt.value] }))
+    .filter((opt) => opt.count > 0)
+    .sort((a, b) => b.count - a.count);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Heart className="h-4 w-4 text-primary" />
+        <Eye className="h-4 w-4 text-primary" />
         <span className="text-base font-semibold uppercase tracking-wide text-muted-foreground">
-          Wife Approved?
+          Who Should Watch?
         </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {OPTIONS.map((opt) => {
-          const active = my === opt.value;
+          const active = mine.includes(opt.value);
           return (
             <button
               key={opt.value}
               type="button"
-              onClick={() => choose(opt.value)}
+              onClick={() => toggle(opt.value)}
               disabled={pending}
               aria-pressed={active}
-              data-testid={`button-approval-${opt.value}`}
+              data-testid={`button-audience-${opt.value}`}
               className={cn(
                 "rounded-xl border px-3 py-2 text-base font-medium transition-colors disabled:opacity-50",
                 active
@@ -114,22 +121,22 @@ export function ApprovalControl({
         })}
       </div>
 
-      <p className="mt-3 text-base text-muted-foreground" data-testid="text-approval-tally">
-        {total === 0 ? (
-          "No answers yet — be the first."
+      <p
+        className="mt-3 text-base text-muted-foreground"
+        data-testid="text-audience-tally"
+      >
+        {tally.length === 0 ? (
+          "No picks yet — be the first."
         ) : (
           <>
-            <span className="font-semibold text-foreground">{counts.yes} Yes</span>
-            {" / "}
-            <span className="font-semibold text-foreground">{counts.no} No</span>
-            {counts.solo > 0 && (
-              <>
-                {" / "}
+            {tally.map((opt, i) => (
+              <span key={opt.value}>
+                {i > 0 && " / "}
                 <span className="font-semibold text-foreground">
-                  {counts.solo} Solo
+                  {opt.count} {opt.label}
                 </span>
-              </>
-            )}
+              </span>
+            ))}
           </>
         )}
       </p>

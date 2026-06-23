@@ -14,8 +14,8 @@ import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark, Activity, ListVideo } from
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
 import { WatchTrailerButton } from "@/components/watch-trailer-button";
 import { StreamingBadge } from "@/components/streaming-badge";
-import { ApprovalSummary } from "@/components/approval-summary";
-import { useApprovalMap, approvalKey } from "@/hooks/use-approvals";
+import { AudienceSummary } from "@/components/audience-summary";
+import { useAudienceMap, audienceKey } from "@/hooks/use-audiences";
 import { SpicySummary } from "@/components/spicy-summary";
 import { useSpiceMap, spiceKey } from "@/hooks/use-spice";
 import { ReactionBar } from "@/components/reaction-bar";
@@ -61,7 +61,7 @@ export default function Home() {
     savedIdByShow.set(`${item.title.trim().toLowerCase()}::${item.mediaType}`, item.id);
   }
 
-  const approvalMap = useApprovalMap();
+  const audienceMap = useAudienceMap();
   const spiceMap = useSpiceMap();
   const reactionMap = useReactionMap();
   
@@ -311,10 +311,8 @@ export default function Home() {
                     />
                     <WatchTrailerButton title={entry.title} />
                     {(() => {
-                      const a = approvalMap.get(approvalKey(entry.title, entry.mediaType));
-                      return a ? (
-                        <ApprovalSummary yes={a.yes} no={a.no} solo={a.solo} />
-                      ) : null;
+                      const a = audienceMap.get(audienceKey(entry.title, entry.mediaType));
+                      return a ? <AudienceSummary summary={a} /> : null;
                     })()}
                     {(() => {
                       const s = spiceMap.get(spiceKey(entry.title, entry.mediaType));

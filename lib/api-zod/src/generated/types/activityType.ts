@@ -13,6 +13,6 @@ export const ActivityType = {
   rating: 'rating',
   watchlist: 'watchlist',
   comment: 'comment',
-  approval: 'approval',
+  audience: 'audience',
   spice: 'spice',
 } as const;

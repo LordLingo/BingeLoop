@@ -8,7 +8,7 @@ import {
   entriesTable,
   watchlistItemsTable,
   showCommentsTable,
-  showApprovalsTable,
+  showAudiencesTable,
   showSpiceTable,
 } from "@workspace/db";
 import { makeTestApp } from "./testApp";
@@ -76,12 +76,12 @@ beforeAll(async () => {
     mediaType: "movie",
     body: "Classic.",
   });
-  // Alice approves; Bob flags it spicy. (poll rows store only userId.)
-  await db.insert(showApprovalsTable).values({
+  // Alice tags audiences; Bob flags it spicy. (poll rows store only userId.)
+  await db.insert(showAudiencesTable).values({
     userId: ALICE,
     titleKey: MOVIE_KEY,
     mediaType: "movie",
-    approval: "yes",
+    audiences: ["couples", "girls"],
   });
   await db.insert(showSpiceTable).values({
     userId: BOB,
@@ -100,8 +100,8 @@ afterAll(async () => {
     .delete(showCommentsTable)
     .where(inArray(showCommentsTable.userId, ALL_USERS));
   await db
-    .delete(showApprovalsTable)
-    .where(inArray(showApprovalsTable.userId, ALL_USERS));
+    .delete(showAudiencesTable)
+    .where(inArray(showAudiencesTable.userId, ALL_USERS));
   await db.delete(showSpiceTable).where(inArray(showSpiceTable.userId, ALL_USERS));
   await db
     .delete(groupMembersTable)
@@ -123,15 +123,15 @@ describe("GET /activity/feed", () => {
       .set(as(ALICE));
     expect(res.status).toBe(200);
     const types = res.body.map((i: { type: string }) => i.type).sort();
-    expect(types).toEqual(["approval", "comment", "rating", "spice", "watchlist"]);
+    expect(types).toEqual(["audience", "comment", "rating", "spice", "watchlist"]);
 
     // Poll rows store only userId; the feed must resolve display names from the
     // group membership map, not raw ids.
-    const approval = res.body.find((i: { type: string }) => i.type === "approval");
-    expect(approval.actorName).toBe("Alice");
-    expect(approval.approval).toBe("yes");
+    const audience = res.body.find((i: { type: string }) => i.type === "audience");
+    expect(audience.actorName).toBe("Alice");
+    expect(audience.audiences).toEqual(["couples", "girls"]);
 
-    // Comment/approval/spice carry only a titleKey, so they must inherit the
+    // Comment/audience/spice carry only a titleKey, so they must inherit the
     // display title + linkable entry id from Alice's rating entry.
     const spice = res.body.find((i: { type: string }) => i.type === "spice");
     expect(spice.actorName).toBe("Bob");
@@ -148,7 +148,7 @@ describe("GET /activity/feed", () => {
       .get("/api/activity/feed")
       .set(as(BOB));
     expect(res.status).toBe(200);
-    // Bob alone: watchlist save, comment, spice flag (no rating/approval).
+    // Bob alone: watchlist save, comment, spice flag (no rating/audience).
     const types = res.body.map((i: { type: string }) => i.type).sort();
     expect(types).toEqual(["comment", "spice", "watchlist"]);
   });

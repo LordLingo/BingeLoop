@@ -30,14 +30,14 @@ A mobile-first web app (brand name: BingeLoop) where users log TV shows and movi
 
 ## Product
 
-Users create and name their own groups, invite others by link, belong to multiple groups, and switch the active group (new accounts with no groups land on an Onboarding screen to create their first). The library, hero stats, and "also engaged by" attribution are all scoped to the active group's members. Within that scope users browse their watch library with category/media-type filters and sorting, see summary stats (total logged, average rating, movie/TV split, category breakdown), and add/edit/delete entries — each with a title, movie/TV type, 1–5 star rating, category, and optional comment. Entries, watchlist saves, and approvals remain personal to each user; you only see another member's data when you share a group with them.
+Users create and name their own groups, invite others by link, belong to multiple groups, and switch the active group (new accounts with no groups land on an Onboarding screen to create their first). The library, hero stats, and "also engaged by" attribution are all scoped to the active group's members. Within that scope users browse their watch library with category/media-type filters and sorting, see summary stats (total logged, average rating, movie/TV split, category breakdown), and add/edit/delete entries — each with a title, movie/TV type, 1–5 star rating, category, and optional comment. Entries, watchlist saves, and audience picks remain personal to each user; you only see another member's data when you share a group with them.
 
 ## Documentation
 
 Detailed notes are split into focused docs under [`docs/`](./docs):
 
 - [`docs/architecture.md`](./docs/architecture.md) — core decisions: entries/categories/stats/auth, groups & membership (incl. soft-removal), privacy/data-scoping, and the non-member `groupId` 403 contract.
-- [`docs/features.md`](./docs/features.md) — per-feature detail: watchlist, approvals, spicy flag, comments, activity feed, new-activity badge, Top Four, lists, invites, TMDB search, emoji reactions, weekly digest.
+- [`docs/features.md`](./docs/features.md) — per-feature detail: watchlist, who-should-watch poll, spicy flag, comments, activity feed, new-activity badge, Top Four, lists, invites, TMDB search, emoji reactions, weekly digest.
 - [`docs/design.md`](./docs/design.md) — the light "cinematic editorial" theme, fonts, and the navy `.poster-card` token re-scoping.
 - [`docs/roadmap.md`](./docs/roadmap.md) — parked ideas not yet built (incl. deferred email/push digest delivery).
 

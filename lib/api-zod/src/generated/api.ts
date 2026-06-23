@@ -266,63 +266,67 @@ export const DeleteWatchlistItemParams = zod.object({
 
 
 /**
- * Returns, for every show that has at least one answer within the given group, the count of each answer across that group's members plus the caller's own answer. Without a groupId, only the caller's own answers are counted.
- * @summary List "Wife Approved?" summaries
+ * Returns, for every show that has at least one pick within the given group, the count of members who chose each audience plus the caller's own picks. Without a groupId, only the caller's own picks are counted.
+ * @summary List "Who Should Watch?" summaries
  */
-export const ListApprovalsQueryParams = zod.object({
+export const ListAudiencesQueryParams = zod.object({
   "groupId": zod.coerce.number().optional().describe('Scope the tallies to members of this group.')
 })
 
-export const ListApprovalsResponseItem = zod.object({
+export const ListAudiencesResponseItem = zod.object({
   "titleKey": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
-  "yes": zod.number(),
-  "no": zod.number(),
-  "solo": zod.number(),
-  "myApproval": zod.union([zod.enum(['yes', 'no', 'solo']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+  "girls": zod.number().describe('Number of members who picked \"The Girls\".'),
+  "guys": zod.number().describe('Number of members who picked \"The Guys\".'),
+  "couples": zod.number().describe('Number of members who picked \"Couples\".'),
+  "solo": zod.number().describe('Number of members who picked \"Solo\".'),
+  "myAudiences": zod.array(zod.enum(['girls', 'guys', 'couples', 'solo']).describe('Which audience a show suits.')).describe('The current user\'s own picks (may be empty).')
 })
-export const ListApprovalsResponse = zod.array(ListApprovalsResponseItem)
+export const ListAudiencesResponse = zod.array(ListAudiencesResponseItem)
 
 
 /**
- * @summary Set my "Wife Approved?" answer for a show
+ * @summary Set my "Who Should Watch?" picks for a show
  */
 
 
 
-export const SetApprovalBody = zod.object({
+
+export const SetAudiencesBody = zod.object({
   "title": zod.string().min(1),
   "mediaType": zod.enum(['movie', 'tv']),
-  "approval": zod.enum(['yes', 'no', 'solo']),
-  "groupId": zod.number().optional().describe('Scope the returned tallies to members of this group. Without it, only the caller\'s own answer is counted.')
+  "audiences": zod.array(zod.enum(['girls', 'guys', 'couples', 'solo']).describe('Which audience a show suits.')).min(1),
+  "groupId": zod.number().optional().describe('Scope the returned tallies to members of this group. Without it, only the caller\'s own picks are counted.')
 })
 
-export const SetApprovalResponse = zod.object({
+export const SetAudiencesResponse = zod.object({
   "titleKey": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
-  "yes": zod.number(),
-  "no": zod.number(),
-  "solo": zod.number(),
-  "myApproval": zod.union([zod.enum(['yes', 'no', 'solo']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+  "girls": zod.number().describe('Number of members who picked \"The Girls\".'),
+  "guys": zod.number().describe('Number of members who picked \"The Guys\".'),
+  "couples": zod.number().describe('Number of members who picked \"Couples\".'),
+  "solo": zod.number().describe('Number of members who picked \"Solo\".'),
+  "myAudiences": zod.array(zod.enum(['girls', 'guys', 'couples', 'solo']).describe('Which audience a show suits.')).describe('The current user\'s own picks (may be empty).')
 })
 
 
 /**
- * @summary Clear my answer for a show
+ * @summary Clear my audience picks for a show
  */
-export const ClearApprovalQueryParams = zod.object({
+export const ClearAudiencesQueryParams = zod.object({
   "title": zod.coerce.string(),
   "mediaType": zod.enum(['movie', 'tv']),
   "groupId": zod.coerce.number().optional().describe('Scope the returned tallies to members of this group.')
 })
 
-export const ClearApprovalResponse = zod.object({
+export const ClearAudiencesResponse = zod.object({
   "titleKey": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
-  "yes": zod.number(),
-  "no": zod.number(),
-  "solo": zod.number(),
-  "myApproval": zod.union([zod.enum(['yes', 'no', 'solo']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+  "girls": zod.number().describe('Number of members who picked \"The Girls\".'),
+  "guys": zod.number().describe('Number of members who picked \"The Guys\".'),
+  "couples": zod.number().describe('Number of members who picked \"Couples\".'),
+  "solo": zod.number().describe('Number of members who picked \"Solo\".'),
+  "myAudiences": zod.array(zod.enum(['girls', 'guys', 'couples', 'solo']).describe('Which audience a show suits.')).describe('The current user\'s own picks (may be empty).')
 })
 
 
@@ -435,7 +439,7 @@ export const CheckInResponse = zod.object({
 
 
 /**
- * Returns a reverse-chronological feed of recent actions (ratings, watchlist saves, comments, "Wife Approved?" and Spicy answers) by members of the given group. Without a groupId, only the caller's own activity is returned. Returns 403 if the caller passed a group they are not a member of.
+ * Returns a reverse-chronological feed of recent actions (ratings, watchlist saves, comments, "Who Should Watch?" and Spicy answers) by members of the given group. Without a groupId, only the caller's own activity is returned. Returns 403 if the caller passed a group they are not a member of.
  * @summary Combined recent activity from group members
  */
 export const listActivityFeedQueryLimitMax = 100;
@@ -449,14 +453,14 @@ export const ListActivityFeedQueryParams = zod.object({
 
 export const ListActivityFeedResponseItem = zod.object({
   "id": zod.string().describe('Stable composite key for this event, e.g. \"rating:123\".'),
-  "type": zod.enum(['rating', 'watchlist', 'comment', 'approval', 'spice']),
+  "type": zod.enum(['rating', 'watchlist', 'comment', 'audience', 'spice']),
   "actorName": zod.string().describe('Display name of the member who performed the action.'),
   "title": zod.string().describe('Display title of the show the action is about.'),
   "mediaType": zod.enum(['movie', 'tv']),
   "createdAt": zod.coerce.date(),
   "entryId": zod.union([zod.number(),zod.null()]).describe('An entry id for this show to open, or null if none is visible to the caller.'),
   "rating": zod.union([zod.number(),zod.null()]).describe('1-5 star rating, present only for rating activity.'),
-  "approval": zod.union([zod.enum(['yes', 'no', 'solo']),zod.null()]).describe('The answer given, present only for approval activity.'),
+  "audiences": zod.union([zod.array(zod.enum(['girls', 'guys', 'couples', 'solo']).describe('Which audience a show suits.')),zod.null()]).describe('The audience picks given, present only for audience activity.'),
   "spicy": zod.union([zod.enum(['yes', 'no']),zod.null()]).describe('The answer given, present only for spice activity.')
 })
 export const ListActivityFeedResponse = zod.array(ListActivityFeedResponseItem)
@@ -783,7 +787,7 @@ export const LeaveGroupParams = zod.object({
 
 
 /**
- * Revokes the target member's access to the group: they can no longer view or switch to it. The member's contributed content (entries, ratings, comments, watchlist, Top Four, lists, approval/spice flags) is kept and stays visible to the rest of the group, with their name as the original contributor. Only the group owner may call this, and the owner cannot remove themselves.
+ * Revokes the target member's access to the group: they can no longer view or switch to it. The member's contributed content (entries, ratings, comments, watchlist, Top Four, lists, audience/spice picks) is kept and stays visible to the rest of the group, with their name as the original contributor. Only the group owner may call this, and the owner cannot remove themselves.
  * @summary Remove a member from a group (owner only)
  */
 export const RemoveGroupMemberParams = zod.object({

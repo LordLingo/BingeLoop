@@ -23,10 +23,10 @@ import type {
   AcceptInviteResult,
   ActivityItem,
   AddListItemInput,
-  ApprovalInput,
+  AudienceInput,
   CheckInParams,
   CheckInResult,
-  ClearApprovalParams,
+  ClearAudiencesParams,
   ClearSpicyParams,
   Comment,
   CommentInput,
@@ -44,7 +44,7 @@ import type {
   Invite,
   InvitePreview,
   ListActivityFeedParams,
-  ListApprovalsParams,
+  ListAudiencesParams,
   ListCommentsParams,
   ListDetail,
   ListEntriesParams,
@@ -59,7 +59,7 @@ import type {
   ProfileUpdate,
   ReactionInput,
   ReactionSummary,
-  ShowApproval,
+  ShowAudience,
   ShowSpicy,
   SpicyInput,
   Stats,
@@ -1099,7 +1099,7 @@ export const useDeleteWatchlistItem = <TError = ErrorType<Error>,
       return useMutation(getDeleteWatchlistItemMutationOptions(options));
     }
 
-export const getListApprovalsUrl = (params?: ListApprovalsParams,) => {
+export const getListAudiencesUrl = (params?: ListAudiencesParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -1111,16 +1111,16 @@ export const getListApprovalsUrl = (params?: ListApprovalsParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/approvals?${stringifiedParams}` : `/api/approvals`
+  return stringifiedParams.length > 0 ? `/api/audiences?${stringifiedParams}` : `/api/audiences`
 }
 
 /**
- * Returns, for every show that has at least one answer within the given group, the count of each answer across that group's members plus the caller's own answer. Without a groupId, only the caller's own answers are counted.
- * @summary List "Wife Approved?" summaries
+ * Returns, for every show that has at least one pick within the given group, the count of members who chose each audience plus the caller's own picks. Without a groupId, only the caller's own picks are counted.
+ * @summary List "Who Should Watch?" summaries
  */
-export const listApprovals = async (params?: ListApprovalsParams, options?: RequestInit): Promise<ShowApproval[]> => {
+export const listAudiences = async (params?: ListAudiencesParams, options?: RequestInit): Promise<ShowAudience[]> => {
 
-  return customFetch<ShowApproval[]>(getListApprovalsUrl(params),
+  return customFetch<ShowAudience[]>(getListAudiencesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1133,45 +1133,45 @@ export const listApprovals = async (params?: ListApprovalsParams, options?: Requ
 
 
 
-export const getListApprovalsQueryKey = (params?: ListApprovalsParams,) => {
+export const getListAudiencesQueryKey = (params?: ListAudiencesParams,) => {
     return [
-    `/api/approvals`, ...(params ? [params] : [])
+    `/api/audiences`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListApprovalsQueryOptions = <TData = Awaited<ReturnType<typeof listApprovals>>, TError = ErrorType<unknown>>(params?: ListApprovalsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListAudiencesQueryOptions = <TData = Awaited<ReturnType<typeof listAudiences>>, TError = ErrorType<unknown>>(params?: ListAudiencesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAudiences>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListApprovalsQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getListAudiencesQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listApprovals>>> = ({ signal }) => listApprovals(params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAudiences>>> = ({ signal }) => listAudiences(params, { signal, ...requestOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAudiences>>, TError, TData> & { queryKey: QueryKey }
 }
 
-export type ListApprovalsQueryResult = NonNullable<Awaited<ReturnType<typeof listApprovals>>>
-export type ListApprovalsQueryError = ErrorType<unknown>
+export type ListAudiencesQueryResult = NonNullable<Awaited<ReturnType<typeof listAudiences>>>
+export type ListAudiencesQueryError = ErrorType<unknown>
 
 
 /**
- * @summary List "Wife Approved?" summaries
+ * @summary List "Who Should Watch?" summaries
  */
 
-export function useListApprovals<TData = Awaited<ReturnType<typeof listApprovals>>, TError = ErrorType<unknown>>(
- params?: ListApprovalsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export function useListAudiences<TData = Awaited<ReturnType<typeof listAudiences>>, TError = ErrorType<unknown>>(
+ params?: ListAudiencesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAudiences>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListApprovalsQueryOptions(params,options)
+  const queryOptions = getListAudiencesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -1184,37 +1184,37 @@ export function useListApprovals<TData = Awaited<ReturnType<typeof listApprovals
 
 
 
-export const getSetApprovalUrl = () => {
+export const getSetAudiencesUrl = () => {
 
 
 
 
-  return `/api/approvals`
+  return `/api/audiences`
 }
 
 /**
- * @summary Set my "Wife Approved?" answer for a show
+ * @summary Set my "Who Should Watch?" picks for a show
  */
-export const setApproval = async (approvalInput: ApprovalInput, options?: RequestInit): Promise<ShowApproval> => {
+export const setAudiences = async (audienceInput: AudienceInput, options?: RequestInit): Promise<ShowAudience> => {
 
-  return customFetch<ShowApproval>(getSetApprovalUrl(),
+  return customFetch<ShowAudience>(getSetAudiencesUrl(),
   {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      approvalInput,)
+      audienceInput,)
   }
 );}
 
 
 
 
-export const getSetApprovalMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setApproval>>, TError,{data: BodyType<ApprovalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof setApproval>>, TError,{data: BodyType<ApprovalInput>}, TContext> => {
+export const getSetAudiencesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setAudiences>>, TError,{data: BodyType<AudienceInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setAudiences>>, TError,{data: BodyType<AudienceInput>}, TContext> => {
 
-const mutationKey = ['setApproval'];
+const mutationKey = ['setAudiences'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1224,10 +1224,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setApproval>>, {data: BodyType<ApprovalInput>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setAudiences>>, {data: BodyType<AudienceInput>}> = (props) => {
           const {data} = props ?? {};
 
-          return  setApproval(data,requestOptions)
+          return  setAudiences(data,requestOptions)
         }
 
 
@@ -1237,25 +1237,25 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type SetApprovalMutationResult = NonNullable<Awaited<ReturnType<typeof setApproval>>>
-    export type SetApprovalMutationBody = BodyType<ApprovalInput>
-    export type SetApprovalMutationError = ErrorType<unknown>
+    export type SetAudiencesMutationResult = NonNullable<Awaited<ReturnType<typeof setAudiences>>>
+    export type SetAudiencesMutationBody = BodyType<AudienceInput>
+    export type SetAudiencesMutationError = ErrorType<unknown>
 
     /**
- * @summary Set my "Wife Approved?" answer for a show
+ * @summary Set my "Who Should Watch?" picks for a show
  */
-export const useSetApproval = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setApproval>>, TError,{data: BodyType<ApprovalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useSetAudiences = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setAudiences>>, TError,{data: BodyType<AudienceInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof setApproval>>,
+        Awaited<ReturnType<typeof setAudiences>>,
         TError,
-        {data: BodyType<ApprovalInput>},
+        {data: BodyType<AudienceInput>},
         TContext
       > => {
-      return useMutation(getSetApprovalMutationOptions(options));
+      return useMutation(getSetAudiencesMutationOptions(options));
     }
 
-export const getClearApprovalUrl = (params: ClearApprovalParams,) => {
+export const getClearAudiencesUrl = (params: ClearAudiencesParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -1267,15 +1267,15 @@ export const getClearApprovalUrl = (params: ClearApprovalParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/approvals?${stringifiedParams}` : `/api/approvals`
+  return stringifiedParams.length > 0 ? `/api/audiences?${stringifiedParams}` : `/api/audiences`
 }
 
 /**
- * @summary Clear my answer for a show
+ * @summary Clear my audience picks for a show
  */
-export const clearApproval = async (params: ClearApprovalParams, options?: RequestInit): Promise<ShowApproval> => {
+export const clearAudiences = async (params: ClearAudiencesParams, options?: RequestInit): Promise<ShowAudience> => {
 
-  return customFetch<ShowApproval>(getClearApprovalUrl(params),
+  return customFetch<ShowAudience>(getClearAudiencesUrl(params),
   {
     ...options,
     method: 'DELETE'
@@ -1287,11 +1287,11 @@ export const clearApproval = async (params: ClearApprovalParams, options?: Reque
 
 
 
-export const getClearApprovalMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearApproval>>, TError,{params: ClearApprovalParams}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof clearApproval>>, TError,{params: ClearApprovalParams}, TContext> => {
+export const getClearAudiencesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearAudiences>>, TError,{params: ClearAudiencesParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof clearAudiences>>, TError,{params: ClearAudiencesParams}, TContext> => {
 
-const mutationKey = ['clearApproval'];
+const mutationKey = ['clearAudiences'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1301,10 +1301,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearApproval>>, {params: ClearApprovalParams}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearAudiences>>, {params: ClearAudiencesParams}> = (props) => {
           const {params} = props ?? {};
 
-          return  clearApproval(params,requestOptions)
+          return  clearAudiences(params,requestOptions)
         }
 
 
@@ -1314,22 +1314,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ClearApprovalMutationResult = NonNullable<Awaited<ReturnType<typeof clearApproval>>>
+    export type ClearAudiencesMutationResult = NonNullable<Awaited<ReturnType<typeof clearAudiences>>>
 
-    export type ClearApprovalMutationError = ErrorType<unknown>
+    export type ClearAudiencesMutationError = ErrorType<unknown>
 
     /**
- * @summary Clear my answer for a show
+ * @summary Clear my audience picks for a show
  */
-export const useClearApproval = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearApproval>>, TError,{params: ClearApprovalParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useClearAudiences = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearAudiences>>, TError,{params: ClearAudiencesParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof clearApproval>>,
+        Awaited<ReturnType<typeof clearAudiences>>,
         TError,
-        {params: ClearApprovalParams},
+        {params: ClearAudiencesParams},
         TContext
       > => {
-      return useMutation(getClearApprovalMutationOptions(options));
+      return useMutation(getClearAudiencesMutationOptions(options));
     }
 
 export const getListSpiceUrl = (params?: ListSpiceParams,) => {
@@ -1815,7 +1815,7 @@ export const getListActivityFeedUrl = (params?: ListActivityFeedParams,) => {
 }
 
 /**
- * Returns a reverse-chronological feed of recent actions (ratings, watchlist saves, comments, "Wife Approved?" and Spicy answers) by members of the given group. Without a groupId, only the caller's own activity is returned. Returns 403 if the caller passed a group they are not a member of.
+ * Returns a reverse-chronological feed of recent actions (ratings, watchlist saves, comments, "Who Should Watch?" and Spicy answers) by members of the given group. Without a groupId, only the caller's own activity is returned. Returns 403 if the caller passed a group they are not a member of.
  * @summary Combined recent activity from group members
  */
 export const listActivityFeed = async (params?: ListActivityFeedParams, options?: RequestInit): Promise<ActivityItem[]> => {
@@ -3187,7 +3187,7 @@ export const getRemoveGroupMemberUrl = (id: number,
 }
 
 /**
- * Revokes the target member's access to the group: they can no longer view or switch to it. The member's contributed content (entries, ratings, comments, watchlist, Top Four, lists, approval/spice flags) is kept and stays visible to the rest of the group, with their name as the original contributor. Only the group owner may call this, and the owner cannot remove themselves.
+ * Revokes the target member's access to the group: they can no longer view or switch to it. The member's contributed content (entries, ratings, comments, watchlist, Top Four, lists, audience/spice picks) is kept and stays visible to the rest of the group, with their name as the original contributor. Only the group owner may call this, and the owner cannot remove themselves.
  * @summary Remove a member from a group (owner only)
  */
 export const removeGroupMember = async (id: number,

@@ -42,7 +42,7 @@ export async function isMember(
 }
 
 // CONTENT set: ALL contributor ids for the group, INCLUDING removed members.
-// Used to scope group-wide reads (entries, stats, approvals, etc.) so a removed
+// Used to scope group-wide reads (entries, stats, audiences, etc.) so a removed
 // member's contributions remain visible to the rest of the group.
 export async function getGroupMemberIds(groupId: number): Promise<string[]> {
   const rows = await db

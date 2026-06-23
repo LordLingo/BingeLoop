@@ -7,6 +7,7 @@
 - [Per-surface inverted theme](per-surface-theme-scoping.md) — to invert one surface against the global theme, re-scope the design-token CSS vars on that surface's class, not per-component overrides.
 - [API server testing setup](api-server-testing.md) — vitest tests: real DB + Clerk mocked via `x-test-user-id`; Entry strips userId (assert addedBy); testApp injects no-op req.log so catch blocks don't 500.
 - [Group-scoped write authz ordering](group-scoped-write-authz-ordering.md) — check group membership BEFORE mutating in poll write endpoints; a 403 must leave no side effects.
+- [Audience poll vs spice poll](audience-vs-spice-poll.md) — "Who Should Watch?" audiences is MULTI-select (text[], counts can exceed members, empty→400); spice is single-answer. Shared scoping, NOT shape.
 - [Display name snapshot fan-out](display-name-fanout.md) — names are denormalized; new snapshots must use resolveDisplayName (never email) AND join setDisplayNameAndPropagate's txn.
 - [Group membership soft-removal](group-membership-soft-removal.md) — `group_members.status`: access helpers filter active, content helper (getGroupMemberIds) includes removed so kicked members' content stays visible.
 - [Orval coerce.string() query params](tmdb-coerce-string-query-params.md) — a required string query param won't 400 when omitted (coerces undefined→"undefined"); guard explicitly, test min(1) with `?query=`.

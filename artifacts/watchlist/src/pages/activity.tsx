@@ -11,18 +11,25 @@ import {
   Star,
   Bookmark,
   MessageCircle,
-  Heart,
+  Eye,
   Flame,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { StarRating } from "@/components/star-rating";
 import { useActiveGroup } from "@/components/active-group-context";
 
+const AUDIENCE_LABELS: Record<string, string> = {
+  girls: "The Girls",
+  guys: "The Guys",
+  couples: "Couples",
+  solo: "Solo",
+};
+
 const ICONS: Record<ActivityItem["type"], ReactNode> = {
   rating: <Star className="w-4 h-4" />,
   watchlist: <Bookmark className="w-4 h-4" />,
   comment: <MessageCircle className="w-4 h-4" />,
-  approval: <Heart className="w-4 h-4" />,
+  audience: <Eye className="w-4 h-4" />,
   spice: <Flame className="w-4 h-4" />,
 };
 
@@ -136,10 +143,16 @@ function renderAction(item: ActivityItem): ReactNode {
       return <>saved {title} to their watchlist</>;
     case "comment":
       return <>commented on {title}</>;
-    case "approval":
-      if (item.approval === "yes") return <>marked {title} as Wife Approved ✓</>;
-      if (item.approval === "no") return <>said {title} isn't Wife Approved</>;
-      return <>marked {title} as a solo watch</>;
+    case "audience": {
+      const labels = (item.audiences ?? []).map((a) => AUDIENCE_LABELS[a]);
+      if (labels.length === 0)
+        return <>set who should watch {title}</>;
+      return (
+        <>
+          suggested {title} for {labels.join(", ")}
+        </>
+      );
+    }
     case "spice":
       if (item.spicy === "yes") return <>flagged {title} as Spicy 🌶️</>;
       return <>marked {title} as not spicy</>;

@@ -7,7 +7,7 @@
  */
 import type { MediaType } from './mediaType';
 
-export type ClearApprovalParams = {
+export type ClearAudiencesParams = {
 title: string;
 mediaType: MediaType;
 /**

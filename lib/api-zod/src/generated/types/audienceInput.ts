@@ -5,14 +5,15 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { Approval } from './approval';
+import type { Audience } from './audience';
 import type { MediaType } from './mediaType';
 
-export interface ApprovalInput {
+export interface AudienceInput {
   /** @minLength 1 */
   title: string;
   mediaType: MediaType;
-  approval: Approval;
-  /** Scope the returned tallies to members of this group. Without it, only the caller's own answer is counted. */
+  /** @minItems 1 */
+  audiences: Audience[];
+  /** Scope the returned tallies to members of this group. Without it, only the caller's own picks are counted. */
   groupId?: number;
 }

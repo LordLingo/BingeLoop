@@ -23,7 +23,7 @@ type ReactionRow = { userId: string; emoji: string };
 // Member ids whose reactions count for this caller: just the caller without a
 // group, all members of the group when a member, or null (→ 403) when the
 // caller passed a group they don't belong to. Mirrors the contract used by
-// /entries, /stats, /approvals, /spice, /comments.
+// /entries, /stats, /audiences, /spice, /comments.
 async function resolveMemberIds(
   callerId: string,
   groupId: number | undefined,

@@ -22,7 +22,7 @@ function normalizeTitle(title: string): string {
 // Returns the member ids whose comments are visible to this caller for a show:
 // just the caller when no group is given, or all members of the group. Returns
 // null when the caller passed a group they don't belong to, so the route can
-// respond with a 403 (consistent with /entries, /stats, /approvals, /spice).
+// respond with a 403 (consistent with /entries, /stats, /audiences, /spice).
 async function resolveMemberIds(
   callerId: string,
   groupId: number | undefined,

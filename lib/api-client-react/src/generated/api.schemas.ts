@@ -254,31 +254,41 @@ export interface WatchlistInput {
   mediaType: MediaType;
 }
 
-export type Approval = typeof Approval[keyof typeof Approval];
+/**
+ * Which audience a show suits.
+ */
+export type Audience = typeof Audience[keyof typeof Audience];
 
 
-export const Approval = {
-  yes: 'yes',
-  no: 'no',
+export const Audience = {
+  girls: 'girls',
+  guys: 'guys',
+  couples: 'couples',
   solo: 'solo',
 } as const;
 
-export interface ShowApproval {
+export interface ShowAudience {
   titleKey: string;
   mediaType: MediaType;
-  yes: number;
-  no: number;
+  /** Number of members who picked "The Girls". */
+  girls: number;
+  /** Number of members who picked "The Guys". */
+  guys: number;
+  /** Number of members who picked "Couples". */
+  couples: number;
+  /** Number of members who picked "Solo". */
   solo: number;
-  /** The current user's own answer, or null if they haven't answered. */
-  myApproval: Approval | null;
+  /** The current user's own picks (may be empty). */
+  myAudiences: Audience[];
 }
 
-export interface ApprovalInput {
+export interface AudienceInput {
   /** @minLength 1 */
   title: string;
   mediaType: MediaType;
-  approval: Approval;
-  /** Scope the returned tallies to members of this group. Without it, only the caller's own answer is counted. */
+  /** @minItems 1 */
+  audiences: Audience[];
+  /** Scope the returned tallies to members of this group. Without it, only the caller's own picks are counted. */
   groupId?: number;
 }
 
@@ -492,7 +502,7 @@ export const ActivityType = {
   rating: 'rating',
   watchlist: 'watchlist',
   comment: 'comment',
-  approval: 'approval',
+  audience: 'audience',
   spice: 'spice',
 } as const;
 
@@ -510,8 +520,8 @@ export interface ActivityItem {
   entryId: number | null;
   /** 1-5 star rating, present only for rating activity. */
   rating: number | null;
-  /** The answer given, present only for approval activity. */
-  approval: Approval | null;
+  /** The audience picks given, present only for audience activity. */
+  audiences: Audience[] | null;
   /** The answer given, present only for spice activity. */
   spicy: Spicy | null;
 }
@@ -575,14 +585,14 @@ userId?: string;
 groupId?: number;
 };
 
-export type ListApprovalsParams = {
+export type ListAudiencesParams = {
 /**
  * Scope the tallies to members of this group.
  */
 groupId?: number;
 };
 
-export type ClearApprovalParams = {
+export type ClearAudiencesParams = {
 title: string;
 mediaType: MediaType;
 /**
