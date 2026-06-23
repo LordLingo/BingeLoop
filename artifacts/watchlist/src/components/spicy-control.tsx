@@ -9,11 +9,27 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useActiveGroup } from "@/components/active-group-context";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-const OPTIONS: { value: Spicy; label: string; peppers: string }[] = [
-  { value: "mild", label: "Mild", peppers: "🌶️" },
-  { value: "mature", label: "17+", peppers: "🌶️🌶️" },
-  { value: "adult", label: "Adults Only", peppers: "🌶️🌶️🌶️" },
+const OPTIONS: {
+  value: Spicy;
+  label: string;
+  peppers: string;
+  barClass: string;
+}[] = [
+  { value: "mild", label: "Mild", peppers: "🌶️", barClass: "bg-emerald-500" },
+  { value: "mature", label: "17+", peppers: "🌶️🌶️", barClass: "bg-amber-500" },
+  {
+    value: "adult",
+    label: "Adults Only",
+    peppers: "🌶️🌶️🌶️",
+    barClass: "bg-rose-500",
+  },
 ];
 
 export function SpicyControl({
@@ -33,6 +49,8 @@ export function SpicyControl({
 
   const pending = set.isPending || clear.isPending;
   const my = summary?.mySpicy ?? null;
+  const total =
+    (summary?.mild ?? 0) + (summary?.mature ?? 0) + (summary?.adult ?? 0);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["/api/spice"] });
@@ -104,6 +122,40 @@ export function SpicyControl({
           );
         })}
       </div>
+
+      {total > 0 && (
+        <div className="mt-3">
+          <TooltipProvider delayDuration={100}>
+            <div
+              className="flex h-2 w-full overflow-hidden rounded-full bg-muted"
+              data-testid="spicy-distribution"
+            >
+              {OPTIONS.map((opt) => {
+                const count = summary?.[opt.value] ?? 0;
+                if (count === 0) return null;
+                const pct = (count / total) * 100;
+                return (
+                  <Tooltip key={opt.value}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={cn("h-full", opt.barClass)}
+                        style={{ width: `${pct}%` }}
+                        data-testid={`spicy-bar-${opt.value}`}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {opt.label}: {count} {count === 1 ? "vote" : "votes"}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {total} {total === 1 ? "vote" : "votes"} from your group
+          </p>
+        </div>
+      )}
     </div>
   );
 }
