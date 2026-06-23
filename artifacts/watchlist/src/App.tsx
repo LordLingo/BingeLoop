@@ -12,6 +12,7 @@ import { ActiveGroupProvider, useActiveGroup } from "@/components/active-group-c
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AddEntry from "@/pages/add-entry";
+import AssignEntries from "@/pages/assign-entries";
 import ViewEntry from "@/pages/view-entry";
 import WatchlistPage from "@/pages/watchlist";
 import ActivityPage from "@/pages/activity";
@@ -140,6 +141,7 @@ function Router() {
       <Route path="/lists"><AuthRoute component={ListsPage} /></Route>
       <Route path="/lists/:id"><AuthRoute component={ListDetailPage} /></Route>
       <Route path="/add"><AuthRoute component={AddEntry} /></Route>
+      <Route path="/unassigned"><AuthRoute component={AssignEntries} /></Route>
       <Route path="/entry/:id"><AuthRoute component={ViewEntry} /></Route>
       <Route path="/invite/:token" component={InvitePage} />
       <Route path="/sign-in/*?" component={SignInPage} />

@@ -48,6 +48,7 @@ beforeAll(async () => {
       category: "Drama",
       userId: MEMBER,
       addedBy: MEMBER,
+      groupId,
     },
     {
       title: "Heat",
@@ -56,6 +57,7 @@ beforeAll(async () => {
       category: "Thriller",
       userId: OWNER,
       addedBy: OWNER,
+      groupId,
     },
   ]);
 

@@ -20,12 +20,16 @@ const RUN = `t${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 const ALICE = `${RUN}_alice`;
 const BOB = `${RUN}_bob`;
 const CAROL = `${RUN}_carol`;
-const ALL_USERS = [ALICE, BOB, CAROL];
+const DAVE = `${RUN}_dave`;
+const ALL_USERS = [ALICE, BOB, CAROL, DAVE];
 
 // Group 1 = { alice, bob }; Group 2 = { carol }.
 // Alice shares a group with Bob, but shares nothing with Carol.
 let group1Id: number;
 let group2Id: number;
+// Dave belongs to BOTH groupA and groupB (multi-group isolation checks).
+let groupAId: number;
+let groupBId: number;
 
 // Entry ids for direct-fetch (GET /entries/:id) checks.
 let bobEntryId: number;
@@ -47,6 +51,17 @@ beforeAll(async () => {
   group1Id = g1.id;
   group2Id = g2.id;
 
+  const [gA] = await db
+    .insert(groupsTable)
+    .values({ name: `${RUN} Group A`, ownerId: DAVE })
+    .returning();
+  const [gB] = await db
+    .insert(groupsTable)
+    .values({ name: `${RUN} Group B`, ownerId: DAVE })
+    .returning();
+  groupAId = gA.id;
+  groupBId = gB.id;
+
   await db.insert(groupMembersTable).values([
     {
       groupId: group1Id,
@@ -66,9 +81,22 @@ beforeAll(async () => {
       displayName: CAROL,
       role: "owner",
     },
+    {
+      groupId: groupAId,
+      userId: DAVE,
+      displayName: DAVE,
+      role: "owner",
+    },
+    {
+      groupId: groupBId,
+      userId: DAVE,
+      displayName: DAVE,
+      role: "owner",
+    },
   ]);
 
   // Alice: 2 entries. Bob: 1 (shares the "Dune" title with Alice). Carol: 1.
+  // Each entry is tagged with the group it was added to.
   const inserted = await db
     .insert(entriesTable)
     .values([
@@ -79,6 +107,7 @@ beforeAll(async () => {
         category: "Sci-Fi",
         userId: ALICE,
         addedBy: ALICE,
+        groupId: group1Id,
       },
       {
         title: "Severance",
@@ -87,6 +116,7 @@ beforeAll(async () => {
         category: "Thriller",
         userId: ALICE,
         addedBy: ALICE,
+        groupId: group1Id,
       },
       {
         title: "Dune",
@@ -95,6 +125,7 @@ beforeAll(async () => {
         category: "Sci-Fi",
         userId: BOB,
         addedBy: BOB,
+        groupId: group1Id,
       },
       {
         title: "Oppenheimer",
@@ -103,11 +134,44 @@ beforeAll(async () => {
         category: "Drama",
         userId: CAROL,
         addedBy: CAROL,
+        groupId: group2Id,
       },
     ])
     .returning();
   bobEntryId = inserted.find((e) => e.userId === BOB)!.id;
   carolEntryId = inserted.find((e) => e.userId === CAROL)!.id;
+
+  // Dave belongs to groupA and groupB. He has one entry in each, plus one
+  // legacy entry with no group (groupId NULL) for the unassigned/triage checks.
+  await db.insert(entriesTable).values([
+    {
+      title: "Show A",
+      mediaType: "tv",
+      rating: 4,
+      category: "Drama",
+      userId: DAVE,
+      addedBy: DAVE,
+      groupId: groupAId,
+    },
+    {
+      title: "Show B",
+      mediaType: "tv",
+      rating: 5,
+      category: "Comedy",
+      userId: DAVE,
+      addedBy: DAVE,
+      groupId: groupBId,
+    },
+    {
+      title: "Legacy Show",
+      mediaType: "movie",
+      rating: 3,
+      category: "Thriller",
+      userId: DAVE,
+      addedBy: DAVE,
+      groupId: null,
+    },
+  ]);
 
   // Watchlist: Alice saves "Dune" (Bob has rated it -> alsoEngagedBy candidate).
   await db.insert(watchlistItemsTable).values([
@@ -262,6 +326,141 @@ describe("GET /stats visibility matrix", () => {
       .query({ groupId: group2Id })
       .set(as(ALICE));
     expect(res.status).toBe(403);
+  });
+});
+
+describe("entries are scoped to the group they were added to", () => {
+  it("a group library shows only entries tagged to that group", async () => {
+    const resA = await request(app)
+      .get("/api/entries")
+      .query({ groupId: groupAId })
+      .set(as(DAVE));
+    expect(resA.status).toBe(200);
+    expect(resA.body).toHaveLength(1);
+    expect(resA.body[0].title).toBe("Show A");
+
+    const resB = await request(app)
+      .get("/api/entries")
+      .query({ groupId: groupBId })
+      .set(as(DAVE));
+    expect(resB.status).toBe(200);
+    expect(resB.body).toHaveLength(1);
+    expect(resB.body[0].title).toBe("Show B");
+  });
+
+  it("stats for a group aggregate only that group's entries", async () => {
+    const resA = await request(app)
+      .get("/api/stats")
+      .query({ groupId: groupAId })
+      .set(as(DAVE));
+    expect(resA.status).toBe(200);
+    expect(resA.body.total).toBe(1);
+    expect(resA.body.tvCount).toBe(1);
+  });
+
+  it("the member-profile (userId) view returns all the user's entries across groups", async () => {
+    // Dave's full library spans groupA, groupB and one unassigned entry.
+    const res = await request(app).get("/api/entries").set(as(DAVE));
+    expect(res.status).toBe(200);
+    const titles = res.body.map((e: { title: string }) => e.title).sort();
+    expect(titles).toEqual(["Legacy Show", "Show A", "Show B"]);
+  });
+
+  it("unassigned=true returns only the caller's group-less entries", async () => {
+    const res = await request(app)
+      .get("/api/entries")
+      .query({ unassigned: true })
+      .set(as(DAVE));
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].title).toBe("Legacy Show");
+    expect(res.body[0].groupId).toBeNull();
+  });
+
+  it("POST persists groupId when the caller is a member", async () => {
+    const create = await request(app)
+      .post("/api/entries")
+      .send({
+        title: "New In Group A",
+        mediaType: "movie",
+        rating: 4,
+        category: "Drama",
+        groupId: groupAId,
+      })
+      .set(as(DAVE));
+    expect(create.status).toBe(201);
+    expect(create.body.groupId).toBe(groupAId);
+
+    const list = await request(app)
+      .get("/api/entries")
+      .query({ groupId: groupAId })
+      .set(as(DAVE));
+    const titles = list.body.map((e: { title: string }) => e.title);
+    expect(titles).toContain("New In Group A");
+  });
+
+  it("POST with a groupId the caller does NOT belong to is forbidden", async () => {
+    const res = await request(app)
+      .post("/api/entries")
+      .send({
+        title: "Intruder",
+        mediaType: "movie",
+        rating: 2,
+        category: "Drama",
+        groupId: group1Id,
+      })
+      .set(as(DAVE));
+    expect(res.status).toBe(403);
+  });
+
+  it("PATCH to a group the caller does NOT belong to is forbidden and has no side effect", async () => {
+    const listA = await request(app)
+      .get("/api/entries")
+      .query({ groupId: groupAId })
+      .set(as(DAVE));
+    const showA = listA.body.find(
+      (e: { title: string }) => e.title === "Show A",
+    );
+    expect(showA).toBeDefined();
+
+    // group1 is Alice/Bob's group; Dave is not a member.
+    const patch = await request(app)
+      .patch(`/api/entries/${showA.id}`)
+      .send({ groupId: group1Id })
+      .set(as(DAVE));
+    expect(patch.status).toBe(403);
+
+    // The entry must remain tagged to groupA — no partial mutation occurred.
+    const after = await request(app)
+      .get(`/api/entries/${showA.id}`)
+      .set(as(DAVE));
+    expect(after.status).toBe(200);
+    expect(after.body.groupId).toBe(groupAId);
+  });
+
+  it("PATCH assigns an unassigned entry to a group the caller belongs to", async () => {
+    const unassigned = await request(app)
+      .get("/api/entries")
+      .query({ unassigned: true })
+      .set(as(DAVE));
+    const legacy = unassigned.body.find(
+      (e: { title: string }) => e.title === "Legacy Show",
+    );
+    expect(legacy).toBeDefined();
+
+    const patch = await request(app)
+      .patch(`/api/entries/${legacy.id}`)
+      .send({ groupId: groupBId })
+      .set(as(DAVE));
+    expect(patch.status).toBe(200);
+    expect(patch.body.groupId).toBe(groupBId);
+
+    const list = await request(app)
+      .get("/api/entries")
+      .query({ groupId: groupBId })
+      .set(as(DAVE));
+    const titles = list.body.map((e: { title: string }) => e.title);
+    expect(titles).toContain("Legacy Show");
   });
 });
 

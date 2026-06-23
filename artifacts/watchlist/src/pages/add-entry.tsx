@@ -5,17 +5,19 @@ import { EntryForm } from "@/components/entry-form";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useActiveGroup } from "@/components/active-group-context";
 
 export default function AddEntry() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+  const { activeGroupId } = useActiveGroup();
+
   const createMutation = useCreateEntry();
 
   const handleSubmit = (data: any) => {
     createMutation.mutate(
-      { data },
+      { data: { ...data, groupId: activeGroupId ?? null } },
       {
         onSuccess: (newEntry) => {
           queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });

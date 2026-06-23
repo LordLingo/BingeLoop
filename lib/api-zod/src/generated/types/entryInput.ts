@@ -29,4 +29,9 @@ export interface EntryInput {
   streamingLogo?: string | null;
   /** @nullable */
   network?: string | null;
+  /**
+     * The group to add this entry to. Defaults to null (unassigned) when omitted.
+     * @nullable
+     */
+  groupId?: number | null;
 }

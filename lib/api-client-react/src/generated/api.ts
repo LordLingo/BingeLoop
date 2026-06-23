@@ -181,7 +181,7 @@ export const getListEntriesUrl = (params?: ListEntriesParams,) => {
 }
 
 /**
- * Returns entries from members of the active group by default. Pass groupId to scope to a specific group (you must be a member), or userId to view a single member's entries (only allowed when you share a group). With neither, returns entries from everyone who shares a group with you.
+ * By default returns only your own entries across all your groups. Pass groupId to scope to entries that were added to that specific group (you must be a member). Pass userId to view a single member's entries across all groups (only allowed when you share a group). Pass unassigned=true to list your own entries that have not yet been assigned to any group.
  * @summary List watchlist entries
  */
 export const listEntries = async (params?: ListEntriesParams, options?: RequestInit): Promise<Entry[]> => {
@@ -556,7 +556,7 @@ export const getGetStatsUrl = (params?: GetStatsParams,) => {
 }
 
 /**
- * Aggregate counts, average rating, and category breakdown. Pass groupId to aggregate across all members of a group (you must be a member), or userId for a single member's stats (only allowed when you share a group). With neither, aggregates across everyone who shares a group with you.
+ * Aggregate counts, average rating, and category breakdown. Pass groupId to aggregate across entries added to that group (you must be a member), or userId for a single member's stats across all groups (only allowed when you share a group). With neither, aggregates only your own entries across all your groups.
  * @summary Watchlist summary stats
  */
 export const getStats = async (params?: GetStatsParams, options?: RequestInit): Promise<Stats> => {

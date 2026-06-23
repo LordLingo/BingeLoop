@@ -11,3 +11,4 @@
 - [Display name snapshot fan-out](display-name-fanout.md) — names are denormalized; new snapshots must use resolveDisplayName (never email) AND join setDisplayNameAndPropagate's txn.
 - [Group membership soft-removal](group-membership-soft-removal.md) — `group_members.status`: access helpers filter active, content helper (getGroupMemberIds) includes removed so kicked members' content stays visible.
 - [Orval coerce.string() query params](tmdb-coerce-string-query-params.md) — a required string query param won't 400 when omitted (coerces undefined→"undefined"); guard explicitly, test min(1) with `?query=`.
+- [Entry group-scoping contract](entry-group-scoping.md) — group library/stats filter by entries.groupId (NOT member-set); userId view stays cross-group; NULL groupId = unassigned, triaged in-app.

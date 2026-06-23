@@ -11,6 +11,7 @@ export const entriesTable = pgTable("entries", {
   comment: text("comment"),
   userId: text("user_id").notNull(),
   addedBy: text("added_by").notNull(),
+  groupId: integer("group_id"),
   tmdbId: integer("tmdb_id"),
   posterPath: text("poster_path"),
   streamingProvider: text("streaming_provider"),

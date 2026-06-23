@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, asc, and, inArray } from "drizzle-orm";
+import { eq, desc, asc, and, isNull } from "drizzle-orm";
 import { db, entriesTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
-import { usersShareGroup, isMember, getGroupMemberIds } from "../lib/groups";
+import { usersShareGroup, isMember } from "../lib/groups";
 import { resolveDisplayName } from "../lib/displayName";
 import {
   ListEntriesQueryParams,
@@ -75,8 +75,7 @@ router.get("/stats", async (req: AuthedRequest, res): Promise<void> => {
       res.status(403).json({ error: "You are not a member of this group" });
       return;
     }
-    const memberIds = await getGroupMemberIds(groupId);
-    memberFilter = inArray(entriesTable.userId, memberIds);
+    memberFilter = eq(entriesTable.groupId, groupId);
   } else {
     memberFilter = eq(entriesTable.userId, callerId);
   }
@@ -116,12 +115,24 @@ router.get("/entries", async (req: AuthedRequest, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { userId: queryUserId, groupId, category, mediaType, sort } = parsed.data;
+  const {
+    userId: queryUserId,
+    groupId,
+    unassigned,
+    category,
+    mediaType,
+    sort,
+  } = parsed.data;
 
   const callerId = req.userId!;
 
   let memberFilter;
-  if (queryUserId) {
+  if (unassigned) {
+    memberFilter = and(
+      eq(entriesTable.userId, callerId),
+      isNull(entriesTable.groupId),
+    );
+  } else if (queryUserId) {
     if (queryUserId !== callerId) {
       const allowed = await usersShareGroup(callerId, queryUserId);
       if (!allowed) {
@@ -138,8 +149,7 @@ router.get("/entries", async (req: AuthedRequest, res): Promise<void> => {
       res.status(403).json({ error: "You are not a member of this group" });
       return;
     }
-    const memberIds = await getGroupMemberIds(groupId);
-    memberFilter = inArray(entriesTable.userId, memberIds);
+    memberFilter = eq(entriesTable.groupId, groupId);
   } else {
     memberFilter = eq(entriesTable.userId, callerId);
   }
@@ -190,6 +200,16 @@ router.post("/entries", async (req: AuthedRequest, res): Promise<void> => {
   }
 
   const userId = req.userId!;
+
+  const groupId = parsed.data.groupId ?? null;
+  if (groupId != null) {
+    const allowed = await isMember(groupId, userId);
+    if (!allowed) {
+      res.status(403).json({ error: "You are not a member of this group" });
+      return;
+    }
+  }
+
   const addedBy = await resolveDisplayName(userId);
 
   const [entry] = await db
@@ -202,6 +222,7 @@ router.post("/entries", async (req: AuthedRequest, res): Promise<void> => {
       comment: parsed.data.comment ?? null,
       userId,
       addedBy,
+      groupId,
       tmdbId: parsed.data.tmdbId ?? null,
       posterPath: parsed.data.posterPath ?? null,
       streamingProvider: parsed.data.streamingProvider ?? null,
@@ -274,6 +295,14 @@ router.patch("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
   if (existing.userId !== req.userId!) {
     res.status(403).json({ error: "You can only edit your own entries" });
     return;
+  }
+
+  if (parsed.data.groupId != null) {
+    const allowed = await isMember(parsed.data.groupId, req.userId!);
+    if (!allowed) {
+      res.status(403).json({ error: "You are not a member of this group" });
+      return;
+    }
   }
 
   if (Object.keys(parsed.data).length === 0) {

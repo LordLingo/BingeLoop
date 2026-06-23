@@ -18,12 +18,13 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * Returns entries from members of the active group by default. Pass groupId to scope to a specific group (you must be a member), or userId to view a single member's entries (only allowed when you share a group). With neither, returns entries from everyone who shares a group with you.
+ * By default returns only your own entries across all your groups. Pass groupId to scope to entries that were added to that specific group (you must be a member). Pass userId to view a single member's entries across all groups (only allowed when you share a group). Pass unassigned=true to list your own entries that have not yet been assigned to any group.
  * @summary List watchlist entries
  */
 export const ListEntriesQueryParams = zod.object({
-  "userId": zod.coerce.string().optional().describe('View this member\'s entries instead of the group\'s. Requires a shared group.'),
-  "groupId": zod.coerce.number().optional().describe('Scope the list to members of this group. You must be a member.'),
+  "userId": zod.coerce.string().optional().describe('View this member\'s entries across all groups. Requires a shared group.'),
+  "groupId": zod.coerce.number().optional().describe('Scope the list to entries added to this group. You must be a member.'),
+  "unassigned": zod.coerce.boolean().optional().describe('When true, returns only your own entries that have no group assigned yet.'),
   "category": zod.coerce.string().optional(),
   "mediaType": zod.enum(['movie', 'tv']).optional(),
   "sort": zod.enum(['newest', 'oldest', 'rating_high', 'rating_low', 'title']).optional()
@@ -47,6 +48,7 @@ export const ListEntriesResponseItem = zod.object({
   "streamingProvider": zod.string().nullish().describe('US streaming service name from TMDB watch\/providers.'),
   "streamingLogo": zod.string().nullish().describe('TMDB logo path for the streaming provider.'),
   "network": zod.string().nullish().describe('Network name (TV shows only).'),
+  "groupId": zod.number().nullish().describe('The group this entry was added to. Null means it has not been assigned to a group yet.'),
   "createdAt": zod.coerce.date()
 })
 export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
@@ -71,7 +73,8 @@ export const CreateEntryBody = zod.object({
   "posterPath": zod.string().nullish(),
   "streamingProvider": zod.string().nullish(),
   "streamingLogo": zod.string().nullish(),
-  "network": zod.string().nullish()
+  "network": zod.string().nullish(),
+  "groupId": zod.number().nullish().describe('The group to add this entry to. Defaults to null (unassigned) when omitted.')
 })
 
 
@@ -100,6 +103,7 @@ export const GetEntryResponse = zod.object({
   "streamingProvider": zod.string().nullish().describe('US streaming service name from TMDB watch\/providers.'),
   "streamingLogo": zod.string().nullish().describe('TMDB logo path for the streaming provider.'),
   "network": zod.string().nullish().describe('Network name (TV shows only).'),
+  "groupId": zod.number().nullish().describe('The group this entry was added to. Null means it has not been assigned to a group yet.'),
   "createdAt": zod.coerce.date()
 })
 
@@ -127,7 +131,8 @@ export const UpdateEntryBody = zod.object({
   "posterPath": zod.string().nullish(),
   "streamingProvider": zod.string().nullish(),
   "streamingLogo": zod.string().nullish(),
-  "network": zod.string().nullish()
+  "network": zod.string().nullish(),
+  "groupId": zod.number().nullish().describe('Reassign this entry to a group. Used to assign previously unassigned entries.')
 })
 
 export const updateEntryResponseRatingMax = 5;
@@ -148,6 +153,7 @@ export const UpdateEntryResponse = zod.object({
   "streamingProvider": zod.string().nullish().describe('US streaming service name from TMDB watch\/providers.'),
   "streamingLogo": zod.string().nullish().describe('TMDB logo path for the streaming provider.'),
   "network": zod.string().nullish().describe('Network name (TV shows only).'),
+  "groupId": zod.number().nullish().describe('The group this entry was added to. Null means it has not been assigned to a group yet.'),
   "createdAt": zod.coerce.date()
 })
 
@@ -161,7 +167,7 @@ export const DeleteEntryParams = zod.object({
 
 
 /**
- * Aggregate counts, average rating, and category breakdown. Pass groupId to aggregate across all members of a group (you must be a member), or userId for a single member's stats (only allowed when you share a group). With neither, aggregates across everyone who shares a group with you.
+ * Aggregate counts, average rating, and category breakdown. Pass groupId to aggregate across entries added to that group (you must be a member), or userId for a single member's stats across all groups (only allowed when you share a group). With neither, aggregates only your own entries across all your groups.
  * @summary Watchlist summary stats
  */
 export const GetStatsQueryParams = zod.object({

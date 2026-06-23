@@ -48,5 +48,10 @@ export interface Entry {
      * @nullable
      */
   network?: string | null;
+  /**
+     * The group this entry was added to. Null means it has not been assigned to a group yet.
+     * @nullable
+     */
+  groupId?: number | null;
   createdAt: Date;
 }

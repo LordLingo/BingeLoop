@@ -10,7 +10,7 @@ import {
   ListEntriesSort
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark, Activity, ListVideo } from "lucide-react";
+import { Plus, Film, Tv, Star, ArrowUpDown, Bookmark, Activity, ListVideo, FolderInput } from "lucide-react";
 import { SaveToWatchlistButton } from "@/components/save-to-watchlist-button";
 import { WatchTrailerButton } from "@/components/watch-trailer-button";
 import { StreamingBadge } from "@/components/streaming-badge";
@@ -76,6 +76,12 @@ export default function Home() {
       queryKey: getListEntriesQueryKey(entriesParams),
     },
   });
+
+  const unassignedParams = { unassigned: true };
+  const { data: unassignedEntries } = useListEntries(unassignedParams, {
+    query: { queryKey: getListEntriesQueryKey(unassignedParams) },
+  });
+  const unassignedCount = unassignedEntries?.length ?? 0;
 
   return (
     <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
@@ -150,6 +156,26 @@ export default function Home() {
       </section>
 
       <main className="max-w-3xl mx-auto px-4 space-y-6">
+        {unassignedCount > 0 && (
+          <Link
+            href="/unassigned"
+            className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors p-4"
+            data-testid="banner-unassigned"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0 text-primary">
+              <FolderInput className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-foreground">
+                {unassignedCount} {unassignedCount === 1 ? "show" : "shows"} not in a group yet
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Assign them so they appear in the right library.
+              </p>
+            </div>
+            <span className="text-sm font-semibold text-primary shrink-0">Assign</span>
+          </Link>
+        )}
         <NewActivityBadge />
         <WeeklyDigestCard />
 

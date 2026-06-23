@@ -10,13 +10,17 @@ import type { MediaType } from './mediaType';
 
 export type ListEntriesParams = {
 /**
- * View this member's entries instead of the group's. Requires a shared group.
+ * View this member's entries across all groups. Requires a shared group.
  */
 userId?: string;
 /**
- * Scope the list to members of this group. You must be a member.
+ * Scope the list to entries added to this group. You must be a member.
  */
 groupId?: number;
+/**
+ * When true, returns only your own entries that have no group assigned yet.
+ */
+unassigned?: boolean;
 category?: string;
 mediaType?: MediaType;
 sort?: ListEntriesSort;

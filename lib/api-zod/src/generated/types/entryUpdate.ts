@@ -30,4 +30,9 @@ export interface EntryUpdate {
   streamingLogo?: string | null;
   /** @nullable */
   network?: string | null;
+  /**
+     * Reassign this entry to a group. Used to assign previously unassigned entries.
+     * @nullable
+     */
+  groupId?: number | null;
 }

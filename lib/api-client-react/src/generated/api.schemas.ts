@@ -155,6 +155,11 @@ export interface Entry {
      * @nullable
      */
   network?: string | null;
+  /**
+     * The group this entry was added to. Null means it has not been assigned to a group yet.
+     * @nullable
+     */
+  groupId?: number | null;
   createdAt: string;
 }
 
@@ -180,6 +185,11 @@ export interface EntryInput {
   streamingLogo?: string | null;
   /** @nullable */
   network?: string | null;
+  /**
+     * The group to add this entry to. Defaults to null (unassigned) when omitted.
+     * @nullable
+     */
+  groupId?: number | null;
 }
 
 export interface EntryUpdate {
@@ -205,6 +215,11 @@ export interface EntryUpdate {
   streamingLogo?: string | null;
   /** @nullable */
   network?: string | null;
+  /**
+     * Reassign this entry to a group. Used to assign previously unassigned entries.
+     * @nullable
+     */
+  groupId?: number | null;
 }
 
 export interface TmdbSearchResult {
@@ -528,13 +543,17 @@ export interface ActivityItem {
 
 export type ListEntriesParams = {
 /**
- * View this member's entries instead of the group's. Requires a shared group.
+ * View this member's entries across all groups. Requires a shared group.
  */
 userId?: string;
 /**
- * Scope the list to members of this group. You must be a member.
+ * Scope the list to entries added to this group. You must be a member.
  */
 groupId?: number;
+/**
+ * When true, returns only your own entries that have no group assigned yet.
+ */
+unassigned?: boolean;
 category?: string;
 mediaType?: MediaType;
 sort?: ListEntriesSort;
