@@ -22,6 +22,7 @@ const OUTSIDER = `${RUN}_outsider`;
 const ALL_USERS = [OWNER, MEMBER, OUTSIDER];
 
 let groupId: number;
+let memberEntryId: number;
 
 function as(userId: string) {
   return { "x-test-user-id": userId };
@@ -40,26 +41,30 @@ beforeAll(async () => {
   ]);
 
   // The member contributes an entry that must survive their removal.
-  await db.insert(entriesTable).values([
-    {
-      title: "The Bear",
-      mediaType: "tv",
-      rating: 5,
-      category: "Drama",
-      userId: MEMBER,
-      addedBy: MEMBER,
-      groupId,
-    },
-    {
-      title: "Heat",
-      mediaType: "movie",
-      rating: 4,
-      category: "Thriller",
-      userId: OWNER,
-      addedBy: OWNER,
-      groupId,
-    },
-  ]);
+  const insertedEntries = await db
+    .insert(entriesTable)
+    .values([
+      {
+        title: "The Bear",
+        mediaType: "tv",
+        rating: 5,
+        category: "Drama",
+        userId: MEMBER,
+        addedBy: MEMBER,
+        groupId,
+      },
+      {
+        title: "Heat",
+        mediaType: "movie",
+        rating: 4,
+        category: "Thriller",
+        userId: OWNER,
+        addedBy: OWNER,
+        groupId,
+      },
+    ])
+    .returning();
+  memberEntryId = insertedEntries.find((e) => e.userId === MEMBER)!.id;
 
   // Non-entry artifacts the member contributed; these must also survive removal.
   await db.insert(watchlistItemsTable).values({
@@ -181,13 +186,29 @@ describe("removal revokes access but preserves content", () => {
     expect(bear.couples).toBeGreaterThanOrEqual(1);
   });
 
-  it("an active member can still view a removed member's watchlist via userId", async () => {
+  it("a removed member's watchlist is no longer visible via userId (no shared active group)", async () => {
     const res = await request(app)
       .get("/api/watchlist")
       .query({ userId: MEMBER })
       .set(as(OWNER));
+    expect(res.status).toBe(403);
+  });
+
+  it("a removed member's group-tagged entry is still openable by an active member of that group", async () => {
+    // Consistent with group-library retention: the entry still appears in the
+    // group's library, so an active member can open it directly by id.
+    const res = await request(app)
+      .get(`/api/entries/${memberEntryId}`)
+      .set(as(OWNER));
     expect(res.status).toBe(200);
-    expect(res.body.find((i: { title: string }) => i.title === "Andor")).toBeDefined();
+    expect(res.body.addedBy).toBe(MEMBER);
+  });
+
+  it("a removed member's entry is NOT openable by someone outside its group", async () => {
+    const res = await request(app)
+      .get(`/api/entries/${memberEntryId}`)
+      .set(as(OUTSIDER));
+    expect(res.status).toBe(404);
   });
 });
 

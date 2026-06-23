@@ -8,9 +8,10 @@ description: How entries are scoped to groups vs cross-group member views, and t
 `entries` carries a nullable `groupId`. Scoping rules in `GET /entries` and `GET /stats`:
 
 - `groupId=X` branch: filter `eq(entries.groupId, X)` and require caller `isMember(X)`. This is the GROUP LIBRARY + hero stats. It is NOT the member-set ("everyone who shares a group") — that was the original bug: entries were tied only to userId/addedBy, so a user's entries showed up in EVERY group they belonged to.
-- `userId=U` branch: cross-group — returns ALL of U's entries regardless of groupId, allowed only when caller `usersShareGroup(U)`. This powers the member-profile view and must stay cross-group.
+- `userId=U` branch (member profile): SELF (`U===caller`) returns ALL own entries across every group (incl. unassigned). For OTHERS it is scoped to `sharedActiveGroupIds(caller, U)` — `and(eq(userId,U), inArray(groupId, sharedIds))` — so you only see that member's entries from groups you BOTH currently actively belong to; non-shared-group AND unassigned entries are excluded; empty shared set → 403. (Privacy tightening: it is NOT cross-group anymore.)
 - default (no param): caller-only (`eq(entries.userId, callerId)`), across all the caller's groups.
 - `unassigned=true`: caller-owned `isNull(groupId)` — legacy/group-less entries.
+- `GET /entries/:id` (direct fetch): self → allow; else allow iff `entry.groupId != null && isMember(entry.groupId, caller)` (mirrors the group library, so removed members' group-tagged entries stay openable by that group); an unassigned entry of another user → 404.
 
 **Why:** users belong to multiple groups; an entry belongs to the one group it was logged in, not all of them.
 

@@ -52,26 +52,37 @@ export async function getGroupMemberIds(groupId: number): Promise<string[]> {
   return rows.map((r) => r.userId);
 }
 
-// Asymmetric on purpose: the CALLER (userA) must be an ACTIVE member of a shared
-// group, while the TARGET (userB) may be active OR removed in that group. This
-// lets active members view a removed contributor's content, while a removed
-// caller (no active membership) can no longer see anyone else's content.
-export async function usersShareGroup(
+// Groups where BOTH users are CURRENTLY ACTIVE members. This is the privacy
+// boundary for cross-user reads: you may only see another member's content from
+// groups you currently share with them. A soft-removed member (on either side)
+// no longer shares the group, so their content stops being mutually visible.
+export async function sharedActiveGroupIds(
   userA: string,
   userB: string,
-): Promise<boolean> {
-  if (userA === userB) return true;
+): Promise<number[]> {
   const aGroups = await getMemberGroupIds(userA);
-  if (aGroups.length === 0) return false;
-  const [shared] = await db
+  if (aGroups.length === 0) return [];
+  const rows = await db
     .select({ groupId: groupMembersTable.groupId })
     .from(groupMembersTable)
     .where(
       and(
         eq(groupMembersTable.userId, userB),
+        eq(groupMembersTable.status, "active"),
         inArray(groupMembersTable.groupId, aGroups),
       ),
-    )
-    .limit(1);
-  return !!shared;
+    );
+  return rows.map((r) => r.groupId);
+}
+
+// Symmetric: both users must be CURRENTLY ACTIVE members of some shared group.
+// Once a member is soft-removed, they no longer share a group with anyone, so
+// their cross-user content (profile entries/stats, watchlist, top four, lists,
+// direct entry access) is hidden from everyone except themselves.
+export async function usersShareGroup(
+  userA: string,
+  userB: string,
+): Promise<boolean> {
+  if (userA === userB) return true;
+  return (await sharedActiveGroupIds(userA, userB)).length > 0;
 }

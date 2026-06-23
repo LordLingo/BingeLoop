@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, asc, and, isNull } from "drizzle-orm";
+import { eq, desc, asc, and, isNull, inArray } from "drizzle-orm";
 import { db, entriesTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
-import { usersShareGroup, isMember } from "../lib/groups";
+import { sharedActiveGroupIds, isMember } from "../lib/groups";
 import { resolveDisplayName } from "../lib/displayName";
 import {
   ListEntriesQueryParams,
@@ -59,16 +59,22 @@ router.get("/stats", async (req: AuthedRequest, res): Promise<void> => {
 
   let memberFilter;
   if (queryUserId) {
-    if (queryUserId !== callerId) {
-      const allowed = await usersShareGroup(callerId, queryUserId);
-      if (!allowed) {
+    if (queryUserId === callerId) {
+      memberFilter = eq(entriesTable.userId, callerId);
+    } else {
+      const sharedIds = await sharedActiveGroupIds(callerId, queryUserId);
+      if (sharedIds.length === 0) {
         res
           .status(403)
           .json({ error: "You don't share a group with this user" });
         return;
       }
+      // Only this member's entries from groups you currently share with them.
+      memberFilter = and(
+        eq(entriesTable.userId, queryUserId),
+        inArray(entriesTable.groupId, sharedIds),
+      );
     }
-    memberFilter = eq(entriesTable.userId, queryUserId);
   } else if (groupId != null) {
     const allowed = await isMember(groupId, callerId);
     if (!allowed) {
@@ -133,16 +139,22 @@ router.get("/entries", async (req: AuthedRequest, res): Promise<void> => {
       isNull(entriesTable.groupId),
     );
   } else if (queryUserId) {
-    if (queryUserId !== callerId) {
-      const allowed = await usersShareGroup(callerId, queryUserId);
-      if (!allowed) {
+    if (queryUserId === callerId) {
+      memberFilter = eq(entriesTable.userId, callerId);
+    } else {
+      const sharedIds = await sharedActiveGroupIds(callerId, queryUserId);
+      if (sharedIds.length === 0) {
         res
           .status(403)
           .json({ error: "You don't share a group with this user" });
         return;
       }
+      // Only this member's entries from groups you currently share with them.
+      memberFilter = and(
+        eq(entriesTable.userId, queryUserId),
+        inArray(entriesTable.groupId, sharedIds),
+      );
     }
-    memberFilter = eq(entriesTable.userId, queryUserId);
   } else if (groupId != null) {
     const allowed = await isMember(groupId, callerId);
     if (!allowed) {
@@ -253,8 +265,12 @@ router.get("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
 
   const callerId = req.userId!;
   if (entry.userId !== callerId) {
-    const allowed = await usersShareGroup(callerId, entry.userId);
-    if (!allowed) {
+    // Visible only if the entry belongs to a group you're an active member of
+    // (consistent with the group library). Unassigned entries belong to no
+    // group, so they stay private to their author.
+    const visible =
+      entry.groupId != null && (await isMember(entry.groupId, callerId));
+    if (!visible) {
       res.status(404).json({ error: "Entry not found" });
       return;
     }

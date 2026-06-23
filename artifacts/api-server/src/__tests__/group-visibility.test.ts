@@ -87,6 +87,14 @@ beforeAll(async () => {
       displayName: DAVE,
       role: "owner",
     },
+    // Alice shares groupA with Dave (but NOT groupB) — used to prove a member
+    // profile only exposes entries from groups the viewer also belongs to.
+    {
+      groupId: groupAId,
+      userId: ALICE,
+      displayName: ALICE,
+      role: "member",
+    },
     {
       groupId: groupBId,
       userId: DAVE,
@@ -358,12 +366,35 @@ describe("entries are scoped to the group they were added to", () => {
     expect(resA.body.tvCount).toBe(1);
   });
 
-  it("the member-profile (userId) view returns all the user's entries across groups", async () => {
+  it("your own default view returns all your own entries across groups", async () => {
     // Dave's full library spans groupA, groupB and one unassigned entry.
     const res = await request(app).get("/api/entries").set(as(DAVE));
     expect(res.status).toBe(200);
     const titles = res.body.map((e: { title: string }) => e.title).sort();
     expect(titles).toEqual(["Legacy Show", "Show A", "Show B"]);
+  });
+
+  it("a member profile shows ONLY entries from groups the viewer and target both belong to", async () => {
+    // Alice shares groupA with Dave but not groupB, and never sees his
+    // unassigned (group-less) entry.
+    const res = await request(app)
+      .get("/api/entries")
+      .query({ userId: DAVE })
+      .set(as(ALICE));
+    expect(res.status).toBe(200);
+    const titles = res.body.map((e: { title: string }) => e.title);
+    expect(titles).toContain("Show A");
+    expect(titles).not.toContain("Show B");
+    expect(titles).not.toContain("Legacy Show");
+  });
+
+  it("member-profile stats aggregate only shared-group entries", async () => {
+    const res = await request(app)
+      .get("/api/stats")
+      .query({ userId: DAVE })
+      .set(as(ALICE));
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
   });
 
   it("unassigned=true returns only the caller's group-less entries", async () => {
