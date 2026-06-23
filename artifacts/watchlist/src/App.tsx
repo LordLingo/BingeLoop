@@ -31,6 +31,7 @@ import SignUpPage from "@/pages/sign-up";
 import InvitePage from "@/pages/invite";
 import { InviteAccepter } from "@/components/invite-accepter";
 import { InstallHelpProvider } from "@/components/install-prompt";
+import { useVisibilityRecovery } from "@/hooks/use-visibility-recovery";
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -61,6 +62,14 @@ function ClerkQueryClientCacheInvalidator() {
     });
   }, [clerk, qc]);
   
+  return null;
+}
+
+// Recovers the iOS blank/white screen when the app is reopened after iOS purged
+// it from memory while backgrounded. Mounted inside QueryClientProvider so it
+// can refetch active data.
+function VisibilityRecovery() {
+  useVisibilityRecovery();
   return null;
 }
 
@@ -214,6 +223,7 @@ function App() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
+        <VisibilityRecovery />
         <ActiveGroupProvider>
           <InviteAccepter />
           <NewActivityProvider>
