@@ -36,6 +36,7 @@ import { UserMenu } from "@/components/user-menu";
 import { NewActivityBadge } from "@/components/new-activity-badge";
 import { InviteDialog } from "@/components/invite-dialog";
 import { GroupSwitcher } from "@/components/group-switcher";
+import { BrandLogo } from "@/components/brand-logo";
 import { useActiveGroup } from "@/components/active-group-context";
 
 export default function Home() {
@@ -86,10 +87,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
       <div className="flex flex-col gap-3 px-4 sm:px-6 pt-6 pb-2 text-foreground">
-        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-foreground">
-          <Film className="w-6 h-6 text-primary shrink-0" />
-          BINGELOOP
-        </div>
+        <BrandLogo className="h-8 sm:h-9" />
         <div className="flex items-center justify-between gap-2">
           <GroupSwitcher />
           <div className="flex items-center gap-1 shrink-0">

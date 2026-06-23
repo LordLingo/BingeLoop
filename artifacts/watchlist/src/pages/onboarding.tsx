@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Film, Users, Plus } from "lucide-react";
+import { Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/user-menu";
+import { BrandLogo } from "@/components/brand-logo";
 import { CreateGroupDialog } from "@/components/create-group-dialog";
 
 export default function Onboarding() {
@@ -10,10 +11,7 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex justify-between items-center px-6 pt-6 pb-2 text-foreground">
-        <div className="flex items-center gap-2.5 font-serif text-2xl sm:text-3xl tracking-[0.18em] text-foreground">
-          <Film className="w-6 h-6 text-primary shrink-0" />
-          BINGELOOP
-        </div>
+        <BrandLogo className="h-8 sm:h-9" />
         <UserMenu />
       </div>
 

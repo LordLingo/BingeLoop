@@ -1,15 +1,13 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Film, Tv, Star, Library } from "lucide-react";
+import { Film, Tv, Star } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans">
       <header className="px-6 py-6 flex items-center justify-between z-10">
-        <div className="flex items-center gap-2 text-foreground font-serif font-bold text-2xl tracking-tight">
-          <Library className="w-6 h-6 text-primary" />
-          BingeLoop
-        </div>
+        <BrandLogo className="h-9" />
         <div className="flex items-center gap-4">
           <Link href="/sign-in">
             <Button variant="ghost" className="font-medium">Sign In</Button>
