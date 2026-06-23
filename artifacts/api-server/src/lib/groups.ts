@@ -41,6 +41,24 @@ export async function isMember(
   return !!(await getMembership(groupId, userId));
 }
 
+// ACTIVE member ids for a group. Used to surface legacy un-grouped (group_id
+// IS NULL) entries inside every group their author currently belongs to, so
+// shows logged before groups existed reappear in the right shared libraries.
+export async function getActiveGroupMemberIds(
+  groupId: number,
+): Promise<string[]> {
+  const rows = await db
+    .select({ userId: groupMembersTable.userId })
+    .from(groupMembersTable)
+    .where(
+      and(
+        eq(groupMembersTable.groupId, groupId),
+        eq(groupMembersTable.status, "active"),
+      ),
+    );
+  return rows.map((r) => r.userId);
+}
+
 // CONTENT set: ALL contributor ids for the group, INCLUDING removed members.
 // Used to scope group-wide reads (entries, stats, audiences, etc.) so a removed
 // member's contributions remain visible to the rest of the group.

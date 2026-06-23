@@ -1,8 +1,13 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, asc, and, isNull, inArray } from "drizzle-orm";
+import { eq, desc, asc, and, or, isNull, inArray } from "drizzle-orm";
 import { db, entriesTable } from "@workspace/db";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
-import { sharedActiveGroupIds, isMember } from "../lib/groups";
+import {
+  sharedActiveGroupIds,
+  isMember,
+  usersShareGroup,
+  getActiveGroupMemberIds,
+} from "../lib/groups";
 import { resolveDisplayName } from "../lib/displayName";
 import {
   ListEntriesQueryParams,
@@ -25,6 +30,20 @@ const withAddedById = <T extends { userId: string }>(row: T) => ({
   ...row,
   addedById: row.userId,
 });
+
+// Entries visible inside a group's shared library: anything explicitly assigned
+// to the group, PLUS legacy un-grouped (group_id IS NULL) entries logged by the
+// group's current active members — so shows from before groups existed reappear
+// for everyone in the groups their author belongs to.
+async function groupScopedFilter(groupId: number) {
+  const memberIds = await getActiveGroupMemberIds(groupId);
+  const assigned = eq(entriesTable.groupId, groupId);
+  if (memberIds.length === 0) return assigned;
+  return or(
+    assigned,
+    and(isNull(entriesTable.groupId), inArray(entriesTable.userId, memberIds)),
+  );
+}
 
 router.use(requireAuth);
 
@@ -81,7 +100,7 @@ router.get("/stats", async (req: AuthedRequest, res): Promise<void> => {
       res.status(403).json({ error: "You are not a member of this group" });
       return;
     }
-    memberFilter = eq(entriesTable.groupId, groupId);
+    memberFilter = await groupScopedFilter(groupId);
   } else {
     memberFilter = eq(entriesTable.userId, callerId);
   }
@@ -161,7 +180,7 @@ router.get("/entries", async (req: AuthedRequest, res): Promise<void> => {
       res.status(403).json({ error: "You are not a member of this group" });
       return;
     }
-    memberFilter = eq(entriesTable.groupId, groupId);
+    memberFilter = await groupScopedFilter(groupId);
   } else {
     memberFilter = eq(entriesTable.userId, callerId);
   }
@@ -265,11 +284,13 @@ router.get("/entries/:id", async (req: AuthedRequest, res): Promise<void> => {
 
   const callerId = req.userId!;
   if (entry.userId !== callerId) {
-    // Visible only if the entry belongs to a group you're an active member of
-    // (consistent with the group library). Unassigned entries belong to no
-    // group, so they stay private to their author.
+    // Visible if the entry belongs to a group you're an active member of, OR it
+    // is a legacy un-grouped entry whose author currently shares an active group
+    // with you (consistent with the group library surfacing such entries).
     const visible =
-      entry.groupId != null && (await isMember(entry.groupId, callerId));
+      entry.groupId != null
+        ? await isMember(entry.groupId, callerId)
+        : await usersShareGroup(callerId, entry.userId);
     if (!visible) {
       res.status(404).json({ error: "Entry not found" });
       return;

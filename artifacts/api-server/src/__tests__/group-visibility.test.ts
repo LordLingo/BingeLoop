@@ -34,6 +34,7 @@ let groupBId: number;
 // Entry ids for direct-fetch (GET /entries/:id) checks.
 let bobEntryId: number;
 let carolEntryId: number;
+let legacyEntryId: number;
 
 function as(userId: string) {
   return { "x-test-user-id": userId };
@@ -151,35 +152,39 @@ beforeAll(async () => {
 
   // Dave belongs to groupA and groupB. He has one entry in each, plus one
   // legacy entry with no group (groupId NULL) for the unassigned/triage checks.
-  await db.insert(entriesTable).values([
-    {
-      title: "Show A",
-      mediaType: "tv",
-      rating: 4,
-      category: "Drama",
-      userId: DAVE,
-      addedBy: DAVE,
-      groupId: groupAId,
-    },
-    {
-      title: "Show B",
-      mediaType: "tv",
-      rating: 5,
-      category: "Comedy",
-      userId: DAVE,
-      addedBy: DAVE,
-      groupId: groupBId,
-    },
-    {
-      title: "Legacy Show",
-      mediaType: "movie",
-      rating: 3,
-      category: "Thriller",
-      userId: DAVE,
-      addedBy: DAVE,
-      groupId: null,
-    },
-  ]);
+  const daveEntries = await db
+    .insert(entriesTable)
+    .values([
+      {
+        title: "Show A",
+        mediaType: "tv",
+        rating: 4,
+        category: "Drama",
+        userId: DAVE,
+        addedBy: DAVE,
+        groupId: groupAId,
+      },
+      {
+        title: "Show B",
+        mediaType: "tv",
+        rating: 5,
+        category: "Comedy",
+        userId: DAVE,
+        addedBy: DAVE,
+        groupId: groupBId,
+      },
+      {
+        title: "Legacy Show",
+        mediaType: "movie",
+        rating: 3,
+        category: "Thriller",
+        userId: DAVE,
+        addedBy: DAVE,
+        groupId: null,
+      },
+    ])
+    .returning();
+  legacyEntryId = daveEntries.find((e) => e.title === "Legacy Show")!.id;
 
   // Watchlist: Alice saves "Dune" (Bob has rated it -> alsoEngagedBy candidate).
   await db.insert(watchlistItemsTable).values([
@@ -338,32 +343,61 @@ describe("GET /stats visibility matrix", () => {
 });
 
 describe("entries are scoped to the group they were added to", () => {
-  it("a group library shows only entries tagged to that group", async () => {
+  it("a group library shows entries tagged to it plus members' legacy un-grouped entries", async () => {
+    // Legacy Show is Dave's only un-grouped entry; Dave is a member of both A
+    // and B, so it surfaces in both groups' libraries alongside the tagged show.
     const resA = await request(app)
       .get("/api/entries")
       .query({ groupId: groupAId })
       .set(as(DAVE));
     expect(resA.status).toBe(200);
-    expect(resA.body).toHaveLength(1);
-    expect(resA.body[0].title).toBe("Show A");
+    const titlesA = resA.body.map((e: { title: string }) => e.title).sort();
+    expect(titlesA).toEqual(["Legacy Show", "Show A"]);
 
     const resB = await request(app)
       .get("/api/entries")
       .query({ groupId: groupBId })
       .set(as(DAVE));
     expect(resB.status).toBe(200);
-    expect(resB.body).toHaveLength(1);
-    expect(resB.body[0].title).toBe("Show B");
+    const titlesB = resB.body.map((e: { title: string }) => e.title).sort();
+    expect(titlesB).toEqual(["Legacy Show", "Show B"]);
   });
 
-  it("stats for a group aggregate only that group's entries", async () => {
+  it("a member sees a co-member's legacy un-grouped entry in a shared group", async () => {
+    // Alice shares groupA with Dave, so she sees Dave's legacy entry there.
+    const res = await request(app)
+      .get("/api/entries")
+      .query({ groupId: groupAId })
+      .set(as(ALICE));
+    expect(res.status).toBe(200);
+    const titles = res.body.map((e: { title: string }) => e.title).sort();
+    expect(titles).toEqual(["Legacy Show", "Show A"]);
+  });
+
+  it("a co-member can open a legacy un-grouped entry directly; a non-shared user cannot", async () => {
+    // Alice shares groupA with Dave -> can open Dave's legacy card (200).
+    const shared = await request(app)
+      .get(`/api/entries/${legacyEntryId}`)
+      .set(as(ALICE));
+    expect(shared.status).toBe(200);
+    expect(shared.body.title).toBe("Legacy Show");
+
+    // Carol shares no group with Dave -> hidden (404).
+    const nonShared = await request(app)
+      .get(`/api/entries/${legacyEntryId}`)
+      .set(as(CAROL));
+    expect(nonShared.status).toBe(404);
+  });
+
+  it("stats for a group include tagged entries plus members' legacy un-grouped entries", async () => {
     const resA = await request(app)
       .get("/api/stats")
       .query({ groupId: groupAId })
       .set(as(DAVE));
     expect(resA.status).toBe(200);
-    expect(resA.body.total).toBe(1);
-    expect(resA.body.tvCount).toBe(1);
+    expect(resA.body.total).toBe(2); // Show A + Legacy Show
+    expect(resA.body.tvCount).toBe(1); // Show A
+    expect(resA.body.movieCount).toBe(1); // Legacy Show
   });
 
   it("your own default view returns all your own entries across groups", async () => {
