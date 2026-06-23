@@ -11,9 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useActiveGroup } from "@/components/active-group-context";
 
-const OPTIONS: { value: Spicy; label: string }[] = [
-  { value: "yes", label: "Yes" },
-  { value: "no", label: "No" },
+const OPTIONS: { value: Spicy; label: string; peppers: string }[] = [
+  { value: "mild", label: "Mild", peppers: "🌶️" },
+  { value: "mature", label: "17+", peppers: "🌶️🌶️" },
+  { value: "adult", label: "Adults Only", peppers: "🌶️🌶️🌶️" },
 ];
 
 export function SpicyControl({
@@ -34,8 +35,9 @@ export function SpicyControl({
   const pending = set.isPending || clear.isPending;
   const my = summary?.mySpicy ?? null;
   const counts = {
-    yes: summary?.yes ?? 0,
-    no: summary?.no ?? 0,
+    mild: summary?.mild ?? 0,
+    mature: summary?.mature ?? 0,
+    adult: summary?.adult ?? 0,
   };
 
   const invalidate = () =>
@@ -76,7 +78,7 @@ export function SpicyControl({
     }
   };
 
-  const total = counts.yes + counts.no;
+  const total = counts.mild + counts.mature + counts.adult;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
@@ -87,7 +89,7 @@ export function SpicyControl({
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {OPTIONS.map((opt) => {
           const active = my === opt.value;
           return (
@@ -99,13 +101,14 @@ export function SpicyControl({
               aria-pressed={active}
               data-testid={`button-spicy-${opt.value}`}
               className={cn(
-                "rounded-xl border px-3 py-2 text-base font-medium transition-colors disabled:opacity-50",
+                "flex flex-col items-center gap-1 rounded-xl border px-2 py-3 text-sm font-medium transition-colors disabled:opacity-50",
                 active
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background text-foreground hover:bg-muted/50",
               )}
             >
-              {opt.label}
+              <span className="text-lg leading-none">{opt.peppers}</span>
+              <span>{opt.label}</span>
             </button>
           );
         })}
@@ -120,11 +123,15 @@ export function SpicyControl({
         ) : (
           <>
             <span className="font-semibold text-foreground">
-              {counts.yes} Spicy
+              {counts.mild} 🌶️
             </span>
-            {" / "}
+            {" · "}
             <span className="font-semibold text-foreground">
-              {counts.no} Not
+              {counts.mature} 🌶️🌶️
+            </span>
+            {" · "}
+            <span className="font-semibold text-foreground">
+              {counts.adult} 🌶️🌶️🌶️
             </span>
           </>
         )}

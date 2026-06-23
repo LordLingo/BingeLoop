@@ -30,6 +30,11 @@ function normalizeTitle(title: string): string {
   return title.trim().toLowerCase();
 }
 
+const SPICY_VALUES = ["mild", "mature", "adult"] as const;
+function isSpicyValue(v: string): v is (typeof SPICY_VALUES)[number] {
+  return (SPICY_VALUES as readonly string[]).includes(v);
+}
+
 // Member ids whose activity the caller may see: just the caller without a
 // group, all members of the group when a member, or null (→ 403) when the
 // caller passed a group they don't belong to. Mirrors the contract used by
@@ -323,7 +328,9 @@ router.get("/activity/feed", async (req: AuthedRequest, res): Promise<void> => {
       entryId: entryIdByKey.get(key) ?? null,
       rating: null,
       audiences: null,
-      spicy: s.spicy,
+      // Sanitize legacy binary yes/no rows: the response schema only allows the
+      // current 3-level enum, so unknown values become null instead of 500ing.
+      spicy: isSpicyValue(s.spicy) ? s.spicy : null,
     });
   }
 

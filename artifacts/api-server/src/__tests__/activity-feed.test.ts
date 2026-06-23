@@ -87,6 +87,15 @@ beforeAll(async () => {
     userId: BOB,
     titleKey: MOVIE_KEY,
     mediaType: "movie",
+    spicy: "adult",
+  });
+  // Carol has a legacy binary spice row ("yes") from the old version of the
+  // poll. The feed schema only allows the current 3-level enum, so the route
+  // must sanitize it to null rather than failing to parse.
+  await db.insert(showSpiceTable).values({
+    userId: CAROL,
+    titleKey: MOVIE_KEY,
+    mediaType: "movie",
     spicy: "yes",
   });
 });
@@ -159,6 +168,17 @@ describe("GET /activity/feed", () => {
       .query({ groupId: group1Id })
       .set(as(CAROL));
     expect(res.status).toBe(403);
+  });
+
+  it("survives legacy binary spice rows by nulling unknown values", async () => {
+    const res = await request(app)
+      .get("/api/activity/feed")
+      .query({ groupId: group2Id })
+      .set(as(CAROL));
+    expect(res.status).toBe(200);
+    const spice = res.body.find((i: { type: string }) => i.type === "spice");
+    expect(spice).toBeDefined();
+    expect(spice.spicy).toBeNull();
   });
 
   it("honors the limit param", async () => {

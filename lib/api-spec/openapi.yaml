@@ -1687,23 +1687,29 @@ components:
             only the caller's own picks are counted.
     Spicy:
       type: string
-      enum: [yes, no]
+      description: >-
+        Maturity level for a show: mild (1 pepper), mature (2 peppers, 17+),
+        adult (3 peppers, adults only).
+      enum: [mild, mature, adult]
     ShowSpicy:
       type: object
       required:
         - titleKey
         - mediaType
-        - "yes"
-        - "no"
+        - mild
+        - mature
+        - adult
         - mySpicy
       properties:
         titleKey:
           type: string
         mediaType:
           $ref: "#/components/schemas/MediaType"
-        "yes":
+        mild:
           type: integer
-        "no":
+        mature:
+          type: integer
+        adult:
           type: integer
         mySpicy:
           description: The current user's own answer, or null if they haven't answered.

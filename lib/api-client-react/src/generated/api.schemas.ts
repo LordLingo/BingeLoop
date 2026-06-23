@@ -307,19 +307,24 @@ export interface AudienceInput {
   groupId?: number;
 }
 
+/**
+ * Maturity level for a show: mild (1 pepper), mature (2 peppers, 17+), adult (3 peppers, adults only).
+ */
 export type Spicy = typeof Spicy[keyof typeof Spicy];
 
 
 export const Spicy = {
-  yes: 'yes',
-  no: 'no',
+  mild: 'mild',
+  mature: 'mature',
+  adult: 'adult',
 } as const;
 
 export interface ShowSpicy {
   titleKey: string;
   mediaType: MediaType;
-  yes: number;
-  no: number;
+  mild: number;
+  mature: number;
+  adult: number;
   /** The current user's own answer, or null if they haven't answered. */
   mySpicy: Spicy | null;
 }

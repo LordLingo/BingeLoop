@@ -153,9 +153,16 @@ function renderAction(item: ActivityItem): ReactNode {
         </>
       );
     }
-    case "spice":
-      if (item.spicy === "yes") return <>flagged {title} as Spicy 🌶️</>;
-      return <>marked {title} as not spicy</>;
+    case "spice": {
+      const labels: Record<string, string> = {
+        mild: "Mild 🌶️",
+        mature: "17+ 🌶️🌶️",
+        adult: "Adults Only 🌶️🌶️🌶️",
+      };
+      const label = item.spicy ? labels[item.spicy] : null;
+      if (label) return <>rated {title} {label}</>;
+      return <>updated the spice rating for {title}</>;
+    }
     default:
       return title;
   }

@@ -342,7 +342,13 @@ export default function Home() {
                     })()}
                     {(() => {
                       const s = spiceMap.get(spiceKey(entry.title, entry.mediaType));
-                      return s ? <SpicySummary yes={s.yes} /> : null;
+                      return s ? (
+                        <SpicySummary
+                          mild={s.mild}
+                          mature={s.mature}
+                          adult={s.adult}
+                        />
+                      ) : null;
                     })()}
                   </div>
                   <div className="mt-3">

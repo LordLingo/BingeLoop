@@ -6,10 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 
+/**
+ * Maturity level for a show: mild (1 pepper), mature (2 peppers, 17+), adult (3 peppers, adults only).
+ */
 export type Spicy = typeof Spicy[keyof typeof Spicy];
 
 
 export const Spicy = {
-  yes: 'yes',
-  no: 'no',
+  mild: 'mild',
+  mature: 'mature',
+  adult: 'adult',
 } as const;

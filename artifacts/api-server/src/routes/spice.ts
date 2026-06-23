@@ -16,8 +16,12 @@ const router: IRouter = Router();
 
 router.use(requireAuth);
 
-const SPICY_VALUES = ["yes", "no"] as const;
+const SPICY_VALUES = ["mild", "mature", "adult"] as const;
 type SpicyValue = (typeof SPICY_VALUES)[number];
+
+function isSpicyValue(v: string): v is SpicyValue {
+  return (SPICY_VALUES as readonly string[]).includes(v);
+}
 
 function normalizeTitle(title: string): string {
   return title.trim().toLowerCase();
@@ -54,9 +58,9 @@ async function summarizeShow(
       ),
     );
 
-  const counts = { yes: 0, no: 0 };
+  const counts = { mild: 0, mature: 0, adult: 0 };
   for (const r of rows) {
-    if (r.spicy === "yes" || r.spicy === "no") {
+    if (isSpicyValue(r.spicy)) {
       counts[r.spicy] += 1;
     }
   }
@@ -72,10 +76,7 @@ async function summarizeShow(
       ),
     );
 
-  const mySpicy =
-    mine?.spicy === "yes" || mine?.spicy === "no"
-      ? (mine.spicy as SpicyValue)
-      : null;
+  const mySpicy = mine && isSpicyValue(mine.spicy) ? mine.spicy : null;
 
   return { titleKey, mediaType, ...counts, mySpicy };
 }
@@ -126,8 +127,9 @@ router.get("/spice", async (req: AuthedRequest, res): Promise<void> => {
     {
       titleKey: string;
       mediaType: string;
-      yes: number;
-      no: number;
+      mild: number;
+      mature: number;
+      adult: number;
       mySpicy: SpicyValue | null;
     }
   >();
@@ -139,20 +141,21 @@ router.get("/spice", async (req: AuthedRequest, res): Promise<void> => {
       show = {
         titleKey: row.titleKey,
         mediaType: row.mediaType,
-        yes: 0,
-        no: 0,
+        mild: 0,
+        mature: 0,
+        adult: 0,
         mySpicy: null,
       };
       byShow.set(k, show);
     }
-    if (row.spicy === "yes" || row.spicy === "no") {
+    if (isSpicyValue(row.spicy)) {
       show[row.spicy] = row.value;
     }
   }
 
   for (const m of mine) {
     const show = byShow.get(key(m.titleKey, m.mediaType));
-    if (show && (m.spicy === "yes" || m.spicy === "no")) {
+    if (show && isSpicyValue(m.spicy)) {
       show.mySpicy = m.spicy;
     }
   }

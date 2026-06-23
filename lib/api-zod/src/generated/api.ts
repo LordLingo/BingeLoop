@@ -347,9 +347,10 @@ export const ListSpiceQueryParams = zod.object({
 export const ListSpiceResponseItem = zod.object({
   "titleKey": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
-  "yes": zod.number(),
-  "no": zod.number(),
-  "mySpicy": zod.union([zod.enum(['yes', 'no']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+  "mild": zod.number(),
+  "mature": zod.number(),
+  "adult": zod.number(),
+  "mySpicy": zod.union([zod.enum(['mild', 'mature', 'adult']).describe('Maturity level for a show: mild (1 pepper), mature (2 peppers, 17+), adult (3 peppers, adults only).'),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
 })
 export const ListSpiceResponse = zod.array(ListSpiceResponseItem)
 
@@ -363,16 +364,17 @@ export const ListSpiceResponse = zod.array(ListSpiceResponseItem)
 export const SetSpicyBody = zod.object({
   "title": zod.string().min(1),
   "mediaType": zod.enum(['movie', 'tv']),
-  "spicy": zod.enum(['yes', 'no']),
+  "spicy": zod.enum(['mild', 'mature', 'adult']).describe('Maturity level for a show: mild (1 pepper), mature (2 peppers, 17+), adult (3 peppers, adults only).'),
   "groupId": zod.number().optional().describe('Scope the returned tallies to members of this group. Without it, only the caller\'s own answer is counted.')
 })
 
 export const SetSpicyResponse = zod.object({
   "titleKey": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
-  "yes": zod.number(),
-  "no": zod.number(),
-  "mySpicy": zod.union([zod.enum(['yes', 'no']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+  "mild": zod.number(),
+  "mature": zod.number(),
+  "adult": zod.number(),
+  "mySpicy": zod.union([zod.enum(['mild', 'mature', 'adult']).describe('Maturity level for a show: mild (1 pepper), mature (2 peppers, 17+), adult (3 peppers, adults only).'),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
 })
 
 
@@ -388,9 +390,10 @@ export const ClearSpicyQueryParams = zod.object({
 export const ClearSpicyResponse = zod.object({
   "titleKey": zod.string(),
   "mediaType": zod.enum(['movie', 'tv']),
-  "yes": zod.number(),
-  "no": zod.number(),
-  "mySpicy": zod.union([zod.enum(['yes', 'no']),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
+  "mild": zod.number(),
+  "mature": zod.number(),
+  "adult": zod.number(),
+  "mySpicy": zod.union([zod.enum(['mild', 'mature', 'adult']).describe('Maturity level for a show: mild (1 pepper), mature (2 peppers, 17+), adult (3 peppers, adults only).'),zod.null()]).describe('The current user\'s own answer, or null if they haven\'t answered.')
 })
 
 
@@ -467,7 +470,7 @@ export const ListActivityFeedResponseItem = zod.object({
   "entryId": zod.union([zod.number(),zod.null()]).describe('An entry id for this show to open, or null if none is visible to the caller.'),
   "rating": zod.union([zod.number(),zod.null()]).describe('1-5 star rating, present only for rating activity.'),
   "audiences": zod.union([zod.array(zod.enum(['girls', 'guys', 'couples', 'solo']).describe('Which audience a show suits.')),zod.null()]).describe('The audience picks given, present only for audience activity.'),
-  "spicy": zod.union([zod.enum(['yes', 'no']),zod.null()]).describe('The answer given, present only for spice activity.')
+  "spicy": zod.union([zod.enum(['mild', 'mature', 'adult']).describe('Maturity level for a show: mild (1 pepper), mature (2 peppers, 17+), adult (3 peppers, adults only).'),zod.null()]).describe('The answer given, present only for spice activity.')
 })
 export const ListActivityFeedResponse = zod.array(ListActivityFeedResponseItem)
 

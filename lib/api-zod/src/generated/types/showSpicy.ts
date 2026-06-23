@@ -11,8 +11,9 @@ import type { Spicy } from './spicy';
 export interface ShowSpicy {
   titleKey: string;
   mediaType: MediaType;
-  yes: number;
-  no: number;
+  mild: number;
+  mature: number;
+  adult: number;
   /** The current user's own answer, or null if they haven't answered. */
   mySpicy: Spicy | null;
 }

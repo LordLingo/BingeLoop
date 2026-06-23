@@ -1,14 +1,14 @@
 - [Clerk appearance vs provider props](clerk-react-gotchas.md) — `localization` is a `<ClerkProvider>` prop, NOT a key inside `appearance`; placing it in appearance fails typecheck.
 - [Drizzle NOT NULL backfill](drizzle-notnull-backfill.md) — adding a NOT NULL column via `drizzle-kit push` to a table with existing rows fails; clear/backfill rows first.
-- [Canonical category contract](canonical-category-contract.md) — server validates `category` against canonical `CATEGORIES`; the UI must constrain it (Select from `/categories`), never free-text, or submits 400.
-- [Orval zod response naming](orval-zod-naming.md) — `@workspace/api-zod` exports the response *schema* as `<OperationId>Response` (value); `<SchemaName>` is only the TS type. Import the `Response` one for `.parse()`.
+- [Canonical category contract](canonical-category-contract.md) — server validates `category` against canonical `CATEGORIES`; UI must constrain it (Select from `/categories`), never free-text.
+- [Orval zod response naming](orval-zod-naming.md) — `@workspace/api-zod` response schema is `<OperationId>Response` (value); `<SchemaName>` is the TS type only. Use `Response` for `.parse()`.
 - [API router auth ordering](api-router-auth-ordering.md) — public routes must mount before entriesRouter, whose router.use(requireAuth) (no path) 401s any later-reached request.
 - [CSS comment glob trap](css-comment-glob-trap.md) — `*/` inside a CSS comment (e.g. `bg-*/text-*`) closes it early and silently breaks the next rule; no build error.
-- [Per-surface inverted theme](per-surface-theme-scoping.md) — to invert one surface against the global theme, re-scope the design-token CSS vars on that surface's class, not per-component overrides.
-- [API server testing setup](api-server-testing.md) — vitest tests: real DB + Clerk mocked via `x-test-user-id`; Entry strips userId (assert addedBy); testApp injects no-op req.log so catch blocks don't 500.
+- [Per-surface inverted theme](per-surface-theme-scoping.md) — to invert one surface vs the global theme, re-scope the design-token CSS vars on that surface's class, not per-component.
+- [API server testing setup](api-server-testing.md) — vitest: real DB + Clerk mocked via `x-test-user-id`; Entry strips userId (assert addedBy); testApp injects no-op req.log.
 - [Group-scoped write authz ordering](group-scoped-write-authz-ordering.md) — check group membership BEFORE mutating in poll write endpoints; a 403 must leave no side effects.
-- [Audience poll vs spice poll](audience-vs-spice-poll.md) — "Who Should Watch?" audiences is MULTI-select (text[], counts can exceed members, empty→400); spice is single-answer. Shared scoping, NOT shape.
+- [Audience poll vs spice poll](audience-vs-spice-poll.md) — audiences MULTI-select (text[]); spice single 3-level mild/mature/adult (legacy yes/no rows must be isSpicyValue-guarded or zod 500s).
 - [Display name snapshot fan-out](display-name-fanout.md) — names are denormalized; new snapshots must use resolveDisplayName (never email) AND join setDisplayNameAndPropagate's txn.
-- [Group membership soft-removal](group-membership-soft-removal.md) — `group_members.status`: access helpers filter active, content helper (getGroupMemberIds) includes removed so kicked members' content stays visible.
-- [Orval coerce.string() query params](tmdb-coerce-string-query-params.md) — a required string query param won't 400 when omitted (coerces undefined→"undefined"); guard explicitly, test min(1) with `?query=`.
+- [Group membership soft-removal](group-membership-soft-removal.md) — `group_members.status`: access helpers filter active; getGroupMemberIds keeps removed so kicked members' content stays visible.
+- [Orval coerce.string() query params](tmdb-coerce-string-query-params.md) — a required string query param won't 400 when omitted (coerces undefined→"undefined"); guard explicitly.
 - [Entry group-scoping contract](entry-group-scoping.md) — group library/stats filter by entries.groupId (NOT member-set); userId view stays cross-group; NULL groupId = unassigned, triaged in-app.

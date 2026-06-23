@@ -1,14 +1,22 @@
-import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function SpicySummary({
-  yes,
+  mild,
+  mature,
+  adult,
   className,
 }: {
-  yes: number;
+  mild: number;
+  mature: number;
+  adult: number;
   className?: string;
 }) {
-  if (!yes) return null;
+  const total = mild + mature + adult;
+  if (!total) return null;
+
+  const avg = (mild * 1 + mature * 2 + adult * 3) / total;
+  const level = Math.min(3, Math.max(1, Math.round(avg)));
+  const peppers = "🌶️".repeat(level);
 
   return (
     <span
@@ -18,8 +26,10 @@ export function SpicySummary({
       )}
       data-testid="text-spicy-summary"
     >
-      <Flame className="h-3.5 w-3.5 text-primary/70" />
-      <span className="font-semibold text-foreground/80">{yes} Spicy 🌶️</span>
+      <span aria-hidden>{peppers}</span>
+      <span className="font-semibold text-foreground/80">
+        {total} {total === 1 ? "rating" : "ratings"}
+      </span>
     </span>
   );
 }

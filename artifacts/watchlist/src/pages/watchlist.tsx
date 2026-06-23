@@ -133,7 +133,13 @@ export default function WatchlistPage() {
                       const s = spiceMap.get(
                         spiceKey(item.title, item.mediaType),
                       );
-                      return s ? <SpicySummary yes={s.yes} /> : null;
+                      return s ? (
+                        <SpicySummary
+                          mild={s.mild}
+                          mature={s.mature}
+                          adult={s.adult}
+                        />
+                      ) : null;
                     })()}
                   </div>
                 </div>
