@@ -35,6 +35,7 @@ import {
 import { UserMenu } from "@/components/user-menu";
 import { NewActivityBadge } from "@/components/new-activity-badge";
 import { InviteDialog } from "@/components/invite-dialog";
+import { GroupMembersDialog } from "@/components/group-members-dialog";
 import { GroupSwitcher } from "@/components/group-switcher";
 import { BrandLogo } from "@/components/brand-logo";
 import { useActiveGroup } from "@/components/active-group-context";
@@ -123,13 +124,16 @@ export default function Home() {
       {/* Hero Stats */}
       <section className="cinematic-panel text-foreground pt-6 pb-8 px-6 rounded-b-[2.5rem] border-b border-border/60 mb-6">
         <div className="max-w-3xl mx-auto space-y-6">
-          <h1
-            className="text-5xl font-serif tracking-wide text-foreground uppercase truncate"
-            title={activeGroup?.name ?? "Your Library"}
-            data-testid="text-library-heading"
-          >
-            {activeGroup?.name ?? "Your Library"}
-          </h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1
+              className="min-w-0 flex-1 text-5xl font-serif tracking-wide text-foreground uppercase truncate"
+              title={activeGroup?.name ?? "Your Library"}
+              data-testid="text-library-heading"
+            >
+              {activeGroup?.name ?? "Your Library"}
+            </h1>
+            <GroupMembersDialog />
+          </div>
           
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-black/[0.03] rounded-2xl p-4 border border-black/10">
